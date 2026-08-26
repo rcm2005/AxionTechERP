@@ -1,0 +1,22 @@
+.main {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+
+  @include mq(lg) {
+    margin-left: var(--sidebar-width-collapsed);
+  }
+
+  @include mq(md) {
+    margin-left: var(--sidebar-width-collapsed-sm);
+  }
+}
+
+.content {
+  padding: 28px 32px 40px;
+  max-width: 1500px;
+  margin: auto;
+
+  @include mq(md) {
+    padding: 20px 15px;
+  }
+}

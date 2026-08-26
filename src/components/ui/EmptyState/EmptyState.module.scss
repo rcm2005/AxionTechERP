@@ -1,0 +1,24 @@
+.root {
+  padding: 35px;
+  text-align: center;
+  color: var(--color-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  strong {
+    color: var(--color-text);
+    font-size: 13px;
+  }
+}
+
+.icon {
+  font-size: 22px;
+  opacity: 0.5;
+}
+
+.description {
+  font-size: 12px;
+  max-width: 340px;
+}

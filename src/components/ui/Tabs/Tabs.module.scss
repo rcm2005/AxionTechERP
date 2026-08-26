@@ -1,0 +1,28 @@
+.root {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--color-line);
+  padding: 0 15px;
+  overflow-x: auto;
+}
+
+.tab {
+  border: 0;
+  background: transparent;
+  padding: 13px 12px;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--color-muted);
+  border-bottom: 2px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}

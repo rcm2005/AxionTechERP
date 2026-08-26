@@ -1,0 +1,23 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+
+  @include mq(md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  button {
+    padding: 13px 10px;
+    border: 1px dashed var(--color-line);
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    color: var(--color-accent);
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--color-accent);
+    }
+  }
+}

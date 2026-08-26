@@ -1,0 +1,13 @@
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+
+  @include mq(md) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.timelineWrap {
+  margin-top: 20px;
+}

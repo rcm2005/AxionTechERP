@@ -1,0 +1,3 @@
+// Só @forward aqui — nada disso emite CSS diretamente.
+// É injetado em todo módulo .scss via additionalData no vite.config.ts.
+@forward 'mixins';

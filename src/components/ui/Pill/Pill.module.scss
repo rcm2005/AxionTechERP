@@ -1,0 +1,34 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.green {
+  background: var(--tone-green-bg);
+  color: var(--tone-green-fg);
+}
+
+.orange {
+  background: var(--tone-orange-bg);
+  color: var(--tone-orange-fg);
+}
+
+.red {
+  background: var(--tone-red-bg);
+  color: var(--tone-red-fg);
+}
+
+.blue {
+  background: var(--tone-blue-bg);
+  color: var(--tone-blue-fg);
+}
+
+.neutral {
+  background: var(--tone-neutral-bg);
+  color: var(--tone-neutral-fg);
+}

@@ -1,0 +1,21 @@
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  background: var(--sidebar-bg);
+  color: #fff;
+  padding: 12px 15px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-toast);
+  font-size: 12px;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: var(--transition-base);
+  z-index: 50;
+
+  &[data-show='true'] {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

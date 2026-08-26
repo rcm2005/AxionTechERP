@@ -1,0 +1,27 @@
+.root {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  gap: var(--space-3);
+
+  h1 {
+    font-size: 25px;
+    margin-bottom: 5px;
+  }
+
+  p {
+    color: var(--color-muted);
+    font-size: 13px;
+  }
+
+  @include mq(md) {
+    flex-direction: column;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}

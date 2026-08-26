@@ -1,0 +1,19 @@
+.root {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+
+  :global(input),
+  :global(select) {
+    border: 1px solid var(--color-line);
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--color-text);
+  }
+
+  :global(input) {
+    min-width: 250px;
+  }
+}

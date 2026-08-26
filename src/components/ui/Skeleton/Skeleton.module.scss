@@ -1,0 +1,16 @@
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.root {
+  display: inline-block;
+  border-radius: var(--radius-sm);
+  background: var(--color-line);
+  animation: pulse 1.4s ease-in-out infinite;
+}

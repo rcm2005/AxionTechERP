@@ -1,0 +1,23 @@
+.mes {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.rowLabel {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.rowValue {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0 15px;
+}
+
+.positive {
+  color: var(--color-success);
+}
+
+.spacer {
+  height: 20px;
+}

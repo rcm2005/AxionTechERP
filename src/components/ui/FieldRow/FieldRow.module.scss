@@ -1,0 +1,17 @@
+.root {
+  margin: 14px 0;
+
+  label {
+    display: block;
+    color: var(--color-muted);
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 800;
+    margin-bottom: 4px;
+    letter-spacing: 0.4px;
+  }
+
+  strong {
+    font-size: 13px;
+  }
+}

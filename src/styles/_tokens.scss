@@ -1,0 +1,86 @@
+// Design tokens — skin "corporate" (app interno) por padrão em :root,
+// skin "editorial" (login) sobrescrevendo via .theme-editorial.
+
+:root {
+  // corporate skin
+  --color-bg: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-surface-2: #f8fafc;
+  --color-text: #172033;
+  --color-muted: #6b7280;
+  --color-muted-2: #98a2b3;
+  --color-line: #e6eaf0;
+
+  --color-accent: #3157d5;
+  --color-accent-hover: #2445b7;
+  --color-accent-dim: #a9b8ea;
+  --color-on-accent: #ffffff;
+  --color-gold: #c9a24a;
+
+  --color-success: #16865a;
+  --color-warning: #d97706;
+  --color-danger: #dc3d4b;
+
+  --sidebar-bg: #101828;
+  --sidebar-bg-hover: #172033;
+  --sidebar-fg: #b8c0cf;
+  --sidebar-fg-muted: #98a2b3;
+  --sidebar-line: #273247;
+
+  --tone-green-bg: #e7f7ef;
+  --tone-green-fg: #16865a;
+  --tone-orange-bg: #fff4df;
+  --tone-orange-fg: #a75c00;
+  --tone-red-bg: #ffe8eb;
+  --tone-red-fg: #c02e3d;
+  --tone-blue-bg: #eaf0ff;
+  --tone-blue-fg: #3157d5;
+  --tone-neutral-bg: #eef1f5;
+  --tone-neutral-fg: #667085;
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 9px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 8px 28px rgba(16, 24, 40, 0.06);
+  --shadow-toast: 0 10px 35px rgba(0, 0, 0, 0.2);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 22px;
+  --space-6: 32px;
+  --space-7: 40px;
+
+  --sidebar-width: 244px;
+  --sidebar-width-collapsed: 76px;
+  --sidebar-width-collapsed-sm: 62px;
+
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+}
+
+.theme-editorial {
+  --color-bg: #0a0a0c;
+  --color-surface: #101013;
+  --color-surface-2: #0c0c0f;
+  --color-text: #f4f4f6;
+  --color-muted: #8c8d97;
+  --color-muted-2: #6b6c76;
+  --color-line: #232329;
+
+  --color-accent: #ff2f6e;
+  --color-accent-hover: #e0245f;
+  --color-accent-dim: #5c1330;
+  --color-on-accent: #ffffff;
+  --color-gold: #c9a24a;
+
+  color: var(--color-text);
+  background: var(--color-bg);
+}

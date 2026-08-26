@@ -1,0 +1,63 @@
+.root {
+  @include card;
+  padding: 18px;
+}
+
+.sm {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.value {
+  font-size: 26px;
+  font-weight: 800;
+  margin-top: 9px;
+}
+
+.sm .value {
+  font-size: 18px;
+}
+
+.sub {
+  font-size: 11px;
+  color: var(--color-muted);
+  margin-top: 5px;
+}
+
+.tone-green {
+  color: var(--color-success);
+}
+
+.tone-orange {
+  color: var(--color-warning);
+}
+
+.tone-red {
+  color: var(--color-danger);
+}
+
+.tone-blue {
+  color: var(--color-accent);
+}
+
+.tone-neutral {
+  color: var(--color-muted);
+}

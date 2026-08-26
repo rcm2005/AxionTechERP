@@ -1,0 +1,23 @@
+.root {
+  @include card;
+}
+
+.padded {
+  padding: 18px;
+}
+
+.head {
+  padding: 17px 18px;
+  border-bottom: 1px solid var(--color-line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h3 {
+    font-size: 14px;
+  }
+}
+
+.body {
+  padding: 17px 18px;
+}
