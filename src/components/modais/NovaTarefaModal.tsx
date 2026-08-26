@@ -52,6 +52,7 @@ export function NovaTarefaModal({ open, onClose }: Props) {
       });
       toast.show('Tarefa criada!');
       handleClose();
+      window.location.reload();
     } finally {
       setSaving(false);
     }

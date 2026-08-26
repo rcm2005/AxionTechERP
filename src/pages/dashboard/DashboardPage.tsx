@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/contexts/ToastContext';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useAgenda } from '@/hooks/useAgenda';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -11,6 +10,7 @@ import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
 import { AgendaDoDiaCard } from '@/components/dashboard/AgendaDoDiaCard';
 import { AlertasCard } from '@/components/dashboard/AlertasCard';
 import { AtalhosCard } from '@/components/dashboard/AtalhosCard';
+import { NovoProcessoModal } from '@/components/modais/NovoProcessoModal';
 import { REFERENCE_DATE } from '@/config/app';
 import { formatLongDate } from '@/utils/format';
 import styles from './DashboardPage.module.scss';
@@ -25,7 +25,7 @@ function getGreeting(): string {
 export function DashboardPage() {
   useDocumentTitle('Dashboard');
   const { usuario } = useAuth();
-  const toast = useToast();
+  const [novoProcessoOpen, setNovoProcessoOpen] = useState(false);
   const { data: resumo, loading: loadingResumo } = useDashboard();
   const { data: eventos, loading: loadingEventos } = useAgenda({});
   const greeting = useMemo(() => getGreeting(), []);
@@ -37,7 +37,7 @@ export function DashboardPage() {
         title={`${greeting}, ${primeiroNome} 👋`}
         subtitle={`Visão geral do escritório em ${formatLongDate(REFERENCE_DATE)}.`}
         actions={
-          <Button variant="primary" onClick={() => toast.show('Novo processo iniciado')}>
+          <Button variant="primary" onClick={() => setNovoProcessoOpen(true)}>
             + Novo processo
           </Button>
         }
@@ -66,6 +66,8 @@ export function DashboardPage() {
       <div className={styles.shortcuts}>
         <AtalhosCard />
       </div>
+
+      <NovoProcessoModal open={novoProcessoOpen} onClose={() => setNovoProcessoOpen(false)} />
     </section>
   );
 }

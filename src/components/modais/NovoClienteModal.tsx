@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Modal, ModalField, ModalFooter } from '@/components/ui/Modal/Modal';
 import { TextInput, TextSelect } from '@/components/ui/TextField/TextField';
 import { useToast } from '@/contexts/ToastContext';
 import { criarCliente } from '@/services/clientes.service';
 import { db } from '@/mocks';
+import { paths } from '@/routes/paths';
 import type { TipoPessoa, ClienteStatus, SituacaoFinanceira } from '@/types';
 
 interface Props {
@@ -13,6 +15,7 @@ interface Props {
 
 export function NovoClienteModal({ open, onClose }: Props) {
   const toast = useToast();
+  const navigate = useNavigate();
   const [nome, setNome] = useState('');
   const [tipoPessoa, setTipoPessoa] = useState<TipoPessoa>('PF');
   const [documento, setDocumento] = useState('');
@@ -35,7 +38,7 @@ export function NovoClienteModal({ open, onClose }: Props) {
     if (!nome.trim()) { setNomeError('Nome é obrigatório.'); return; }
     setSaving(true);
     try {
-      await criarCliente({
+      const novo = await criarCliente({
         nome: nome.trim(),
         tipoPessoa,
         documento,
@@ -48,6 +51,7 @@ export function NovoClienteModal({ open, onClose }: Props) {
       });
       toast.show('Cliente criado com sucesso!');
       handleClose();
+      navigate(paths.cliente(novo.id));
     } finally {
       setSaving(false);
     }

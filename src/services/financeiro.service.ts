@@ -1,5 +1,5 @@
 import type { Lancamento } from '@/types';
-import { db } from '@/mocks';
+import { db, saveDB } from '@/mocks';
 import { USE_MOCKS, delay } from './mockAdapter';
 import { http } from './http';
 
@@ -61,6 +61,7 @@ export async function criarLancamento(dados: Omit<Lancamento, 'id'>): Promise<La
       id: `l${Date.now()}`,
     };
     db.lancamentos.push(novo);
+    saveDB();
     return novo;
   }
   const { data } = await http.post<Lancamento>('/financeiro/lancamentos', dados);

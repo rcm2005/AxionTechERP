@@ -1,5 +1,5 @@
 import type { AgendaFiltros, EventoAgenda } from '@/types';
-import { db } from '@/mocks';
+import { db, saveDB } from '@/mocks';
 import { USE_MOCKS, delay } from './mockAdapter';
 import { http } from './http';
 
@@ -40,6 +40,7 @@ export async function criarEvento(
       concluido: false,
     };
     db.eventos.push(novo);
+    saveDB();
     return novo;
   }
   const { data } = await http.post<EventoAgenda>('/agenda', dados);

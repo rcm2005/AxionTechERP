@@ -1,5 +1,5 @@
 import type { Cliente, ClienteFiltros } from '@/types';
-import { db } from '@/mocks';
+import { db, saveDB } from '@/mocks';
 import { USE_MOCKS, delay } from './mockAdapter';
 import { http } from './http';
 
@@ -53,6 +53,7 @@ export async function criarCliente(
       qtdProcessos: 0,
     };
     db.clientes.push(novo);
+    saveDB();
     return novo;
   }
   const { data } = await http.post<Cliente>('/clientes', dados);

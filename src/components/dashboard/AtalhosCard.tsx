@@ -1,29 +1,40 @@
-import { useToast } from '@/contexts/ToastContext';
+import { useState } from 'react';
 import { Card, CardBody, CardHead } from '@/components/ui/Card/Card';
+import { NovoProcessoModal } from '@/components/modais/NovoProcessoModal';
+import { NovoClienteModal } from '@/components/modais/NovoClienteModal';
+import { NovaTarefaModal } from '@/components/modais/NovaTarefaModal';
 import styles from './AtalhosCard.module.scss';
 
-const ATALHOS = [
-  { label: '+ Novo cliente', mensagem: 'Formulário de novo cliente aberto' },
-  { label: '+ Novo processo', mensagem: 'Formulário de novo processo aberto' },
-  { label: '+ Nova tarefa', mensagem: 'Formulário de nova tarefa aberto' },
-  { label: '+ Novo compromisso', mensagem: 'Formulário de novo compromisso aberto' },
-];
-
 export function AtalhosCard() {
-  const toast = useToast();
+  const [novoProcessoOpen, setNovoProcessoOpen] = useState(false);
+  const [novoClienteOpen, setNovoClienteOpen] = useState(false);
+  const [novaTarefaOpen, setNovaTarefaOpen] = useState(false);
 
   return (
-    <Card>
-      <CardHead title="Atalhos" />
-      <CardBody>
-        <div className={styles.grid}>
-          {ATALHOS.map((atalho) => (
-            <button key={atalho.label} type="button" onClick={() => toast.show(atalho.mensagem)}>
-              {atalho.label}
+    <>
+      <Card>
+        <CardHead title="Atalhos" />
+        <CardBody>
+          <div className={styles.grid}>
+            <button type="button" onClick={() => setNovoClienteOpen(true)}>
+              + Novo cliente
             </button>
-          ))}
-        </div>
-      </CardBody>
-    </Card>
+            <button type="button" onClick={() => setNovoProcessoOpen(true)}>
+              + Novo processo
+            </button>
+            <button type="button" onClick={() => setNovaTarefaOpen(true)}>
+              + Nova tarefa
+            </button>
+            <button type="button" onClick={() => setNovaTarefaOpen(true)}>
+              + Novo compromisso
+            </button>
+          </div>
+        </CardBody>
+      </Card>
+
+      <NovoProcessoModal open={novoProcessoOpen} onClose={() => setNovoProcessoOpen(false)} />
+      <NovoClienteModal open={novoClienteOpen} onClose={() => setNovoClienteOpen(false)} />
+      <NovaTarefaModal open={novaTarefaOpen} onClose={() => setNovaTarefaOpen(false)} />
+    </>
   );
 }

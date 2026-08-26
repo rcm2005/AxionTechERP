@@ -55,6 +55,7 @@ export function NovaCobrancaModal({ open, onClose }: Props) {
       });
       toast.show('Lançamento criado!');
       handleClose();
+      window.location.reload();
     } finally {
       setSaving(false);
     }

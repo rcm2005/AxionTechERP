@@ -1,5 +1,5 @@
 import type { Andamento, Processo } from '@/types';
-import { db } from '@/mocks';
+import { db, saveDB } from '@/mocks';
 import { USE_MOCKS, delay } from './mockAdapter';
 import { http } from './http';
 
@@ -45,6 +45,7 @@ export async function criarProcesso(
       qtdDocumentosPendentes: 0,
     };
     db.processos.push(novo);
+    saveDB();
     return novo;
   }
   const { data } = await http.post<Processo>('/processos', dados);
