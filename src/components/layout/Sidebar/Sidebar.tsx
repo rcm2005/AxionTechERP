@@ -3,6 +3,7 @@ import { NavLink } from 'react-router';
 import clsx from 'clsx';
 import {
   LayoutDashboard,
+  Bot,
   ShoppingCart,
   ShoppingBag,
   Package,
@@ -26,6 +27,7 @@ interface SidebarNavItem {
 
 const SIDEBAR_ITEMS: SidebarNavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/copilot', label: 'Copilot', icon: Bot },
   { path: '/vendas', label: 'Vendas', icon: ShoppingCart },
   { path: '/compras', label: 'Compras', icon: ShoppingBag },
   { path: '/estoque', label: 'Estoque', icon: Package },

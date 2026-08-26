@@ -5,3 +5,4 @@ export * from './produto';
 export * from './pessoa';
 export * from './financeiro';
 export * from './dashboard';
+export * from './producao';

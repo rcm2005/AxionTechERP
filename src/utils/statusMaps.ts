@@ -5,6 +5,7 @@ import type {
   StatusLancamento,
   TipoProduto,
   TipoRelacao,
+  OrdemProducaoStatus,
   Tone,
 } from '@/types';
 
@@ -56,4 +57,12 @@ export const produtoStatusMeta: Record<ProdutoStatus, { label: string; tone: Ton
   inativo: { label: 'Inativo', tone: 'neutral' },
   fora_de_linha: { label: 'Fora de Linha', tone: 'red' },
 };
+
+export const ordemProducaoStatusMeta: Record<OrdemProducaoStatus, StatusMeta> = {
+  planejada: { label: 'Planejada', tone: 'blue' },
+  em_producao: { label: 'Em Produção', tone: 'orange' },
+  concluida: { label: 'Concluída', tone: 'green' },
+  cancelada: { label: 'Cancelada', tone: 'neutral' },
+};
+
 

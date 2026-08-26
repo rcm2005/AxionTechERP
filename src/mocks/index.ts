@@ -4,12 +4,15 @@ import type {
   Produto,
   Pessoa,
   LancamentoFinanceiro,
+  FichaTecnica,
+  OrdemProducao,
 } from '@/types';
 import { tenantsMock } from './tenants.mock';
 import { usuariosMock } from './usuarios.mock';
 import { produtosMock } from './produtos.mock';
 import { pessoasMock } from './pessoas.mock';
 import { lancamentosMock } from './lancamentos.mock';
+import { fichasTecnicasMock, ordensProducaoMock } from './producao.mock';
 
 const DB_KEY = 'axion_enterprise_erp_db_v1';
 
@@ -19,6 +22,8 @@ export interface DbSchema {
   produtos: Produto[];
   pessoas: Pessoa[];
   lancamentos: LancamentoFinanceiro[];
+  fichasTecnicas: FichaTecnica[];
+  ordensProducao: OrdemProducao[];
 }
 
 function getDefaultDB(): DbSchema {
@@ -28,6 +33,8 @@ function getDefaultDB(): DbSchema {
     produtos: [...produtosMock],
     pessoas: [...pessoasMock],
     lancamentos: [...lancamentosMock],
+    fichasTecnicas: [...fichasTecnicasMock],
+    ordensProducao: [...ordensProducaoMock],
   };
 }
 
@@ -44,6 +51,13 @@ function initDB(): DbSchema {
         Array.isArray(parsed.pessoas) &&
         Array.isArray(parsed.lancamentos)
       ) {
+        // Assegura retrocompatibilidade com chaves de produção
+        if (!Array.isArray(parsed.fichasTecnicas)) {
+          parsed.fichasTecnicas = [...fichasTecnicasMock];
+        }
+        if (!Array.isArray(parsed.ordensProducao)) {
+          parsed.ordensProducao = [...ordensProducaoMock];
+        }
         return parsed as DbSchema;
       }
       console.warn('[DB] Schema antigo ou corrompido detectado no LocalStorage. Reinicializando...');
@@ -70,6 +84,8 @@ export function resetDB(): DbSchema {
   db.produtos = defaultDb.produtos;
   db.pessoas = defaultDb.pessoas;
   db.lancamentos = defaultDb.lancamentos;
+  db.fichasTecnicas = defaultDb.fichasTecnicas;
+  db.ordensProducao = defaultDb.ordensProducao;
   localStorage.setItem(DB_KEY, JSON.stringify(defaultDb));
   return db;
 }
@@ -91,8 +107,18 @@ export function getLancamentosByTenant(tenantId: string): LancamentoFinanceiro[]
   return db.lancamentos.filter((l) => l.tenantId === tenantId);
 }
 
+export function getFichasTecnicasByTenant(tenantId: string): FichaTecnica[] {
+  return db.fichasTecnicas.filter((f) => f.tenantId === tenantId);
+}
+
+export function getOrdensProducaoByTenant(tenantId: string): OrdemProducao[] {
+  return db.ordensProducao.filter((o) => o.tenantId === tenantId);
+}
+
 export * from './tenants.mock';
 export * from './usuarios.mock';
 export * from './produtos.mock';
 export * from './pessoas.mock';
 export * from './lancamentos.mock';
+export * from './producao.mock';
+

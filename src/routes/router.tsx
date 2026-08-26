@@ -3,10 +3,12 @@ import { AppLayout } from '@/layouts/AppLayout';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { LoginPage } from '@/pages/login/LoginPage';
 import { DashboardPage } from '@/pages/dashboard/DashboardPage';
+import { CopilotPage } from '@/pages/copilot/CopilotPage';
 import { ClientesPage } from '@/pages/clientes/ClientesPage';
 import { ClienteDetailPage } from '@/pages/clientes/ClienteDetailPage';
 import { FinanceiroPage } from '@/pages/financeiro/FinanceiroPage';
 import { EstoquePage } from '@/pages/estoque/EstoquePage';
+import { PlanosPage } from '@/pages/configuracoes/PlanosPage';
 import { PlaceholderPage } from '@/pages/placeholder/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -31,6 +33,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to={paths.dashboard} replace /> },
           { path: paths.dashboard, element: <DashboardPage /> },
+          { path: paths.copilot, element: <CopilotPage /> },
           { path: paths.vendas, element: <PlaceholderPage moduloOverride="vendas" /> },
           { path: paths.compras, element: <PlaceholderPage moduloOverride="compras" /> },
           { path: paths.estoque, element: <EstoquePage /> },
@@ -38,7 +41,7 @@ export const router = createBrowserRouter([
           { path: paths.fiscal, element: <PlaceholderPage moduloOverride="fiscal" /> },
           { path: paths.clientes, element: <ClientesPage /> },
           { path: `${paths.clientes}/:clienteId`, element: <ClienteDetailPage /> },
-          { path: paths.configuracoes, element: <PlaceholderPage moduloOverride="configuracoes" /> },
+          { path: paths.configuracoes, element: <PlanosPage /> },
         ],
       },
     ],

@@ -1,0 +1,209 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.chatContainer {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 210px);
+  min-height: 520px;
+  background: var(--color-surface, #ffffff);
+  overflow: hidden;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px clamp(16px, 4vw, 48px);
+  scroll-behavior: smooth;
+}
+
+.message {
+  display: flex;
+  width: 100%;
+
+  &.messageUser {
+    justify-content: flex-end;
+
+    .bubble {
+      background: var(--color-accent, #3157d5);
+      color: var(--color-on-accent, #ffffff);
+      border-bottom-right-radius: 4px;
+    }
+  }
+
+  &.messageAssistant {
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: flex-start;
+
+    .bubble {
+      background: var(--color-surface-2, #f1f2f6);
+      color: var(--color-text, #172033);
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--color-line, #e6eaf0);
+    }
+  }
+}
+
+.bubble {
+  max-width: min(680px, 85%);
+  padding: 12px 18px;
+  border-radius: var(--radius-lg, 16px);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  &.bubbleTyping {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 18px;
+
+    span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--color-muted, #8a8c98);
+      animation: chat-typing 1s infinite ease-in-out;
+
+      &:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      &:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+    }
+  }
+}
+
+@keyframes chat-typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.preview {
+  margin-top: 10px;
+  width: 100%;
+  max-width: 680px;
+
+  .previewFrame {
+    width: 100%;
+    height: 320px;
+    border-radius: var(--radius-md, 12px);
+    overflow: hidden;
+    border: 1px solid var(--color-line, #e7e8ee);
+    box-shadow: var(--shadow-card, 0 8px 24px rgba(16, 24, 40, 0.08));
+    background: #0a0a0c;
+
+    iframe {
+      width: 238%;
+      height: 238%;
+      border: 0;
+      transform: scale(0.42);
+      transform-origin: top left;
+      pointer-events: none;
+    }
+  }
+
+  .previewLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--color-accent, #3157d5);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+      color: var(--color-accent-hover, #2445b7);
+    }
+  }
+}
+
+.inputWrapper {
+  padding: 14px clamp(16px, 4vw, 48px) 18px;
+  border-top: 1px solid var(--color-line, #e6eaf0);
+  background: var(--color-surface, #ffffff);
+}
+
+.inputContainer {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  background: var(--color-surface-2, #f8fafc);
+  border: 1px solid var(--color-line, #e6eaf0);
+  border-radius: 20px;
+  padding: 8px 10px 8px 16px;
+  max-width: 800px;
+  margin: 0 auto;
+  transition: border-color var(--transition-fast, 0.15s ease), box-shadow var(--transition-fast, 0.15s ease);
+
+  &:focus-within {
+    border-color: var(--color-accent, #3157d5);
+    box-shadow: 0 0 0 3px rgba(49, 87, 213, 0.12);
+  }
+}
+
+.input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-text, #172033);
+  max-height: 160px;
+  padding: 8px 0;
+
+  &::placeholder {
+    color: var(--color-muted, #8a8c98);
+  }
+}
+
+.button {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: var(--radius-lg, 16px);
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--color-on-accent, #ffffff);
+  background: var(--color-accent, #3157d5);
+  cursor: pointer;
+  transition: background var(--transition-fast, 0.15s ease), opacity var(--transition-fast, 0.15s ease);
+
+  &:hover:not(:disabled) {
+    background: var(--color-accent-hover, #2445b7);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.disclaimer {
+  max-width: 800px;
+  margin: 8px auto 0;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--color-muted, #8a8c98);
+}

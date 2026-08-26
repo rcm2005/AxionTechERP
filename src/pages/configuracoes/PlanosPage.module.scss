@@ -1,0 +1,457 @@
+@use '@/styles/abstracts' as *;
+
+.pageRoot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: var(--space-7);
+}
+
+/* Banner de Uso Atual */
+.usageCard {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.usageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.usageTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.usageTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.planTag {
+  background-color: var(--tone-blue-bg);
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-accent-dim);
+}
+
+.usageMeta {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.quotasGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.quotaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background-color: var(--color-surface-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+}
+
+.quotaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+}
+
+.quotaLabel {
+  font-weight: 600;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quotaValue {
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+/* Seletor de Ciclo (Mensal / Anual) */
+.toggleWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.toggleContainer {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  gap: 4px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.toggleBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &.toggleBtnActive {
+    background-color: var(--color-accent);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(49, 87, 213, 0.28);
+  }
+}
+
+.discountBadge {
+  background: linear-gradient(135deg, #16865a 0%, #10b981 100%);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.3px;
+}
+
+/* Grid de Planos */
+.plansGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5);
+  align-items: stretch;
+}
+
+/* Seção de Confiança / Benefícios */
+.trustSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.trustCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-card);
+}
+
+.trustIconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background-color: var(--tone-blue-bg);
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.trustContent {
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 4px 0;
+  }
+  p {
+    font-size: 12.5px;
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.4;
+  }
+}
+
+/* Tabela Comparativa Detalhada */
+.comparisonSection {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.comparisonHeader {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+
+  h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--color-text);
+    margin: 0 0 6px 0;
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--color-muted);
+    margin: 0;
+  }
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+
+.comparisonTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13.5px;
+
+  th,
+  td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  th {
+    background-color: var(--color-surface-2);
+    font-weight: 700;
+    color: var(--color-text);
+    text-align: center;
+
+    &:first-child {
+      text-align: left;
+    }
+  }
+
+  td {
+    color: var(--color-text);
+    text-align: center;
+
+    &:first-child {
+      text-align: left;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover td {
+    background-color: rgba(234, 240, 255, 0.25);
+  }
+
+  .highlightCol {
+    background-color: rgba(49, 87, 213, 0.03);
+    font-weight: 600;
+  }
+
+  .categoryHeaderRow td {
+    background-color: var(--color-surface-2);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-accent);
+    padding: 10px 18px;
+  }
+}
+
+.checkIcon {
+  color: var(--tone-green-fg);
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.crossIcon {
+  color: var(--color-muted-2);
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* FAQ Accordion */
+.faqSection {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.faqHeader {
+  h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 4px 0;
+  }
+  p {
+    font-size: 13px;
+    color: var(--color-muted);
+    margin: 0;
+  }
+}
+
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.faqItem {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+
+  &.faqOpen {
+    border-color: var(--color-accent-dim);
+  }
+}
+
+.faqQuestion {
+  width: 100%;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-surface);
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-surface-2);
+  }
+}
+
+.faqAnswer {
+  padding: 0 18px 14px 18px;
+  font-size: 13.5px;
+  color: var(--color-muted);
+  line-height: 1.5;
+  background-color: var(--color-surface);
+}
+
+/* Sucesso */
+.successRoot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-7) var(--space-6);
+  box-shadow: var(--shadow-card);
+  max-width: 680px;
+  margin: 0 auto;
+  gap: var(--space-4);
+}
+
+.successIconWrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, #e7f7ef 0%, #d1fae5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tone-green-fg);
+  box-shadow: 0 8px 24px rgba(22, 134, 90, 0.2);
+}
+
+.successTitle {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.successDesc {
+  font-size: 15px;
+  color: var(--color-muted);
+  max-width: 480px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.successPlanCard {
+  width: 100%;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  margin: var(--space-2) 0;
+
+  .statItem {
+    strong {
+      display: block;
+      font-size: 16px;
+      color: var(--color-text);
+    }
+    span {
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+  }
+}
+
+.successActions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
