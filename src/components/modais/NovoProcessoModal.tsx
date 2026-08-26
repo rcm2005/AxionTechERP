@@ -1,65 +1,51 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Modal, ModalField, ModalFooter } from '@/components/ui/Modal/Modal';
 import { TextInput, TextSelect } from '@/components/ui/TextField/TextField';
 import { useToast } from '@/contexts/ToastContext';
 import { criarProcesso } from '@/services/processos.service';
-import type { AreaJuridica, ProcessoStatus } from '@/types';
 import { db } from '@/mocks';
+import { paths } from '@/routes/paths';
+import type { AreaJuridica, ProcessoStatus } from '@/types';
 
-interface NovoProcessoModalProps {
+interface Props {
   open: boolean;
   onClose: () => void;
-  onCreated?: (id: string) => void;
 }
 
-export function NovoProcessoModal({ open, onClose, onCreated }: NovoProcessoModalProps) {
+export function NovoProcessoModal({ open, onClose }: Props) {
   const toast = useToast();
-
+  const navigate = useNavigate();
   const [titulo, setTitulo] = useState('');
   const [area, setArea] = useState<AreaJuridica>('civel');
-  const [clienteId, setClienteId] = useState('');
+  const [clienteId, setClienteId] = useState(db.clientes[0]?.id ?? '');
   const [parteContraria, setParteContraria] = useState('');
-  const [tribunal, setTribunal] = useState('');
+  const [tribunal, setTribunal] = useState('TJSP');
   const [vara, setVara] = useState('');
-  const [advogadoId, setAdvogadoId] = useState('');
+  const [advogadoId, setAdvogadoId] = useState(db.usuarios[0]?.id ?? '');
   const [valorStr, setValorStr] = useState('');
-  const [faseProcessual, setFaseProcessual] = useState('');
-  
+  const [faseProcessual, setFaseProcessual] = useState('Inicial');
   const [tituloError, setTituloError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      setTitulo('');
-      setArea('civel');
-      setClienteId('');
-      setParteContraria('');
-      setTribunal('');
-      setVara('');
-      setAdvogadoId('');
-      setValorStr('');
-      setFaseProcessual('');
-      setTituloError('');
-      setLoading(false);
-    }
-  }, [open]);
+  function reset() {
+    setTitulo(''); setArea('civel'); setClienteId(db.clientes[0]?.id ?? '');
+    setParteContraria(''); setTribunal('TJSP'); setVara('');
+    setAdvogadoId(db.usuarios[0]?.id ?? ''); setValorStr('');
+    setFaseProcessual('Inicial'); setTituloError('');
+  }
 
-  const handleSave = async () => {
-    if (!titulo.trim()) {
-      setTituloError('Título é obrigatório');
-      return;
-    }
-    setTituloError('');
-    setLoading(true);
+  function handleClose() { reset(); onClose(); }
 
-    const valorFormatado = valorStr.replace(/\./g, '').replace(',', '.');
-    const valorParsed = parseFloat(valorFormatado);
-    const valorCausaCentavos = !isNaN(valorParsed) ? Math.round(valorParsed * 100) : 0;
-
+  async function handleSave() {
+    if (!titulo.trim()) { setTituloError('Título é obrigatório.'); return; }
+    setSaving(true);
     try {
+      const valorCausaCentavos = Math.round(parseFloat(valorStr.replace(',', '.')) * 100) || 0;
+      const ts = String(Date.now());
       const novo = await criarProcesso({
-        titulo,
-        area: area as AreaJuridica,
+        titulo: titulo.trim(),
+        area,
         status: 'em_andamento' as ProcessoStatus,
         faseProcessual,
         clienteId,
@@ -67,126 +53,69 @@ export function NovoProcessoModal({ open, onClose, onCreated }: NovoProcessoModa
         tribunal,
         vara,
         advogadoId,
-        numeroCnj: `${Date.now()}-00.2026.8.26.0100`.slice(-25),
-        numeroCurto: String(Date.now()).slice(-5),
+        numeroCnj: `${ts.slice(-5)}-00.2026.8.26.0100`,
+        numeroCurto: ts.slice(-5),
         valorCausaCentavos,
       });
-
       toast.show('Processo criado!');
-      onCreated?.(novo.id);
-      onClose();
-    } catch (error) {
-      console.error(error);
-      toast.show('Erro ao criar processo');
+      handleClose();
+      navigate(paths.processoTab(novo.id, 'resumo'));
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
-  };
-
-  const advogados = db.usuarios.filter(u => u.role !== 'financeiro');
+  }
 
   return (
     <Modal
-      title="Novo Processo"
       open={open}
-      onClose={onClose}
-      footer={
-        <ModalFooter
-          onCancel={onClose}
-          onConfirm={handleSave}
-          loading={loading}
-        />
-      }
+      onClose={handleClose}
+      title="Novo Processo"
+      width="560px"
+      footer={<ModalFooter onCancel={handleClose} onConfirm={handleSave} loading={saving} />}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <ModalField label="Título" required error={tituloError}>
-          <TextInput
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-            placeholder="Ex: Ação de Indenização"
-          />
-        </ModalField>
-
-        <ModalField label="Área Jurídica">
-          <TextSelect
-            value={area}
-            onChange={(e) => setArea(e.target.value as AreaJuridica)}
-          >
-            <option value="civel">Cível</option>
-            <option value="trabalhista">Trabalhista</option>
-            <option value="tributario">Tributário</option>
-            <option value="familia">Família</option>
-            <option value="consumidor">Consumidor</option>
-            <option value="empresarial">Empresarial</option>
-            <option value="penal">Penal</option>
-          </TextSelect>
-        </ModalField>
-
-        <ModalField label="Cliente">
-          <TextSelect
-            value={clienteId}
-            onChange={(e) => setClienteId(e.target.value)}
-          >
-            <option value="">Selecione um cliente...</option>
-            {db.clientes.map(c => (
-              <option key={c.id} value={c.id}>{c.nome}</option>
-            ))}
-          </TextSelect>
-        </ModalField>
-
-        <ModalField label="Parte Contrária">
-          <TextInput
-            value={parteContraria}
-            onChange={(e) => setParteContraria(e.target.value)}
-            placeholder="Nome da parte contrária"
-          />
-        </ModalField>
-
-        <ModalField label="Tribunal">
-          <TextInput
-            value={tribunal}
-            onChange={(e) => setTribunal(e.target.value)}
-            placeholder="TJSP"
-          />
-        </ModalField>
-
-        <ModalField label="Vara">
-          <TextInput
-            value={vara}
-            onChange={(e) => setVara(e.target.value)}
-            placeholder="1ª Vara Cível"
-          />
-        </ModalField>
-
-        <ModalField label="Advogado Responsável">
-          <TextSelect
-            value={advogadoId}
-            onChange={(e) => setAdvogadoId(e.target.value)}
-          >
-            <option value="">Selecione um advogado...</option>
-            {advogados.map(a => (
-              <option key={a.id} value={a.id}>{a.nome}</option>
-            ))}
-          </TextSelect>
-        </ModalField>
-
-        <ModalField label="Valor da Causa R$">
-          <TextInput
-            type="text"
-            value={valorStr}
-            onChange={(e) => setValorStr(e.target.value)}
-            placeholder="0,00"
-          />
-        </ModalField>
-
-        <ModalField label="Fase Processual">
-          <TextInput
-            value={faseProcessual}
-            onChange={(e) => setFaseProcessual(e.target.value)}
-            placeholder="Inicial"
-          />
-        </ModalField>
-      </div>
+      <ModalField label="Título" required error={tituloError}>
+        <TextInput value={titulo} onChange={(e) => { setTitulo(e.target.value); setTituloError(''); }} placeholder="Ação de Cobrança" />
+      </ModalField>
+      <ModalField label="Área Jurídica" required>
+        <TextSelect value={area} onChange={(e) => setArea(e.target.value as AreaJuridica)}>
+          <option value="civel">Cível</option>
+          <option value="trabalhista">Trabalhista</option>
+          <option value="tributario">Tributário</option>
+          <option value="familia">Família</option>
+          <option value="consumidor">Consumidor</option>
+          <option value="empresarial">Empresarial</option>
+          <option value="penal">Penal</option>
+        </TextSelect>
+      </ModalField>
+      <ModalField label="Cliente" required>
+        <TextSelect value={clienteId} onChange={(e) => setClienteId(e.target.value)}>
+          {db.clientes.map((c) => (
+            <option key={c.id} value={c.id}>{c.nome}</option>
+          ))}
+        </TextSelect>
+      </ModalField>
+      <ModalField label="Parte Contrária">
+        <TextInput value={parteContraria} onChange={(e) => setParteContraria(e.target.value)} placeholder="Nome da parte contrária" />
+      </ModalField>
+      <ModalField label="Tribunal">
+        <TextInput value={tribunal} onChange={(e) => setTribunal(e.target.value)} placeholder="TJSP" />
+      </ModalField>
+      <ModalField label="Vara">
+        <TextInput value={vara} onChange={(e) => setVara(e.target.value)} placeholder="1ª Vara Cível" />
+      </ModalField>
+      <ModalField label="Fase Processual">
+        <TextInput value={faseProcessual} onChange={(e) => setFaseProcessual(e.target.value)} placeholder="Inicial" />
+      </ModalField>
+      <ModalField label="Advogado Responsável" required>
+        <TextSelect value={advogadoId} onChange={(e) => setAdvogadoId(e.target.value)}>
+          {db.usuarios.filter((u) => u.role !== 'financeiro').map((u) => (
+            <option key={u.id} value={u.id}>{u.nomeExibicao}</option>
+          ))}
+        </TextSelect>
+      </ModalField>
+      <ModalField label="Valor da Causa (R$)">
+        <TextInput value={valorStr} onChange={(e) => setValorStr(e.target.value)} placeholder="0,00" />
+      </ModalField>
     </Modal>
   );
 }

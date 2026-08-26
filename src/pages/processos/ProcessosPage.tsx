@@ -1,7 +1,7 @@
+import { useState } from 'react';
 import { Outlet, useParams } from 'react-router';
 import { useProcesso } from '@/hooks/useProcessos';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useToast } from '@/contexts/ToastContext';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Button } from '@/components/ui/Button/Button';
 import { Card } from '@/components/ui/Card/Card';
@@ -10,12 +10,13 @@ import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 import { ProcessoProfileCard } from '@/components/processos/ProcessoProfileCard';
 import { paths, processoTabs } from '@/routes/paths';
+import { NovoProcessoModal } from '@/components/modais/NovoProcessoModal';
 import styles from './ProcessosPage.module.scss';
 
 export function ProcessosPage() {
   const { processoId } = useParams<{ processoId: string }>();
   const { data: processo, loading } = useProcesso(processoId);
-  const toast = useToast();
+  const [novoProcessoOpen, setNovoProcessoOpen] = useState(false);
   useDocumentTitle('Processos');
 
   return (
@@ -24,7 +25,7 @@ export function ProcessosPage() {
         title="Processos"
         subtitle="Gestão completa dos processos e seus principais eventos."
         actions={
-          <Button variant="primary" onClick={() => toast.show('Novo processo iniciado')}>
+          <Button variant="primary" onClick={() => setNovoProcessoOpen(true)}>
             + Novo processo
           </Button>
         }
@@ -52,6 +53,8 @@ export function ProcessosPage() {
           </Card>
         </div>
       )}
+
+      <NovoProcessoModal open={novoProcessoOpen} onClose={() => setNovoProcessoOpen(false)} />
     </section>
   );
 }

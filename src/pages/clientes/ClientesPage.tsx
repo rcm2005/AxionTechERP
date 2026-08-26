@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/Card/Card';
 import { DataTable } from '@/components/ui/DataTable/DataTable';
 import { clientesColumns } from '@/components/clientes/clientesColumns';
 import { paths } from '@/routes/paths';
+import { NovoClienteModal } from '@/components/modais/NovoClienteModal';
 import type { ClienteStatus } from '@/types';
 
 const STATUS_OPTIONS = [
@@ -30,6 +31,7 @@ export function ClientesPage() {
   const [busca, setBusca] = useState('');
   const [status, setStatus] = useState<ClienteStatus | 'todos'>('todos');
   const [responsavelId, setResponsavelId] = useState('todos');
+  const [novoClienteOpen, setNovoClienteOpen] = useState(false);
   const buscaDebounced = useDebounce(busca);
 
   const responsavelOptions = useMemo(
@@ -56,7 +58,7 @@ export function ClientesPage() {
         actions={
           <>
             <Button onClick={() => toast.show('Exportação preparada')}>Exportar</Button>
-            <Button variant="primary" onClick={() => toast.show('Novo cliente iniciado')}>
+            <Button variant="primary" onClick={() => setNovoClienteOpen(true)}>
               + Novo cliente
             </Button>
           </>
@@ -91,6 +93,8 @@ export function ClientesPage() {
           onRowClick={(c) => navigate(paths.cliente(c.id))}
         />
       </Card>
+
+      <NovoClienteModal open={novoClienteOpen} onClose={() => setNovoClienteOpen(false)} />
     </section>
   );
 }

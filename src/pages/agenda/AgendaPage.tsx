@@ -5,7 +5,6 @@ import { db } from '@/mocks';
 import { REFERENCE_DATE } from '@/config/app';
 import { useAgenda } from '@/hooks/useAgenda';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useToast } from '@/contexts/ToastContext';
 import type { AgendaFiltros, PrioridadeEvento, TipoEvento } from '@/types';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Button } from '@/components/ui/Button/Button';
@@ -16,6 +15,7 @@ import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
 import { CalendarNav } from '@/components/agenda/CalendarNav';
 import { MonthCalendar } from '@/components/agenda/MonthCalendar';
 import { UpcomingEventsList } from '@/components/agenda/UpcomingEventsList';
+import { NovaTarefaModal } from '@/components/modais/NovaTarefaModal';
 import styles from './AgendaPage.module.scss';
 
 const TIPO_OPTIONS = [
@@ -37,11 +37,11 @@ const MES_PARAM = 'mes';
 
 export function AgendaPage() {
   useDocumentTitle('Agenda & Prazos');
-  const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [responsavelId, setResponsavelId] = useState('todos');
   const [tipo, setTipo] = useState<TipoEvento | 'todos'>('todos');
   const [prioridade, setPrioridade] = useState<PrioridadeEvento | 'todas'>('todas');
+  const [novaTarefaOpen, setNovaTarefaOpen] = useState(false);
 
   const mesParam = searchParams.get(MES_PARAM);
   const mes = useMemo(() => {
@@ -73,7 +73,7 @@ export function AgendaPage() {
         title="Agenda & Prazos"
         subtitle="Calendário operacional para compromissos, audiências e prazos."
         actions={
-          <Button variant="primary" onClick={() => toast.show('Novo evento iniciado')}>
+          <Button variant="primary" onClick={() => setNovaTarefaOpen(true)}>
             + Novo evento
           </Button>
         }
@@ -110,6 +110,8 @@ export function AgendaPage() {
           </CardBody>
         </Card>
       </div>
+
+      <NovaTarefaModal open={novaTarefaOpen} onClose={() => setNovaTarefaOpen(false)} />
     </section>
   );
 }

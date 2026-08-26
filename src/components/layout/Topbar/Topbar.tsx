@@ -18,8 +18,6 @@ export function Topbar() {
 
   const paginaAtual = NAV_ITEMS.find((item) => location.pathname.startsWith(item.path));
 
-  const REFERENCE_DATE = new Date('2026-08-18');
-
   // Notificações: eventos urgentes/atenção do dia de referência
   const notificacoes = useMemo(() => {
     return db.eventos.filter((e) => {

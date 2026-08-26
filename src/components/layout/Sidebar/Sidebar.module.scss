@@ -90,7 +90,8 @@
   }
 }
 
-.navButton span:last-child {
+.navButton span:last-child,
+.navLabel {
   @include mq(lg) {
     display: none;
   }
@@ -109,12 +110,60 @@
 
 .footer {
   margin-top: auto;
-  border-top: 1px solid var(--sidebar-line);
-  padding-top: 16px;
   color: var(--sidebar-fg-muted);
   font-size: 12px;
 
   @include mq(lg) {
     display: none;
   }
+}
+
+.navLabel {
+  flex: 1;
+}
+
+.navBadge {
+  min-width: 18px;
+  height: 18px;
+  background: var(--color-danger);
+  color: #fff;
+  border-radius: var(--radius-pill);
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.userFooter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--sidebar-line);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.userName {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sidebar-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userRole {
+  font-size: 0.7rem;
+  color: var(--sidebar-fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

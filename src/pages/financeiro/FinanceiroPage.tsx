@@ -7,13 +7,15 @@ import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Button } from '@/components/ui/Button/Button';
 import { KpiCard } from '@/components/ui/KpiCard/KpiCard';
 import { Card, CardHead } from '@/components/ui/Card/Card';
-import { DataTable, Column } from '@/components/ui/DataTable/DataTable';
+import { DataTable } from '@/components/ui/DataTable/DataTable';
+import type { Column } from '@/components/ui/DataTable/DataTable';
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
 import { contasReceberColumns } from '@/components/financeiro/contasReceberColumns';
 import { FluxoCaixaCard } from '@/components/financeiro/FluxoCaixaCard';
 import { formatBRL } from '@/utils/format';
 import { BarChart } from '@/components/ui/BarChart/BarChart';
-import type { Lancamento } from '@/types';
+import { NovaCobrancaModal } from '@/components/modais/NovaCobrancaModal';
+
 import styles from './FinanceiroPage.module.scss';
 
 const REFERENCE_DATE = new Date('2026-08-18');
@@ -31,8 +33,9 @@ export function FinanceiroPage() {
   useDocumentTitle('Financeiro');
   const toast = useToast();
   const { data: lancamentos, loading } = useLancamentos();
-  
+
   const [periodo, setPeriodo] = useState<'mes' | 'trimestre' | 'todos'>('mes');
+  const [novaCobrancaOpen, setNovaCobrancaOpen] = useState(false);
 
   const lancamentosFiltrados = useMemo(() => {
     const todos = lancamentos ?? [];
@@ -48,8 +51,8 @@ export function FinanceiroPage() {
 
   const resumo = useMemo(() => calcularResumoFinanceiro(lancamentosFiltrados), [lancamentosFiltrados]);
   const contasAReceber = useMemo(
-    () => lancamentosFiltrados.filter((l) => l.tipo === 'receita' && l.status !== 'cancelado'),
-    [lancamentosFiltrados],
+    () => (lancamentos ?? []).filter((l) => l.tipo === 'receita' && l.status !== 'cancelado'),
+    [lancamentos],
   );
 
   const dadosGrafico = useMemo(() => {
@@ -98,7 +101,7 @@ export function FinanceiroPage() {
         actions={
           <>
             <Button onClick={() => toast.show('Nova despesa iniciada')}>+ Despesa</Button>
-            <Button variant="primary" onClick={() => toast.show('Nova cobrança iniciada')}>
+            <Button variant="primary" onClick={() => setNovaCobrancaOpen(true)}>
               + Cobrança
             </Button>
           </>
@@ -184,7 +187,7 @@ export function FinanceiroPage() {
       {/* Gráfico por categoria */}
       {!loading && dadosGrafico.length > 0 && (
         <Card>
-          <CardHead title="Distribuição por categoria" />
+          <CardHead title={`Distribuição por categoria — ${periodo === 'mes' ? 'mês atual' : periodo === 'trimestre' ? 'últimos 3 meses' : 'todos'}`} />
           <div style={{ padding: 'var(--space-5)' }}>
             <BarChart
               data={dadosGrafico}
@@ -207,6 +210,8 @@ export function FinanceiroPage() {
           />
         </Card>
       )}
+
+      <NovaCobrancaModal open={novaCobrancaOpen} onClose={() => setNovaCobrancaOpen(false)} />
     </section>
   );
 }
