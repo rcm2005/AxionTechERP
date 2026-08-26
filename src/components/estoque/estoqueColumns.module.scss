@@ -1,0 +1,58 @@
+.sku {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-accent);
+  background-color: var(--tone-blue-bg);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.nomeWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nome {
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.muted {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.unidade {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.valor {
+  font-weight: 500;
+}
+
+.estoqueWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.estoqueQtd {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.alertaMinimo {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--tone-red-bg);
+  color: var(--tone-red-fg);
+  font-weight: 600;
+}

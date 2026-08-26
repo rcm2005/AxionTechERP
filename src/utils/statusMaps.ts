@@ -1,7 +1,9 @@
 import type {
   PessoaStatus,
+  ProdutoStatus,
   SituacaoCredito,
   StatusLancamento,
+  TipoProduto,
   TipoRelacao,
   Tone,
 } from '@/types';
@@ -40,3 +42,18 @@ export const lancamentoStatusMeta: Record<StatusLancamento, StatusMeta> = {
   cancelado: { label: 'Cancelado', tone: 'neutral' },
   parcial: { label: 'Parcial', tone: 'blue' },
 };
+
+export const tipoProdutoMeta: Record<TipoProduto, { label: string; tone: Tone; shortLabel: string }> = {
+  MP: { label: 'Matéria-Prima', tone: 'blue', shortLabel: 'MP' },
+  PA: { label: 'Produto Acabado', tone: 'green', shortLabel: 'PA' },
+  Consumo: { label: 'Uso & Consumo', tone: 'neutral', shortLabel: 'Consumo' },
+  Embalagem: { label: 'Embalagem', tone: 'orange', shortLabel: 'Embalagem' },
+  Servico: { label: 'Serviço', tone: 'purple', shortLabel: 'Serviço' },
+};
+
+export const produtoStatusMeta: Record<ProdutoStatus, { label: string; tone: Tone }> = {
+  ativo: { label: 'Ativo', tone: 'green' },
+  inativo: { label: 'Inativo', tone: 'neutral' },
+  fora_de_linha: { label: 'Fora de Linha', tone: 'red' },
+};
+

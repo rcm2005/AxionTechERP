@@ -6,6 +6,7 @@ import { DashboardPage } from '@/pages/dashboard/DashboardPage';
 import { ClientesPage } from '@/pages/clientes/ClientesPage';
 import { ClienteDetailPage } from '@/pages/clientes/ClienteDetailPage';
 import { FinanceiroPage } from '@/pages/financeiro/FinanceiroPage';
+import { EstoquePage } from '@/pages/estoque/EstoquePage';
 import { PlaceholderPage } from '@/pages/placeholder/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -32,7 +33,7 @@ export const router = createBrowserRouter([
           { path: paths.dashboard, element: <DashboardPage /> },
           { path: paths.vendas, element: <PlaceholderPage moduloOverride="vendas" /> },
           { path: paths.compras, element: <PlaceholderPage moduloOverride="compras" /> },
-          { path: paths.estoque, element: <PlaceholderPage moduloOverride="estoque" /> },
+          { path: paths.estoque, element: <EstoquePage /> },
           { path: paths.financeiro, element: <FinanceiroPage /> },
           { path: paths.fiscal, element: <PlaceholderPage moduloOverride="fiscal" /> },
           { path: paths.clientes, element: <ClientesPage /> },
