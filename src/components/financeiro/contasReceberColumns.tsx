@@ -5,26 +5,23 @@ import { db } from '@/mocks';
 import { formatBRL, formatDayMonth } from '@/utils/format';
 import { lancamentoStatusMeta } from '@/utils/statusMaps';
 
-function nomeCliente(id?: string): string {
-  if (!id) return '—';
-  return db.clientes.find((c) => c.id === id)?.nome ?? '—';
-}
-
-function numeroProcesso(id?: string): string | null {
-  if (!id) return null;
-  return db.processos.find((p) => p.id === id)?.numeroCurto ?? null;
+function nomePessoa(l: Lancamento): string {
+  if (l.pessoaNome) return l.pessoaNome;
+  if (!l.pessoaId) return '—';
+  const p = db.pessoas.find((item) => item.id === l.pessoaId);
+  return p ? (p.nomeFantasia || p.razaoSocialOuNome) : '—';
 }
 
 export const contasReceberColumns: Column<Lancamento>[] = [
   {
     key: 'cliente',
-    header: 'Cliente',
-    render: (l) => nomeCliente(l.clienteId),
+    header: 'Cliente / Pagador',
+    render: (l) => nomePessoa(l),
   },
   {
-    key: 'processo',
-    header: 'Processo',
-    render: (l) => numeroProcesso(l.processoId) ?? '—',
+    key: 'docFiscal',
+    header: 'Doc. / NF',
+    render: (l) => l.numeroDocumentoFiscal ?? '—',
   },
   {
     key: 'descricao',

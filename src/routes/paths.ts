@@ -1,13 +1,19 @@
 export const paths = {
   login: '/login',
   dashboard: '/dashboard',
+  vendas: '/vendas',
+  compras: '/compras',
+  estoque: '/estoque',
+  financeiro: '/financeiro',
+  fiscal: '/fiscal',
   clientes: '/clientes',
   cliente: (id: string) => `/clientes/${id}`,
+  configuracoes: '/configuracoes',
+  // Rotas legadas para compatibilidade
   processos: '/processos',
   processo: (id: string) => `/processos/${id}`,
   processoTab: (id: string, tab: string) => `/processos/${id}/${tab}`,
   agenda: '/agenda',
-  financeiro: '/financeiro',
 } as const;
 
 export const processoTabs = [

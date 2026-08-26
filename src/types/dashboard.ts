@@ -6,6 +6,8 @@ export interface KpiResumo {
   valor: string;
   sub?: string;
   subTone?: Tone;
+  variacaoPercentual?: number;
+  tipo?: 'financeiro' | 'estoque' | 'vendas' | 'fiscal';
 }
 
 export interface Alerta {
@@ -13,4 +15,6 @@ export interface Alerta {
   titulo: string;
   descricao: string;
   tone: 'warning' | 'danger';
+  modulo?: 'fiscal' | 'financeiro' | 'estoque' | 'compliance';
+  link?: string;
 }

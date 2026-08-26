@@ -1,29 +1,35 @@
 import type { Column } from '@/components/ui/DataTable/DataTable';
 import { Pill } from '@/components/ui/Pill/Pill';
-import type { Cliente } from '@/types';
-import { db } from '@/mocks';
-import { clienteStatusMeta, situacaoFinanceiraMeta } from '@/utils/statusMaps';
+import type { Pessoa } from '@/types';
+import { pessoaStatusMeta, situacaoCreditoMeta, tipoRelacaoMeta } from '@/utils/statusMaps';
 import styles from './clientesColumns.module.scss';
 
-function nomeResponsavel(id: string): string {
-  return db.usuarios.find((u) => u.id === id)?.nomeExibicao ?? '—';
-}
-
-export const clientesColumns: Column<Cliente>[] = [
+export const clientesColumns: Column<Pessoa>[] = [
   {
     key: 'cliente',
-    header: 'Cliente',
+    header: 'Parceiro / Razão Social',
     render: (c) => (
       <div>
-        <div className={styles.nome}>{c.nome}</div>
-        <div className={styles.muted}>{c.documento}</div>
+        <div className={styles.nome}>{c.razaoSocialOuNome}</div>
+        <div className={styles.muted}>
+          {c.nomeFantasia ? `${c.nomeFantasia} • ` : ''}
+          {c.documento}
+        </div>
       </div>
     ),
   },
   {
+    key: 'relacao',
+    header: 'Relação',
+    render: (c) => {
+      const meta = tipoRelacaoMeta[c.relacao] ?? { label: c.relacao, tone: 'neutral' };
+      return <Pill tone={meta.tone}>{meta.label}</Pill>;
+    },
+  },
+  {
     key: 'tipo',
     header: 'Tipo',
-    render: (c) => (c.tipoPessoa === 'PF' ? 'Pessoa física' : 'Pessoa jurídica'),
+    render: (c) => (c.tipoPessoa === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'),
   },
   {
     key: 'contato',
@@ -37,21 +43,10 @@ export const clientesColumns: Column<Cliente>[] = [
     ),
   },
   {
-    key: 'responsavel',
-    header: 'Responsável',
-    render: (c) => nomeResponsavel(c.responsavelId),
-  },
-  {
-    key: 'processos',
-    header: 'Processos',
-    align: 'right',
-    render: (c) => c.qtdProcessos,
-  },
-  {
-    key: 'financeiro',
-    header: 'Financeiro',
+    key: 'credito',
+    header: 'Situação Crédito',
     render: (c) => {
-      const meta = situacaoFinanceiraMeta[c.situacaoFinanceira];
+      const meta = situacaoCreditoMeta[c.situacaoCredito] ?? { label: c.situacaoCredito, tone: 'neutral' };
       return <span className={styles[`tone-${meta.tone}`]}>{meta.label}</span>;
     },
   },
@@ -59,7 +54,7 @@ export const clientesColumns: Column<Cliente>[] = [
     key: 'status',
     header: 'Status',
     render: (c) => {
-      const meta = clienteStatusMeta[c.status];
+      const meta = pessoaStatusMeta[c.status] ?? { label: c.status, tone: 'neutral' };
       return <Pill tone={meta.tone}>{meta.label}</Pill>;
     },
   },

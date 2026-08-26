@@ -1,16 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboard } from '@/hooks/useDashboard';
-import { useAgenda } from '@/hooks/useAgenda';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Button } from '@/components/ui/Button/Button';
 import { KpiCard } from '@/components/ui/KpiCard/KpiCard';
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
-import { AgendaDoDiaCard } from '@/components/dashboard/AgendaDoDiaCard';
 import { AlertasCard } from '@/components/dashboard/AlertasCard';
 import { AtalhosCard } from '@/components/dashboard/AtalhosCard';
-import { NovoProcessoModal } from '@/components/modais/NovoProcessoModal';
+import { NovoClienteModal } from '@/components/modais/NovoClienteModal';
 import { REFERENCE_DATE } from '@/config/app';
 import { formatLongDate } from '@/utils/format';
 import styles from './DashboardPage.module.scss';
@@ -25,20 +23,19 @@ function getGreeting(): string {
 export function DashboardPage() {
   useDocumentTitle('Dashboard');
   const { usuario } = useAuth();
-  const [novoProcessoOpen, setNovoProcessoOpen] = useState(false);
+  const [novoClienteOpen, setNovoClienteOpen] = useState(false);
   const { data: resumo, loading: loadingResumo } = useDashboard();
-  const { data: eventos, loading: loadingEventos } = useAgenda({});
   const greeting = useMemo(() => getGreeting(), []);
-  const primeiroNome = usuario?.nome.split(' ')[0] ?? '';
+  const primeiroNome = usuario?.nome.split(' ')[0] ?? 'Usuário';
 
   return (
     <section>
       <PageHead
         title={`${greeting}, ${primeiroNome} 👋`}
-        subtitle={`Visão geral do escritório em ${formatLongDate(REFERENCE_DATE)}.`}
+        subtitle={`Visão geral da operação em ${formatLongDate(REFERENCE_DATE)}.`}
         actions={
-          <Button variant="primary" onClick={() => setNovoProcessoOpen(true)}>
-            + Novo processo
+          <Button variant="primary" onClick={() => setNovoClienteOpen(true)}>
+            + Novo cliente / parceiro
           </Button>
         }
       />
@@ -59,7 +56,6 @@ export function DashboardPage() {
       </div>
 
       <div className={styles.grid}>
-        <AgendaDoDiaCard eventos={eventos ?? []} loading={loadingEventos} />
         <AlertasCard alertas={resumo?.alertas ?? []} />
       </div>
 
@@ -67,7 +63,7 @@ export function DashboardPage() {
         <AtalhosCard />
       </div>
 
-      <NovoProcessoModal open={novoProcessoOpen} onClose={() => setNovoProcessoOpen(false)} />
+      <NovoClienteModal open={novoClienteOpen} onClose={() => setNovoClienteOpen(false)} />
     </section>
   );
 }

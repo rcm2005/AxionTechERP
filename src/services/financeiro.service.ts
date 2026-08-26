@@ -35,7 +35,7 @@ export function calcularResumoFinanceiro(lancamentos: Lancamento[]): ResumoFinan
     emAtrasoCentavos,
     lucroCentavos: receitaCentavos - despesaCentavos,
     qtdTitulosAReceber: aReceber.length,
-    qtdClientesEmAtraso: new Set(emAtraso.map((l) => l.clienteId)).size,
+    qtdClientesEmAtraso: new Set(emAtraso.map((l) => l.pessoaId).filter(Boolean)).size,
   };
 }
 

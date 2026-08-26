@@ -6,7 +6,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { criarCliente } from '@/services/clientes.service';
 import { db } from '@/mocks';
 import { paths } from '@/routes/paths';
-import type { TipoPessoa, ClienteStatus, SituacaoFinanceira } from '@/types';
+import type { TipoPessoa, TipoRelacao, PessoaStatus, SituacaoCredito } from '@/types';
 
 interface Props {
   open: boolean;
@@ -16,40 +16,66 @@ interface Props {
 export function NovoClienteModal({ open, onClose }: Props) {
   const toast = useToast();
   const navigate = useNavigate();
-  const [nome, setNome] = useState('');
-  const [tipoPessoa, setTipoPessoa] = useState<TipoPessoa>('PF');
+  const [razaoSocialOuNome, setRazaoSocialOuNome] = useState('');
+  const [nomeFantasia, setNomeFantasia] = useState('');
+  const [tipoPessoa, setTipoPessoa] = useState<TipoPessoa>('PJ');
+  const [relacao, setRelacao] = useState<TipoRelacao>('cliente');
   const [documento, setDocumento] = useState('');
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
-  const [responsavelId, setResponsavelId] = useState(db.usuarios[0]?.id ?? '');
-  const [status, setStatus] = useState<ClienteStatus>('ativo');
+  const [segmento, setSegmento] = useState('');
+  const [status, setStatus] = useState<PessoaStatus>('ativo');
   const [nomeError, setNomeError] = useState('');
   const [saving, setSaving] = useState(false);
 
   function reset() {
-    setNome(''); setTipoPessoa('PF'); setDocumento('');
-    setTelefone(''); setEmail(''); setResponsavelId(db.usuarios[0]?.id ?? '');
-    setStatus('ativo'); setNomeError('');
+    setRazaoSocialOuNome('');
+    setNomeFantasia('');
+    setTipoPessoa('PJ');
+    setRelacao('cliente');
+    setDocumento('');
+    setTelefone('');
+    setEmail('');
+    setSegmento('');
+    setStatus('ativo');
+    setNomeError('');
   }
 
-  function handleClose() { reset(); onClose(); }
+  function handleClose() {
+    reset();
+    onClose();
+  }
 
   async function handleSave() {
-    if (!nome.trim()) { setNomeError('Nome é obrigatório.'); return; }
+    if (!razaoSocialOuNome.trim()) {
+      setNomeError('Razão social ou nome é obrigatório.');
+      return;
+    }
     setSaving(true);
     try {
       const novo = await criarCliente({
-        nome: nome.trim(),
+        tenantId: db.tenants[0]?.id ?? 'tenant-ind-plast',
         tipoPessoa,
-        documento,
-        telefone,
-        email,
-        responsavelId,
-        status,
-        situacaoFinanceira: 'sem_lancamentos' as SituacaoFinanceira,
+        relacao,
+        razaoSocialOuNome: razaoSocialOuNome.trim(),
+        nomeFantasia: nomeFantasia.trim() || undefined,
+        documento: documento.trim(),
+        telefone: telefone.trim(),
+        email: email.trim(),
+        endereco: {
+          cep: '01001-000',
+          logradouro: 'Av. Paulista',
+          numero: '1000',
+          bairro: 'Bela Vista',
+          cidade: 'São Paulo',
+          uf: 'SP',
+        },
+        situacaoCredito: 'aprovado' as SituacaoCredito,
         valorEmAtrasoCentavos: 0,
+        status,
+        segmento: segmento.trim() || undefined,
       });
-      toast.show('Cliente criado com sucesso!');
+      toast.show('Parceiro comercial cadastrado com sucesso!');
       handleClose();
       navigate(paths.cliente(novo.id));
     } finally {
@@ -61,39 +87,75 @@ export function NovoClienteModal({ open, onClose }: Props) {
     <Modal
       open={open}
       onClose={handleClose}
-      title="Novo Cliente"
+      title="Novo Parceiro Comercial / Cliente"
       footer={<ModalFooter onCancel={handleClose} onConfirm={handleSave} loading={saving} />}
     >
-      <ModalField label="Nome" required error={nomeError}>
-        <TextInput value={nome} onChange={(e) => { setNome(e.target.value); setNomeError(''); }} placeholder="Nome completo ou razão social" />
+      <ModalField label="Razão Social / Nome Completo" required error={nomeError}>
+        <TextInput
+          value={razaoSocialOuNome}
+          onChange={(e) => {
+            setRazaoSocialOuNome(e.target.value);
+            setNomeError('');
+          }}
+          placeholder="Ex: Indústria Química Paulista S.A."
+        />
+      </ModalField>
+      <ModalField label="Nome Fantasia">
+        <TextInput
+          value={nomeFantasia}
+          onChange={(e) => setNomeFantasia(e.target.value)}
+          placeholder="Ex: Quimex Brasil"
+        />
+      </ModalField>
+      <ModalField label="Relação Comercial" required>
+        <TextSelect value={relacao} onChange={(e) => setRelacao(e.target.value as TipoRelacao)}>
+          <option value="cliente">Cliente</option>
+          <option value="fornecedor">Fornecedor</option>
+          <option value="ambos">Cliente & Fornecedor</option>
+          <option value="transportadora">Transportadora</option>
+        </TextSelect>
       </ModalField>
       <ModalField label="Tipo de Pessoa" required>
         <TextSelect value={tipoPessoa} onChange={(e) => setTipoPessoa(e.target.value as TipoPessoa)}>
-          <option value="PF">Pessoa Física</option>
-          <option value="PJ">Pessoa Jurídica</option>
+          <option value="PJ">Pessoa Jurídica (PJ)</option>
+          <option value="PF">Pessoa Física (PF)</option>
         </TextSelect>
       </ModalField>
-      <ModalField label="Documento">
-        <TextInput value={documento} onChange={(e) => setDocumento(e.target.value)} placeholder={tipoPessoa === 'PF' ? 'CPF 000.000.000-00' : 'CNPJ 00.000.000/0001-00'} />
+      <ModalField label="Documento (CNPJ / CPF)">
+        <TextInput
+          value={documento}
+          onChange={(e) => setDocumento(e.target.value)}
+          placeholder={tipoPessoa === 'PJ' ? '00.000.000/0001-00' : '000.000.000-00'}
+        />
       </ModalField>
-      <ModalField label="Telefone">
-        <TextInput value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-0000" />
+      <ModalField label="Telefone / Celular">
+        <TextInput
+          value={telefone}
+          onChange={(e) => setTelefone(e.target.value)}
+          placeholder="(11) 3000-0000"
+        />
       </ModalField>
-      <ModalField label="E-mail">
-        <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
+      <ModalField label="E-mail Comercial">
+        <TextInput
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="comercial@empresa.com.br"
+        />
       </ModalField>
-      <ModalField label="Responsável" required>
-        <TextSelect value={responsavelId} onChange={(e) => setResponsavelId(e.target.value)}>
-          {db.usuarios.filter((u) => u.role !== 'financeiro').map((u) => (
-            <option key={u.id} value={u.id}>{u.nomeExibicao}</option>
-          ))}
-        </TextSelect>
+      <ModalField label="Segmento / Ramo">
+        <TextInput
+          value={segmento}
+          onChange={(e) => setSegmento(e.target.value)}
+          placeholder="Ex: Manufatura & Plásticos"
+        />
       </ModalField>
-      <ModalField label="Status">
-        <TextSelect value={status} onChange={(e) => setStatus(e.target.value as ClienteStatus)}>
+      <ModalField label="Status Cadastral">
+        <TextSelect value={status} onChange={(e) => setStatus(e.target.value as PessoaStatus)}>
           <option value="ativo">Ativo</option>
           <option value="inativo">Inativo</option>
           <option value="prospect">Prospect</option>
+          <option value="bloqueado">Bloqueado</option>
         </TextSelect>
       </ModalField>
     </Modal>

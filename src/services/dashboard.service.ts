@@ -1,6 +1,4 @@
-import { addDays, isSameDay, isWithinInterval, parseISO } from 'date-fns';
 import type { Alerta, KpiResumo } from '@/types';
-import { REFERENCE_DATE } from '@/config/app';
 import { db } from '@/mocks';
 import { formatBRL } from '@/utils/format';
 import { calcularResumoFinanceiro } from './financeiro.service';
@@ -17,81 +15,64 @@ export async function buscarResumoDashboard(): Promise<DashboardResumo> {
     throw new Error('Integração com API real ainda não implementada.');
   }
 
-  const hoje = parseISO(REFERENCE_DATE);
-  const fimSemana = addDays(hoje, 7);
-
-  const processosAtivos = db.processos.filter((p) => p.status === 'em_andamento');
-
-  const prazosSemana = db.eventos.filter(
-    (e) => e.tipo === 'prazo' && isWithinInterval(parseISO(e.inicio), { start: hoje, end: fimSemana }),
-  );
-  const prazos48h = db.eventos.filter(
-    (e) =>
-      e.tipo === 'prazo' &&
-      isWithinInterval(parseISO(e.inicio), { start: hoje, end: addDays(hoje, 2) }),
-  );
-
-  const audienciasHoje = db.eventos.filter(
-    (e) => e.tipo === 'audiencia' && isSameDay(parseISO(e.inicio), hoje),
-  );
-  const audienciasManha = audienciasHoje.filter((e) => parseISO(e.inicio).getHours() < 12);
-
   const resumoFinanceiro = calcularResumoFinanceiro(db.lancamentos);
-  const clientesInadimplentes = db.clientes.filter((c) => c.situacaoFinanceira === 'inadimplente');
-  const documentosPendentes = db.processos.reduce((sum, p) => sum + p.qtdDocumentosPendentes, 0);
+  const clientesAtivos = db.pessoas.filter((p) => p.relacao === 'cliente' || p.relacao === 'ambos');
+  const clientesInadimplentes = db.pessoas.filter(
+    (p) => p.situacaoCredito === 'inadimplente' || p.valorEmAtrasoCentavos > 0,
+  );
+  const produtosAbaixoMinimo = db.produtos.filter((p) => p.estoqueAtual <= p.estoqueMinimo);
 
   const kpis: KpiResumo[] = [
     {
-      id: 'processos-ativos',
-      label: 'Processos ativos',
-      valor: String(processosAtivos.length),
-      sub: `${db.processos.length} no total`,
-    },
-    {
-      id: 'prazos-semana',
-      label: 'Prazos esta semana',
-      valor: String(prazosSemana.length),
-      sub: `${prazos48h.length} vencem em 48h`,
-      subTone: prazos48h.length > 0 ? 'red' : undefined,
-    },
-    {
-      id: 'audiencias-hoje',
-      label: 'Audiências hoje',
-      valor: String(audienciasHoje.length),
-      sub: `${audienciasManha.length} ainda pela manhã`,
+      id: 'receita-faturada',
+      label: 'Receita Total (Recebida)',
+      valor: formatBRL(resumoFinanceiro.receitaCentavos),
+      sub: `Lucro op.: ${formatBRL(resumoFinanceiro.lucroCentavos)}`,
+      subTone: resumoFinanceiro.lucroCentavos >= 0 ? 'green' : 'red',
+      tipo: 'financeiro',
     },
     {
       id: 'a-receber',
-      label: 'A receber',
+      label: 'Contas a Receber',
       valor: formatBRL(resumoFinanceiro.aReceberCentavos),
-      sub: `${formatBRL(resumoFinanceiro.emAtrasoCentavos)} em atraso`,
+      sub: `${resumoFinanceiro.qtdTitulosAReceber} títulos pendentes`,
+      subTone: 'orange',
+      tipo: 'financeiro',
+    },
+    {
+      id: 'em-atraso',
+      label: 'Valores em Atraso',
+      valor: formatBRL(resumoFinanceiro.emAtrasoCentavos),
+      sub: `${clientesInadimplentes.length} cliente(s) em atraso`,
       subTone: resumoFinanceiro.emAtrasoCentavos > 0 ? 'red' : 'green',
+      tipo: 'financeiro',
+    },
+    {
+      id: 'carteira-clientes',
+      label: 'Clientes & Parceiros',
+      valor: String(clientesAtivos.length),
+      sub: `${db.pessoas.length} cadastros totais`,
+      tipo: 'vendas',
     },
   ];
 
   const alertas: Alerta[] = [];
-  if (prazos48h.length > 0) {
-    alertas.push({
-      id: 'alerta-prazos',
-      titulo: `${prazos48h.length} prazo${prazos48h.length > 1 ? 's' : ''} vencendo em 48h`,
-      descricao: 'Requerem revisão do responsável.',
-      tone: 'danger',
-    });
-  }
-  if (clientesInadimplentes.length > 0) {
+  if (resumoFinanceiro.emAtrasoCentavos > 0) {
     alertas.push({
       id: 'alerta-inadimplencia',
-      titulo: `${clientesInadimplentes.length} parcela(s) em atraso`,
-      descricao: `Total pendente: ${formatBRL(resumoFinanceiro.emAtrasoCentavos)}.`,
-      tone: 'warning',
+      titulo: `${clientesInadimplentes.length} cliente(s) com títulos vencidos`,
+      descricao: `Montante total em atraso: ${formatBRL(resumoFinanceiro.emAtrasoCentavos)}.`,
+      tone: 'danger',
+      modulo: 'financeiro',
     });
   }
-  if (documentosPendentes > 0) {
+  if (produtosAbaixoMinimo.length > 0) {
     alertas.push({
-      id: 'alerta-documentos',
-      titulo: `${documentosPendentes} documento(s) aguardando assinatura`,
-      descricao: 'Vinculados a processos em andamento.',
+      id: 'alerta-estoque',
+      titulo: `${produtosAbaixoMinimo.length} item(ns) abaixo do estoque mínimo`,
+      descricao: 'SKUs necessitam de reposição imediata no almoxarifado.',
       tone: 'warning',
+      modulo: 'estoque',
     });
   }
 

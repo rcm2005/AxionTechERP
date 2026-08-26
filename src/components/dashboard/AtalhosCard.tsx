@@ -1,40 +1,40 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Card, CardBody, CardHead } from '@/components/ui/Card/Card';
-import { NovoProcessoModal } from '@/components/modais/NovoProcessoModal';
 import { NovoClienteModal } from '@/components/modais/NovoClienteModal';
-import { NovaTarefaModal } from '@/components/modais/NovaTarefaModal';
+import { NovaCobrancaModal } from '@/components/modais/NovaCobrancaModal';
+import { paths } from '@/routes/paths';
 import styles from './AtalhosCard.module.scss';
 
 export function AtalhosCard() {
-  const [novoProcessoOpen, setNovoProcessoOpen] = useState(false);
+  const navigate = useNavigate();
   const [novoClienteOpen, setNovoClienteOpen] = useState(false);
-  const [novaTarefaOpen, setNovaTarefaOpen] = useState(false);
+  const [novaCobrancaOpen, setNovaCobrancaOpen] = useState(false);
 
   return (
     <>
       <Card>
-        <CardHead title="Atalhos" />
+        <CardHead title="Ações Rápidas" />
         <CardBody>
           <div className={styles.grid}>
             <button type="button" onClick={() => setNovoClienteOpen(true)}>
-              + Novo cliente
+              + Novo cliente / parceiro
             </button>
-            <button type="button" onClick={() => setNovoProcessoOpen(true)}>
-              + Novo processo
+            <button type="button" onClick={() => setNovaCobrancaOpen(true)}>
+              + Novo lançamento financeiro
             </button>
-            <button type="button" onClick={() => setNovaTarefaOpen(true)}>
-              + Nova tarefa
+            <button type="button" onClick={() => navigate(paths.clientes)}>
+              Ver todos os clientes
             </button>
-            <button type="button" onClick={() => setNovaTarefaOpen(true)}>
-              + Novo compromisso
+            <button type="button" onClick={() => navigate(paths.financeiro)}>
+              Fluxo financeiro
             </button>
           </div>
         </CardBody>
       </Card>
 
-      <NovoProcessoModal open={novoProcessoOpen} onClose={() => setNovoProcessoOpen(false)} />
       <NovoClienteModal open={novoClienteOpen} onClose={() => setNovoClienteOpen(false)} />
-      <NovaTarefaModal open={novaTarefaOpen} onClose={() => setNovaTarefaOpen(false)} />
+      <NovaCobrancaModal open={novaCobrancaOpen} onClose={() => setNovaCobrancaOpen(false)} />
     </>
   );
 }

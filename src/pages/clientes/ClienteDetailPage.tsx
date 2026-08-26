@@ -3,109 +3,63 @@ import { useMemo, useState } from 'react';
 import { useCliente } from '@/hooks/useClientes';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAsync } from '@/hooks/useAsync';
-import { listarProcessos } from '@/services/processos.service';
-import { listarEventos } from '@/services/agenda.service';
 import { listarLancamentos } from '@/services/financeiro.service';
-import { db } from '@/mocks';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Card } from '@/components/ui/Card/Card';
 import { Pill } from '@/components/ui/Pill/Pill';
 import { KpiCard } from '@/components/ui/KpiCard/KpiCard';
 import { DataTable } from '@/components/ui/DataTable/DataTable';
-import { Timeline } from '@/components/ui/Timeline/Timeline';
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 import { Button } from '@/components/ui/Button/Button';
 import { paths } from '@/routes/paths';
-import { formatBRL, formatDate, formatDateTime } from '@/utils/format';
+import { formatBRL, formatDate } from '@/utils/format';
+import { pessoaStatusMeta, situacaoCreditoMeta, tipoRelacaoMeta, lancamentoStatusMeta } from '@/utils/statusMaps';
 import type { Column } from '@/components/ui/DataTable/DataTable';
-import type { Processo, Lancamento } from '@/types';
+import type { Lancamento } from '@/types';
 import styles from './ClienteDetailPage.module.scss';
 
-const STATUS_CLIENTE_MAP: Record<string, { label: string; tone: 'green' | 'orange' | 'neutral' }> = {
-  ativo: { label: 'Ativo', tone: 'green' },
-  inativo: { label: 'Inativo', tone: 'neutral' },
-  prospect: { label: 'Prospect', tone: 'orange' },
-};
-
-const SITUACAO_MAP: Record<string, { label: string; tone: 'green' | 'red' | 'neutral' }> = {
-  em_dia: { label: 'Em dia', tone: 'green' },
-  inadimplente: { label: 'Inadimplente', tone: 'red' },
-  sem_lancamentos: { label: 'Sem lançamentos', tone: 'neutral' },
-};
-
-const STATUS_LAN_MAP: Record<string, { label: string; tone: 'green' | 'orange' | 'red' | 'neutral' }> = {
-  pago: { label: 'Pago', tone: 'green' },
-  pendente: { label: 'Pendente', tone: 'orange' },
-  atrasado: { label: 'Atrasado', tone: 'red' },
-  cancelado: { label: 'Cancelado', tone: 'neutral' },
-};
-
-const processosColumns: Column<Processo>[] = [
-  { key: 'numeroCurto', header: 'Nº', width: '80px', render: (p) => p.numeroCurto },
-  { key: 'titulo', header: 'Processo', render: (p) => p.titulo },
-  { key: 'area', header: 'Área', width: '110px', render: (p) => p.area },
-  { key: 'faseProcessual', header: 'Fase', render: (p) => p.faseProcessual },
-  {
-    key: 'status',
-    header: 'Status',
-    width: '110px',
-    render: (p) => (
-      <Pill tone={p.status === 'em_andamento' ? 'blue' : p.status === 'encerrado' ? 'neutral' : 'orange'}>
-        {p.status.replace('_', ' ')}
-      </Pill>
-    ),
-  },
-];
-
 const lancamentosColumns: Column<Lancamento>[] = [
-  { key: 'descricao', header: 'Descrição', render: (l) => l.descricao },
+  { key: 'descricao', header: 'Descrição / Doc Fiscal', render: (l) => (
+    <div>
+      <div>{l.descricao}</div>
+      {l.numeroDocumentoFiscal && <small style={{ color: 'var(--color-muted)' }}>Doc: {l.numeroDocumentoFiscal}</small>}
+    </div>
+  ) },
   {
     key: 'tipo',
     header: 'Tipo',
     width: '90px',
     render: (l) => <Pill tone={l.tipo === 'receita' ? 'green' : 'red'}>{l.tipo === 'receita' ? 'Receita' : 'Despesa'}</Pill>,
   },
-  { key: 'valor', header: 'Valor', width: '110px', align: 'right', render: (l) => formatBRL(l.valorCentavos) },
+  { key: 'valor', header: 'Valor', width: '120px', align: 'right', render: (l) => formatBRL(l.valorCentavos) },
   { key: 'vencimento', header: 'Vencimento', width: '110px', render: (l) => formatDate(l.vencimento) },
   {
     key: 'status',
     header: 'Status',
     width: '100px',
-    render: (l) => { const s = STATUS_LAN_MAP[l.status]; return <Pill tone={s.tone}>{s.label}</Pill>; },
+    render: (l) => {
+      const meta = lancamentoStatusMeta[l.status] ?? { label: l.status, tone: 'neutral' };
+      return <Pill tone={meta.tone}>{meta.label}</Pill>;
+    },
   },
 ];
 
-const TABS = ['processos', 'financeiro', 'historico'] as const;
+const TABS = ['financeiro', 'cadastro'] as const;
 type TabKey = (typeof TABS)[number];
 
 export function ClienteDetailPage() {
   const { clienteId } = useParams<{ clienteId: string }>();
   const navigate = useNavigate();
   const { data: cliente, loading: loadingCliente } = useCliente(clienteId);
-  const { data: todosProcessos, loading: loadingProcessos } = useAsync(() => listarProcessos(), []);
-  const { data: todosEventos, loading: loadingEventos } = useAsync(() => listarEventos(), []);
   const { data: todosLancamentos, loading: loadingLancamentos } = useAsync(() => listarLancamentos(), []);
-  const [tab, setTab] = useState<TabKey>('processos');
+  const [tab, setTab] = useState<TabKey>('financeiro');
 
-  useDocumentTitle(cliente?.nome ?? 'Cliente');
+  useDocumentTitle(cliente?.razaoSocialOuNome ?? 'Parceiro Comercial');
 
-  const processos = useMemo(
-    () => (todosProcessos ?? []).filter((p) => p.clienteId === clienteId),
-    [todosProcessos, clienteId],
-  );
   const lancamentos = useMemo(
-    () => (todosLancamentos ?? []).filter((l) => l.clienteId === clienteId),
+    () => (todosLancamentos ?? []).filter((l) => l.pessoaId === clienteId),
     [todosLancamentos, clienteId],
-  );
-  const eventos = useMemo(
-    () => (todosEventos ?? []).filter((e) => e.clienteId === clienteId),
-    [todosEventos, clienteId],
-  );
-
-  const responsavel = useMemo(
-    () => db.usuarios.find((u) => u.id === cliente?.responsavelId),
-    [cliente],
   );
 
   const totalReceitas = useMemo(
@@ -116,21 +70,26 @@ export function ClienteDetailPage() {
     () => lancamentos.filter((l) => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'atrasado')).reduce((s, l) => s + l.valorCentavos, 0),
     [lancamentos],
   );
+  const totalAtraso = useMemo(
+    () => lancamentos.filter((l) => l.tipo === 'receita' && l.status === 'atrasado').reduce((s, l) => s + l.valorCentavos, 0),
+    [lancamentos],
+  );
 
   if (loadingCliente) return <Skeleton height="400px" />;
-  if (!cliente) return <EmptyState title="Cliente não encontrado." />;
+  if (!cliente) return <EmptyState title="Parceiro comercial não encontrado." />;
 
-  const { label: statusLabel, tone: statusTone } = STATUS_CLIENTE_MAP[cliente.status];
-  const { label: situacaoLabel, tone: situacaoTone } = SITUACAO_MAP[cliente.situacaoFinanceira];
+  const statusMeta = pessoaStatusMeta[cliente.status] ?? { label: cliente.status, tone: 'neutral' };
+  const creditoMeta = situacaoCreditoMeta[cliente.situacaoCredito] ?? { label: cliente.situacaoCredito, tone: 'neutral' };
+  const relacaoMeta = tipoRelacaoMeta[cliente.relacao] ?? { label: cliente.relacao, tone: 'neutral' };
 
   return (
     <section>
       <PageHead
-        title={cliente.nome}
-        subtitle={`${cliente.tipoPessoa} • ${cliente.documento}`}
+        title={cliente.razaoSocialOuNome}
+        subtitle={`${cliente.nomeFantasia ? `${cliente.nomeFantasia} • ` : ''}${cliente.tipoPessoa} • ${cliente.documento}`}
         actions={
           <Button variant="ghost" onClick={() => navigate(paths.clientes)}>
-            ← Voltar aos Clientes
+            ← Voltar aos Parceiros
           </Button>
         }
       />
@@ -140,16 +99,20 @@ export function ClienteDetailPage() {
         <Card>
           <div className={styles.infoGrid}>
             <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Status</span>
-              <Pill tone={statusTone}>{statusLabel}</Pill>
+              <span className={styles.infoLabel}>Status Cadastral</span>
+              <Pill tone={statusMeta.tone}>{statusMeta.label}</Pill>
             </div>
             <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Situação financeira</span>
-              <Pill tone={situacaoTone}>{situacaoLabel}</Pill>
+              <span className={styles.infoLabel}>Relação Comercial</span>
+              <Pill tone={relacaoMeta.tone}>{relacaoMeta.label}</Pill>
             </div>
             <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Responsável</span>
-              <span className={styles.infoValue}>{responsavel?.nomeExibicao ?? '—'}</span>
+              <span className={styles.infoLabel}>Situação de Crédito</span>
+              <Pill tone={creditoMeta.tone}>{creditoMeta.label}</Pill>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Segmento</span>
+              <span className={styles.infoValue}>{cliente.segmento ?? '—'}</span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Telefone</span>
@@ -159,17 +122,21 @@ export function ClienteDetailPage() {
               <span className={styles.infoLabel}>E-mail</span>
               <span className={styles.infoValue}>{cliente.email}</span>
             </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Cliente desde</span>
-              <span className={styles.infoValue}>{formatDate(cliente.criadoEm)}</span>
-            </div>
           </div>
         </Card>
 
         <div className={styles.kpis}>
-          <KpiCard label="Processos" value={String(processos.length)} />
-          <KpiCard label="Receita recebida" value={formatBRL(totalReceitas)} subTone="green" />
-          <KpiCard label="A receber" value={formatBRL(totalPendente)} subTone="orange" />
+          <KpiCard
+            label="Limite de Crédito"
+            value={cliente.limiteCreditoCentavos ? formatBRL(cliente.limiteCreditoCentavos) : 'Ilimitado'}
+          />
+          <KpiCard label="Receita Realizada" value={formatBRL(totalReceitas)} subTone="green" />
+          <KpiCard
+            label="Títulos Pendentes"
+            value={formatBRL(totalPendente)}
+            sub={totalAtraso > 0 ? `${formatBRL(totalAtraso)} em atraso` : 'Em dia'}
+            subTone={totalAtraso > 0 ? 'red' : 'green'}
+          />
         </div>
       </div>
 
@@ -183,52 +150,52 @@ export function ClienteDetailPage() {
               className={`${styles.tabBtn} ${tab === t ? styles.tabActive : ''}`}
               onClick={() => setTab(t)}
             >
-              {t === 'processos' ? 'Processos' : t === 'financeiro' ? 'Financeiro' : 'Histórico'}
+              {t === 'financeiro' ? 'Lançamentos Financeiros' : 'Dados Cadastrais & Endereço'}
             </button>
           ))}
         </div>
 
         <div className={styles.tabBody}>
-          {tab === 'processos' && (
-            <DataTable
-              columns={processosColumns}
-              rows={processos}
-              getRowId={(p) => p.id}
-              loading={loadingProcessos}
-              emptyMessage="Nenhum processo vinculado a este cliente."
-              onRowClick={(p) => navigate(paths.processoTab(p.id, 'resumo'))}
-            />
-          )}
-
           {tab === 'financeiro' && (
             <DataTable
               columns={lancamentosColumns}
               rows={lancamentos}
               getRowId={(l) => l.id}
               loading={loadingLancamentos}
-              emptyMessage="Nenhum lançamento financeiro para este cliente."
+              emptyMessage="Nenhum lançamento financeiro registrado para este parceiro."
             />
           )}
 
-          {tab === 'historico' && (
-            <>
-              {loadingEventos && <Skeleton height="120px" />}
-              {!loadingEventos && eventos.length === 0 && <EmptyState title="Nenhum evento registrado." />}
-              {!loadingEventos && eventos.length > 0 && (
-                <Timeline
-                  items={eventos
-                    .sort((a, b) => a.inicio < b.inicio ? 1 : -1)
-                    .map((e) => ({
-                      id: e.id,
-                      dateLabel: e.diaInteiro
-                        ? formatDate(e.inicio.slice(0, 10)).toUpperCase()
-                        : formatDateTime(e.inicio).toUpperCase(),
-                      title: e.titulo,
-                      description: e.descricao ?? e.local ?? '',
-                    }))}
-                />
+          {tab === 'cadastro' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', padding: '16px 0' }}>
+              <div>
+                <strong>Inscrição Estadual:</strong> {cliente.inscricaoEstadual ?? (cliente.isentoIE ? 'Isento' : 'Não informada')}
+              </div>
+              {cliente.inscricaoMunicipal && (
+                <div>
+                  <strong>Inscrição Municipal:</strong> {cliente.inscricaoMunicipal}
+                </div>
               )}
-            </>
+              {cliente.contatoPrincipal && (
+                <div>
+                  <strong>Contato Principal:</strong> {cliente.contatoPrincipal.nome} ({cliente.contatoPrincipal.cargo ?? 'Contato'})
+                </div>
+              )}
+              <div>
+                <strong>Endereço:</strong> {cliente.endereco.logradouro}, {cliente.endereco.numero} {cliente.endereco.complemento ?? ''}
+              </div>
+              <div>
+                <strong>Bairro / Cidade:</strong> {cliente.endereco.bairro} - {cliente.endereco.cidade}/{cliente.endereco.uf}
+              </div>
+              <div>
+                <strong>CEP:</strong> {cliente.endereco.cep}
+              </div>
+              {cliente.observacoes && (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <strong>Observações:</strong> {cliente.observacoes}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </Card>

@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { db } from '@/mocks';
 import { useClientes } from '@/hooks/useClientes';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -15,51 +14,50 @@ import { DataTable } from '@/components/ui/DataTable/DataTable';
 import { clientesColumns } from '@/components/clientes/clientesColumns';
 import { paths } from '@/routes/paths';
 import { NovoClienteModal } from '@/components/modais/NovoClienteModal';
-import type { ClienteStatus } from '@/types';
+import type { PessoaStatus, TipoRelacao } from '@/types';
 
 const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos os status' },
   { value: 'ativo', label: 'Ativo' },
   { value: 'inativo', label: 'Inativo' },
   { value: 'prospect', label: 'Prospect' },
+  { value: 'bloqueado', label: 'Bloqueado' },
+];
+
+const RELACAO_OPTIONS = [
+  { value: 'todos', label: 'Todas as relações' },
+  { value: 'cliente', label: 'Clientes' },
+  { value: 'fornecedor', label: 'Fornecedores' },
+  { value: 'ambos', label: 'Cliente & Fornecedor' },
+  { value: 'transportadora', label: 'Transportadoras' },
 ];
 
 export function ClientesPage() {
-  useDocumentTitle('Clientes');
+  useDocumentTitle('Clientes e Parceiros');
   const toast = useToast();
   const navigate = useNavigate();
   const [busca, setBusca] = useState('');
-  const [status, setStatus] = useState<ClienteStatus | 'todos'>('todos');
-  const [responsavelId, setResponsavelId] = useState('todos');
+  const [status, setStatus] = useState<PessoaStatus | 'todos'>('todos');
+  const [relacao, setRelacao] = useState<TipoRelacao | 'todos'>('todos');
   const [novoClienteOpen, setNovoClienteOpen] = useState(false);
   const buscaDebounced = useDebounce(busca);
-
-  const responsavelOptions = useMemo(
-    () => [
-      { value: 'todos', label: 'Todos os advogados' },
-      ...db.usuarios
-        .filter((u) => u.role !== 'financeiro')
-        .map((u) => ({ value: u.id, label: u.nomeExibicao })),
-    ],
-    [],
-  );
 
   const { data: clientes, loading } = useClientes({
     busca: buscaDebounced,
     status,
-    responsavelId,
+    relacao,
   });
 
   return (
     <section>
       <PageHead
-        title="Clientes"
-        subtitle="Cadastro, relacionamento e situação financeira dos clientes."
+        title="Clientes & Parceiros Comerciais"
+        subtitle="Cadastro B2B, análise de crédito e histórico de relacionamento."
         actions={
           <>
-            <Button onClick={() => toast.show('Exportação preparada')}>Exportar</Button>
+            <Button onClick={() => toast.show('Relatório de parceiros exportado!')}>Exportar</Button>
             <Button variant="primary" onClick={() => setNovoClienteOpen(true)}>
-              + Novo cliente
+              + Novo parceiro
             </Button>
           </>
         }
@@ -67,19 +65,19 @@ export function ClientesPage() {
 
       <Toolbar>
         <SearchInput
-          placeholder="Buscar por nome, CPF/CNPJ..."
+          placeholder="Buscar por razão social, fantasia, CNPJ/CPF..."
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
         />
         <SelectField
           options={STATUS_OPTIONS}
           value={status}
-          onChange={(e) => setStatus(e.target.value as ClienteStatus | 'todos')}
+          onChange={(e) => setStatus(e.target.value as PessoaStatus | 'todos')}
         />
         <SelectField
-          options={responsavelOptions}
-          value={responsavelId}
-          onChange={(e) => setResponsavelId(e.target.value)}
+          options={RELACAO_OPTIONS}
+          value={relacao}
+          onChange={(e) => setRelacao(e.target.value as TipoRelacao | 'todos')}
         />
       </Toolbar>
 
@@ -89,7 +87,7 @@ export function ClientesPage() {
           rows={clientes ?? []}
           getRowId={(c) => c.id}
           loading={loading}
-          emptyMessage="Nenhum cliente encontrado para os filtros selecionados."
+          emptyMessage="Nenhum parceiro comercial encontrado para os filtros selecionados."
           onRowClick={(c) => navigate(paths.cliente(c.id))}
         />
       </Card>
