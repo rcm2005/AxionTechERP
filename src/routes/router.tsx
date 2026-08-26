@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter } from 'react-router';
 import { AppLayout } from '@/layouts/AppLayout';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { LoginPage } from '@/pages/login/LoginPage';
@@ -11,11 +11,16 @@ import { EstoquePage } from '@/pages/estoque/EstoquePage';
 import { PlanosPage } from '@/pages/configuracoes/PlanosPage';
 import { PlaceholderPage } from '@/pages/placeholder/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { LandingPage } from '@/pages/landing/LandingPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnlyRoute } from './PublicOnlyRoute';
 import { paths } from './paths';
 
 export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <LandingPage />,
+  },
   {
     element: <PublicOnlyRoute />,
     children: [
@@ -31,7 +36,6 @@ export const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { index: true, element: <Navigate to={paths.dashboard} replace /> },
           { path: paths.dashboard, element: <DashboardPage /> },
           { path: paths.copilot, element: <CopilotPage /> },
           { path: paths.vendas, element: <PlaceholderPage moduloOverride="vendas" /> },
