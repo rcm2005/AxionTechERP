@@ -1,0 +1,116 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.linha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+
+  @include mq(560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted-2);
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 15px;
+  transition:
+    border-color 0.2s var(--lp-ease),
+    box-shadow 0.2s var(--lp-ease);
+
+  &::placeholder {
+    color: var(--color-muted-2);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 16%, transparent);
+  }
+}
+
+select.input {
+  appearance: none;
+  cursor: pointer;
+}
+
+.erro {
+  font-size: 13.5px;
+  color: var(--color-danger);
+}
+
+.submit {
+  margin-top: 4px;
+  padding: 13px 20px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 15px;
+  font-weight: 600;
+  transition:
+    background 0.2s var(--lp-ease),
+    transform 0.2s var(--lp-ease);
+  @include focus-ring;
+
+  &:hover {
+    background: var(--color-accent-hover);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+.nota {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-muted-2);
+}
+
+.sucesso {
+  border: 1px solid color-mix(in srgb, var(--color-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+}
+
+.sucessoTitulo {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.sucessoTexto {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-muted);
+}
+
+.link {
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+}

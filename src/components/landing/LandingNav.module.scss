@@ -1,0 +1,201 @@
+.header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 40;
+  transition:
+    background 0.35s var(--lp-ease),
+    border-color 0.35s var(--lp-ease),
+    backdrop-filter 0.35s var(--lp-ease);
+  background: transparent;
+  border-bottom: 1px solid transparent;
+}
+
+.scrolled {
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  backdrop-filter: saturate(1.4) blur(14px);
+  border-bottom-color: var(--color-line);
+}
+
+.inner {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 16px var(--lp-gutter);
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  @include focus-ring;
+}
+
+.mark {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: linear-gradient(140deg, var(--color-accent), #8a6d2c);
+  box-shadow: 0 0 0 1px rgba(217, 180, 108, 0.25);
+}
+
+.brandName {
+  font-size: 15px;
+}
+
+.brandDim {
+  color: var(--color-muted);
+}
+
+.links {
+  display: flex;
+  gap: 28px;
+  margin-inline: auto;
+
+  @include mq(900px) {
+    display: none;
+  }
+}
+
+.link {
+  position: relative;
+  font-size: 14px;
+  color: var(--color-muted);
+  text-decoration: none;
+  padding: 4px 0;
+  transition: color 0.2s var(--lp-ease);
+  @include focus-ring;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 1px;
+    width: 100%;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s var(--lp-ease);
+  }
+
+  &:hover {
+    color: var(--color-text);
+
+    &::after {
+      transform: scaleX(1);
+    }
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  @include mq(900px) {
+    display: none;
+  }
+}
+
+.ghost {
+  font-size: 14px;
+  color: var(--color-muted);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  transition: color 0.2s var(--lp-ease);
+  @include focus-ring;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.cta {
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--color-text);
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-line-strong);
+  transition:
+    border-color 0.25s var(--lp-ease),
+    background 0.25s var(--lp-ease);
+  @include focus-ring;
+
+  &:hover {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+}
+
+.burger {
+  @include reset-button;
+  display: none;
+  margin-left: auto;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  @include focus-ring;
+
+  @include mq(900px) {
+    display: flex;
+  }
+}
+
+.burgerBar {
+  width: 18px;
+  height: 1.5px;
+  background: var(--color-text);
+  transition: transform 0.25s var(--lp-ease);
+}
+
+.burgerBarTop {
+  transform: translateY(3.25px) rotate(45deg);
+}
+
+.burgerBarBottom {
+  transform: translateY(-3.25px) rotate(-45deg);
+}
+
+.mobileMenu {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px var(--lp-gutter) 24px;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-line);
+
+  @include mq(900px) {
+    display: flex;
+  }
+}
+
+.mobileLink {
+  padding: 14px 0;
+  font-size: 17px;
+  text-decoration: none;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.mobileCta {
+  margin-top: 12px;
+  padding: 14px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
