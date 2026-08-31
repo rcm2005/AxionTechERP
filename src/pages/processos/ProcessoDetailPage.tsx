@@ -58,7 +58,7 @@ export function ProcessoDetailPage() {
   useDocumentTitle(processo ? `Processo ${processo.numero_cnj}` : 'Processo');
 
   const nomeResponsavel = useMemo(() => {
-    const mapa = new Map((usuarios ?? []).map((u) => [u.id, u.nomeExibicao || u.nome]));
+    const mapa = new Map((usuarios ?? []).map((u) => [u.id, u.nome]));
     return (id: string) => mapa.get(id) ?? '—';
   }, [usuarios]);
 
