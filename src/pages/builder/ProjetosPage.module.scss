@@ -9,6 +9,14 @@
   margin-bottom: var(--space-5);
 }
 
+.cabecalhoTopo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
 .titulo {
   margin: 0 0 4px;
   font-size: 19px;
@@ -20,6 +28,26 @@
   margin: 0;
   font-size: 13.5px;
   color: var(--color-muted);
+}
+
+.novoProjeto {
+  @include reset-button;
+  @include focus-ring;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 13px;
+  font-weight: 550;
+  text-decoration: none;
+
+  &:hover {
+    background: var(--color-accent-hover);
+  }
 }
 
 .grade {

@@ -1,7 +1,7 @@
 export const paths = {
   login: '/login',
   comecar: '/comecar',
-  comecarArquivos: '/comecar/arquivos',
+  comecarProjetos: '/comecar/projetos',
   comecarConta: '/comecar/conta',
   /** Wizard de onboarding original, preservado como fallback do chat. */
   comecarWizard: '/comecar/wizard',

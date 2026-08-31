@@ -18,7 +18,7 @@ interface ItemRail {
 // uma página falsa.
 const ITENS_TOPO: ItemRail[] = [
   { key: 'home', label: 'Início', icon: Home, to: paths.comecar },
-  { key: 'arquivos', label: 'Arquivos', icon: FolderClosed, to: paths.comecarArquivos },
+  { key: 'projetos', label: 'Projetos', icon: FolderClosed, to: paths.comecarProjetos },
   { key: 'financeiro', label: 'Financeiro', icon: DollarSign },
   { key: 'assistente', label: 'Assistente', icon: Bot },
   { key: 'historico', label: 'Histórico', icon: History },
@@ -26,7 +26,7 @@ const ITENS_TOPO: ItemRail[] = [
 
 const TITULOS: Record<string, string> = {
   [paths.comecar]: 'Início',
-  [paths.comecarArquivos]: 'Arquivos',
+  [paths.comecarProjetos]: 'Projetos',
   [paths.comecarConta]: 'Conta',
 };
 

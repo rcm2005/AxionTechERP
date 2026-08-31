@@ -31,7 +31,7 @@ export function LoginPage() {
     try {
       await login(email, senha);
       const state = location.state as LocationState | null;
-      const destino = state?.from?.pathname ?? paths.dashboard;
+      const destino = state?.from?.pathname ?? paths.comecarProjetos;
       navigate(destino, { replace: true });
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Não foi possível entrar.');

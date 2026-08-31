@@ -6,14 +6,14 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { listarMeusEscritorios, type EscritorioDaConta } from '@/services/auth.service';
 import { paths } from '@/routes/paths';
 import { formatDate } from '@/utils/format';
-import styles from './ArquivosPage.module.scss';
+import styles from './ProjetosPage.module.scss';
 
 /**
  * Lista os escritórios (tenants) em que o e-mail da sessão atual já é admin.
  * O escopo vem do servidor a partir do Bearer token — nada é filtrado no cliente.
  */
-export function ArquivosPage() {
-  useDocumentTitle('Arquivos');
+export function ProjetosPage() {
+  useDocumentTitle('Projetos');
   const { isAuthenticated, trocarEscritorio } = useAuth();
   const navigate = useNavigate();
 
@@ -74,9 +74,11 @@ export function ArquivosPage() {
     );
   }
 
+  const temProjetos = !carregando && Boolean(escritorios && escritorios.length > 0);
+
   return (
     <div className={styles.pagina}>
-      <Cabecalho />
+      <Cabecalho mostrarNovoProjeto={temProjetos} />
 
       {erro && (
         <p className={styles.erro} role="alert">
@@ -119,11 +121,20 @@ export function ArquivosPage() {
   );
 }
 
-function Cabecalho() {
+function Cabecalho({ mostrarNovoProjeto }: { mostrarNovoProjeto?: boolean }) {
   return (
     <header className={styles.cabecalho}>
-      <h2 className={styles.titulo}>Seus ERPs</h2>
-      <p className={styles.sub}>Todos os escritórios em que este e-mail é administrador.</p>
+      <div className={styles.cabecalhoTopo}>
+        <div>
+          <h2 className={styles.titulo}>Seus ERPs</h2>
+          <p className={styles.sub}>Todos os escritórios em que este e-mail é administrador.</p>
+        </div>
+        {mostrarNovoProjeto && (
+          <Link to={paths.comecar} className={styles.novoProjeto}>
+            + Novo projeto
+          </Link>
+        )}
+      </div>
     </header>
   );
 }

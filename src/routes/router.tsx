@@ -19,7 +19,7 @@ import { PlaceholderPage } from '@/pages/placeholder/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { LandingPage } from '@/pages/landing/LandingPage';
 import { BuilderChatPage } from '@/pages/builder/BuilderChatPage';
-import { ArquivosPage } from '@/pages/builder/ArquivosPage';
+import { ProjetosPage } from '@/pages/builder/ProjetosPage';
 import { ContaPage } from '@/pages/builder/ContaPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnlyRoute } from './PublicOnlyRoute';
@@ -51,7 +51,7 @@ export const router = createBrowserRouter([
     element: <BuilderLayout />,
     children: [
       { path: paths.comecar, element: <BuilderChatPage /> },
-      { path: paths.comecarArquivos, element: <ArquivosPage /> },
+      { path: paths.comecarProjetos, element: <ProjetosPage /> },
       { path: paths.comecarConta, element: <ContaPage /> },
     ],
   },
