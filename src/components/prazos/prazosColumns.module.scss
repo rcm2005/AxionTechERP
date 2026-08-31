@@ -1,0 +1,25 @@
+.fatal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+  padding-left: var(--space-3);
+  border-left: 3px solid transparent;
+
+  // O peso visual acompanha a urgência: só quem exige ação hoje fica marcado.
+  &[data-urgencia='vencido'],
+  &[data-urgencia='urgente'] {
+    border-left-color: var(--color-danger);
+  }
+
+  &[data-urgencia='proximo'] {
+    border-left-color: var(--color-warning);
+  }
+}
+
+.fatalData {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}

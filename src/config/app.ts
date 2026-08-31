@@ -18,11 +18,12 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { path: paths.dashboard, label: 'Dashboard', icon: 'LayoutDashboard' },
-  { path: paths.vendas, label: 'Vendas', icon: 'ShoppingCart' },
-  { path: paths.compras, label: 'Compras', icon: 'ShoppingBag' },
-  { path: paths.estoque, label: 'Estoque', icon: 'Package' },
+  { path: paths.processos, label: 'Processos', icon: 'Scale' },
+  { path: paths.prazos, label: 'Prazos', icon: 'AlarmClock' },
+  { path: paths.agenda, label: 'Agenda', icon: 'CalendarDays' },
+  { path: paths.clientes, label: 'Clientes', icon: 'Users' },
+  { path: paths.contratos, label: 'Contratos', icon: 'FileSignature' },
   { path: paths.financeiro, label: 'Financeiro', icon: 'DollarSign' },
   { path: paths.fiscal, label: 'Fiscal', icon: 'FileText' },
-  { path: paths.clientes, label: 'Clientes / Pessoas', icon: 'Users' },
   { path: paths.configuracoes, label: 'Configurações', icon: 'Settings' },
 ];

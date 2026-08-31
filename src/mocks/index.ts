@@ -121,4 +121,5 @@ export * from './produtos.mock';
 export * from './pessoas.mock';
 export * from './lancamentos.mock';
 export * from './producao.mock';
+export * from './juridico.mock';
 

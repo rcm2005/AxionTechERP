@@ -9,7 +9,11 @@ import { CopilotPage } from '@/pages/copilot/CopilotPage';
 import { ClientesPage } from '@/pages/clientes/ClientesPage';
 import { ClienteDetailPage } from '@/pages/clientes/ClienteDetailPage';
 import { FinanceiroPage } from '@/pages/financeiro/FinanceiroPage';
-import { EstoquePage } from '@/pages/estoque/EstoquePage';
+import { ProcessosPage } from '@/pages/processos/ProcessosPage';
+import { ProcessoDetailPage } from '@/pages/processos/ProcessoDetailPage';
+import { PrazosPage } from '@/pages/prazos/PrazosPage';
+import { AgendaPage } from '@/pages/agenda/AgendaPage';
+import { ContratosPage } from '@/pages/contratos/ContratosPage';
 import { PlanosPage } from '@/pages/configuracoes/PlanosPage';
 import { PlaceholderPage } from '@/pages/placeholder/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -68,13 +72,15 @@ export const router = createBrowserRouter([
         children: [
           { path: paths.dashboard, element: <DashboardPage /> },
           { path: paths.copilot, element: <CopilotPage /> },
-          { path: paths.vendas, element: <PlaceholderPage moduloOverride="vendas" /> },
-          { path: paths.compras, element: <PlaceholderPage moduloOverride="compras" /> },
-          { path: paths.estoque, element: <EstoquePage /> },
           { path: paths.financeiro, element: <FinanceiroPage /> },
           { path: paths.fiscal, element: <PlaceholderPage moduloOverride="fiscal" /> },
           { path: paths.clientes, element: <ClientesPage /> },
           { path: `${paths.clientes}/:clienteId`, element: <ClienteDetailPage /> },
+          { path: paths.processos, element: <ProcessosPage /> },
+          { path: `${paths.processos}/:processoId`, element: <ProcessoDetailPage /> },
+          { path: paths.prazos, element: <PrazosPage /> },
+          { path: paths.agenda, element: <AgendaPage /> },
+          { path: paths.contratos, element: <ContratosPage /> },
           { path: paths.configuracoes, element: <PlanosPage /> },
         ],
       },

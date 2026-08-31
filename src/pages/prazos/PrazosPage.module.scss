@@ -1,10 +1,8 @@
-@use '@/styles/mixins' as *;
-
 .kpis {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
 
   @include mq(lg) {
     grid-template-columns: 1fr;

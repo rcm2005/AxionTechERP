@@ -7,21 +7,26 @@ export const paths = {
   comecarWizard: '/comecar/wizard',
   dashboard: '/dashboard',
   copilot: '/copilot',
-  vendas: '/vendas',
-  compras: '/compras',
-  estoque: '/estoque',
   financeiro: '/financeiro',
   fiscal: '/fiscal',
   clientes: '/clientes',
   cliente: (id: string) => `/clientes/${id}`,
   configuracoes: '/configuracoes',
-  // Rotas legadas para compatibilidade
+  // Núcleo jurídico (vertical real do produto)
   processos: '/processos',
   processo: (id: string) => `/processos/${id}`,
   processoTab: (id: string, tab: string) => `/processos/${id}/${tab}`,
+  prazos: '/prazos',
   agenda: '/agenda',
+  contratos: '/contratos',
 } as const;
 
+/**
+ * Abas previstas para a tela do processo. Hoje `ProcessoDetailPage` renderiza
+ * seções empilhadas e só as fontes com endpoint real (prazos, audiências);
+ * esta lista permanece como o alvo para quando andamentos/documentos/tarefas
+ * existirem no backend.
+ */
 export const processoTabs = [
   { key: 'resumo', label: 'Resumo' },
   { key: 'andamentos', label: 'Andamentos' },

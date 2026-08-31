@@ -6,3 +6,7 @@ export * from './pessoa';
 export * from './financeiro';
 export * from './dashboard';
 export * from './producao';
+export * from './processo';
+export * from './prazo';
+export * from './agenda';
+export * from './contrato';

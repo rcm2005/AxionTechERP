@@ -4,9 +4,10 @@ import clsx from 'clsx';
 import {
   LayoutDashboard,
   Bot,
-  ShoppingCart,
-  ShoppingBag,
-  Package,
+  Scale,
+  AlarmClock,
+  CalendarDays,
+  FileSignature,
   DollarSign,
   FileText,
   Users,
@@ -28,12 +29,13 @@ interface SidebarNavItem {
 const SIDEBAR_ITEMS: SidebarNavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/copilot', label: 'Copilot', icon: Bot },
-  { path: '/vendas', label: 'Vendas', icon: ShoppingCart },
-  { path: '/compras', label: 'Compras', icon: ShoppingBag },
-  { path: '/estoque', label: 'Estoque', icon: Package },
+  { path: '/processos', label: 'Processos', icon: Scale },
+  { path: '/prazos', label: 'Prazos', icon: AlarmClock },
+  { path: '/agenda', label: 'Agenda', icon: CalendarDays },
+  { path: '/clientes', label: 'Clientes', icon: Users },
+  { path: '/contratos', label: 'Contratos', icon: FileSignature },
   { path: '/financeiro', label: 'Financeiro', icon: DollarSign },
   { path: '/fiscal', label: 'Fiscal', icon: FileText },
-  { path: '/clientes', label: 'Clientes / Pessoas', icon: Users },
   { path: '/configuracoes', label: 'Configurações', icon: Settings },
 ];
 
