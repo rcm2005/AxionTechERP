@@ -6,7 +6,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { CORES_MARCA } from '@/config/coresMarca';
 import { paths } from '@/routes/paths';
 import type { DadosOnboarding } from '@/services/auth.service';
-import { classificarPedido } from './verticalMatch';
+import * as onboardingService from '@/services/onboarding.service';
+import { classificarPedido, normalizar } from './verticalMatch';
 import styles from './BuilderChatPage.module.scss';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -15,10 +16,6 @@ import styles from './BuilderChatPage.module.scss';
 // O chat NÃO é uma ilusão: cada fase abaixo é um estado real, com uma pergunta,
 // uma validação e uma transição. As validações são as mesmas do wizard antigo
 // (`src/pages/onboarding/OnboardingPage.tsx`) — se mudarem lá, mude aqui.
-//
-// Não há LLM ligado neste ambiente: a única "compreensão" é a classificação
-// determinística por palavra-chave em `verticalMatch.ts`. Fora da primeira
-// mensagem, o texto do usuário é lido como o valor do campo perguntado.
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Fase =
@@ -30,6 +27,7 @@ type Fase =
   | 'adminNome'
   | 'adminEmail'
   | 'adminPassword'
+  | 'revisao'
   | 'gerando'
   | 'pronto'
   | 'erro'
@@ -43,6 +41,7 @@ const FASES_TEXTO: ReadonlyArray<Fase> = [
   'adminNome',
   'adminEmail',
   'adminPassword',
+  'revisao',
 ];
 
 interface Mensagem {
@@ -69,6 +68,7 @@ const PLACEHOLDERS: Partial<Record<Fase, string>> = {
   adminNome: 'Ex: Dra. Ana Ribeiro',
   adminEmail: 'voce@escritorio.com.br',
   adminPassword: 'Mínimo 8 caracteres',
+  revisao: 'Ex: muda o e-mail para...',
 };
 
 /** Narração exibida enquanto o tenant é criado de verdade. */
@@ -133,7 +133,7 @@ const PROXIMA: Partial<Record<Fase, Fase>> = {
   corPrimaria: 'adminNome',
   adminNome: 'adminEmail',
   adminEmail: 'adminPassword',
-  adminPassword: 'gerando',
+  adminPassword: 'revisao',
 };
 
 export function BuilderChatPage() {
@@ -145,6 +145,7 @@ export function BuilderChatPage() {
   const [dados, setDados] = useState<Dados>(DADOS_VAZIOS);
   const [entrada, setEntrada] = useState('');
   const [verticalPedido, setVerticalPedido] = useState<string | null>(null);
+  const [, setTentativasRevisao] = useState<number>(0);
   const [mensagens, setMensagens] = useState<Mensagem[]>([
     {
       id: 0,
@@ -170,7 +171,11 @@ export function BuilderChatPage() {
   const irPara = useCallback(
     (proxima: Fase) => {
       const pergunta = PERGUNTAS[proxima];
-      if (pergunta) dizer('assistente', pergunta);
+      if (pergunta) {
+        dizer('assistente', pergunta);
+      } else if (proxima === 'revisao') {
+        dizer('assistente', 'Confere se está tudo certo antes de eu criar o escritório de verdade.');
+      }
       setFase(proxima);
     },
     [dizer]
@@ -222,7 +227,12 @@ export function BuilderChatPage() {
     setEntrada('');
 
     if (fase === 'pedido') {
-      tratarPedido(valor);
+      void tratarPedido(valor);
+      return;
+    }
+
+    if (fase === 'revisao') {
+      void tratarRevisao(valor);
       return;
     }
 
@@ -238,14 +248,31 @@ export function BuilderChatPage() {
     irPara(PROXIMA[fase] ?? 'gerando');
   }
 
-  function tratarPedido(texto: string) {
-    const resultado = classificarPedido(texto);
+  async function tratarPedido(texto: string) {
+    const interpretacao = await onboardingService.interpretarPedido(texto);
+    let tipo: 'juridico' | 'outro' | 'generico';
+    let termo: string | undefined;
 
-    if (resultado.tipo === 'outro') {
-      setVerticalPedido(resultado.termo);
+    if (interpretacao.disponivel) {
+      tipo = interpretacao.tipo;
+      termo = interpretacao.termo;
+      if (interpretacao.nomeEscritorioSugerido) {
+        const sugerido = interpretacao.nomeEscritorioSugerido;
+        setDados((d) => ({ ...d, nomeEscritorio: sugerido }));
+        setEntrada(sugerido);
+      }
+    } else {
+      const resultadoLocal = classificarPedido(texto);
+      tipo = resultadoLocal.tipo;
+      termo = resultadoLocal.tipo === 'outro' ? resultadoLocal.termo : undefined;
+    }
+
+    if (tipo === 'outro') {
+      const termoFinal = termo ?? 'outro setor';
+      setVerticalPedido(termoFinal);
       dizer(
         'assistente',
-        `Vou ser honesto: hoje a Axion tem um único vertical pronto de verdade, o jurídico. Não existe template de ${resultado.termo} — e eu não vou fingir que monto um.`
+        `Vou ser honesto: hoje a Axion tem um único vertical pronto de verdade, o jurídico. Não existe template de ${termoFinal} — e eu não vou fingir que monto um.`
       );
       dizer(
         'assistente',
@@ -255,7 +282,7 @@ export function BuilderChatPage() {
       return;
     }
 
-    if (resultado.tipo === 'generico') {
+    if (tipo === 'generico') {
       dizer(
         'assistente',
         'Beleza. O vertical que eu monto hoje é o jurídico — vou seguir por ele, que é o que existe de verdade.'
@@ -263,6 +290,104 @@ export function BuilderChatPage() {
     }
 
     irPara('nomeEscritorio');
+  }
+
+  async function tratarRevisao(textoBruto: string) {
+    // 1. Fast-path determinístico, sem rede
+    const normalizado = normalizar(textoBruto);
+    if (
+      /\b(confirma|confirmar|pode confirmar|ta certo|esta certo|isso mesmo|pode criar|manda ver)\b/.test(
+        normalizado
+      )
+    ) {
+      confirmarRevisao();
+      return;
+    }
+    if (/\b(recomeca|recomecar|reiniciar|cancelar|do zero)\b/.test(normalizado)) {
+      recomecar();
+      return;
+    }
+
+    // 2. Chamada à IA
+    const resultado = await onboardingService.revisarConfirmacao(textoBruto, {
+      nomeEscritorio: dados.nomeEscritorio,
+      cnpjOuCpf: dados.cnpjOuCpf,
+      corPrimaria: dados.corPrimaria,
+      adminNome: dados.adminNome,
+      adminEmail: dados.adminEmail,
+    });
+
+    // 3. Incerto ou falha
+    if (!resultado || resultado.intent === 'incerto') {
+      setTentativasRevisao((t) => {
+        const nova = t + 1;
+        if (nova >= 2) {
+          dizer(
+            'assistente',
+            'Não consegui entender essa correção. Você pode usar os botões abaixo, ou me dizer exatamente o que corrigir — por exemplo "muda o e-mail para outro@exemplo.com".'
+          );
+        } else {
+          dizer('assistente', 'Não entendi bem — pode tentar de outro jeito? Ou usa os botões abaixo.');
+        }
+        return nova;
+      });
+      return;
+    }
+
+    // 4. Intent confirmar
+    if (resultado.intent === 'confirmar') {
+      confirmarRevisao();
+      return;
+    }
+
+    // 5. Intent recomecar
+    if (resultado.intent === 'recomecar') {
+      recomecar();
+      return;
+    }
+
+    // 6. Intent patch
+    if (resultado.intent === 'patch') {
+      const patchesValidos: Partial<Record<onboardingService.PatchCampo, string>> = {};
+
+      for (const patch of resultado.patches) {
+        if (patch.campo === 'corPrimaria') {
+          const corEncontrada = CORES_MARCA.find(
+            (c) =>
+              c.valor.toLowerCase() === patch.valor.toLowerCase() ||
+              c.nome.toLowerCase() === patch.valor.toLowerCase()
+          );
+          if (corEncontrada) {
+            patchesValidos.corPrimaria = corEncontrada.valor;
+          }
+        } else {
+          const erro = validar(patch.campo as Fase, patch.valor);
+          if (erro === null) {
+            patchesValidos[patch.campo] = patch.valor;
+          }
+        }
+      }
+
+      if (Object.keys(patchesValidos).length === 0) {
+        setTentativasRevisao((t) => {
+          const nova = t + 1;
+          if (nova >= 2) {
+            dizer(
+              'assistente',
+              'Não consegui entender essa correção. Você pode usar os botões abaixo, ou me dizer exatamente o que corrigir — por exemplo "muda o e-mail para outro@exemplo.com".'
+            );
+          } else {
+            dizer('assistente', 'Não entendi bem — pode tentar de outro jeito? Ou usa os botões abaixo.');
+          }
+          return nova;
+        });
+        return;
+      }
+
+      setDados((d) => ({ ...d, ...patchesValidos }));
+      setTentativasRevisao(0);
+      dizer('assistente', resultado.resumoAmigavel ?? 'Atualizei os dados.');
+    }
   }
 
   // ── Respostas rápidas ─────────────────────────────────────────────────────
@@ -286,6 +411,11 @@ export function BuilderChatPage() {
     setFase('encerrado');
   }
 
+  function confirmarRevisao() {
+    dizer('usuario', 'Confirmar e criar meu ERP');
+    setFase('gerando');
+  }
+
   function tentarDeNovo() {
     dizer('usuario', 'Tentar de novo');
     geracaoIniciada.current = false;
@@ -295,6 +425,7 @@ export function BuilderChatPage() {
   function recomecar() {
     setDados(DADOS_VAZIOS);
     setVerticalPedido(null);
+    setTentativasRevisao(0);
     geracaoIniciada.current = false;
     dizer('assistente', 'Sem problema. Me conta de novo: que tipo de ERP você precisa?');
     setFase('pedido');
@@ -351,6 +482,46 @@ export function BuilderChatPage() {
                 Parar por aqui
               </button>
             </div>
+          )}
+
+          {fase === 'revisao' && (
+            <>
+              <div className={styles.linhaAssistente}>
+                <div className={styles.balaoAssistente}>
+                  <dl className={styles.revisao}>
+                    <div>
+                      <dt>Escritório</dt>
+                      <dd>{dados.nomeEscritorio}</dd>
+                    </div>
+                    <div>
+                      <dt>CNPJ/CPF</dt>
+                      <dd>{dados.cnpjOuCpf}</dd>
+                    </div>
+                    <div>
+                      <dt>Cor da marca</dt>
+                      <dd className={styles.revisaoCor}>
+                        <span className={styles.swatchMini} style={{ background: dados.corPrimaria }} />
+                        {CORES_MARCA.find((c) => c.valor === dados.corPrimaria)?.nome}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Administrador</dt>
+                      <dd>
+                        {dados.adminNome} · {dados.adminEmail}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+              <div className={styles.respostasRapidas}>
+                <button type="button" className={styles.btnPrimario} onClick={confirmarRevisao}>
+                  Confirmar e criar meu ERP
+                </button>
+                <button type="button" className={styles.btnSecundario} onClick={recomecar}>
+                  Recomeçar
+                </button>
+              </div>
+            </>
           )}
 
           {fase === 'erro' && (
@@ -436,3 +607,4 @@ export function BuilderChatPage() {
     </div>
   );
 }
+
