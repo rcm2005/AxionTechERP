@@ -1,6 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Usuario } from '@/types';
-import { login as loginService, logout as logoutService } from '@/services/auth.service';
+import {
+  login as loginService,
+  logout as logoutService,
+  criarEscritorio as criarEscritorioService,
+  type DadosOnboarding,
+  type Sessao,
+} from '@/services/auth.service';
 import { getTenantBranding, type TenantBranding } from '@/services/tenant.service';
 
 function aplicarBranding(branding: TenantBranding | null) {
@@ -44,6 +50,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   tenantBranding: TenantBranding | null;
   login: (email: string, senha: string) => Promise<void>;
+  criarEscritorio: (dados: DadosOnboarding) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -89,8 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (email: string, senha: string) => {
-    const sessao = await loginService(email, senha);
+  const commitSessao = useCallback(async (sessao: Sessao) => {
     const defaultEmpresaId = resolveDefaultEmpresaId(sessao.usuario);
     const sessionToStore: StoredSession = {
       ...sessao,
@@ -105,6 +111,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setTenantBranding(null);
     }
   }, []);
+
+  const login = useCallback(
+    async (email: string, senha: string) => {
+      await commitSessao(await loginService(email, senha));
+    },
+    [commitSessao]
+  );
+
+  const criarEscritorio = useCallback(
+    async (dados: DadosOnboarding) => {
+      await commitSessao(await criarEscritorioService(dados));
+    },
+    [commitSessao]
+  );
 
   const logout = useCallback(async () => {
     await logoutService();
@@ -124,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: usuario !== null,
         tenantBranding,
         login,
+        criarEscritorio,
         logout,
       }}
     >

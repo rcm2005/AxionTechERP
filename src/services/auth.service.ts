@@ -63,3 +63,21 @@ export async function logout(): Promise<void> {
   }
   await http.post('/auth/logout');
 }
+
+export interface DadosOnboarding {
+  nomeEscritorio: string;
+  cnpjOuCpf: string;
+  corPrimaria: string;
+  adminNome: string;
+  adminEmail: string;
+  adminPassword: string;
+}
+
+export async function criarEscritorio(dados: DadosOnboarding): Promise<Sessao> {
+  if (USE_MOCKS) {
+    await delay(900);
+    return { usuario: usuarioLogadoMock, token: 'mock-token' };
+  }
+  const { data } = await http.post<ApiLoginResponse>('/auth/signup', dados);
+  return { usuario: mapApiUserToUsuario(data.user), token: data.token };
+}

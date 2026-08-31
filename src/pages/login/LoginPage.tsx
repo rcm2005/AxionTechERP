@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useLocation, useNavigate, type Location } from 'react-router';
+import { Link, useLocation, useNavigate, type Location } from 'react-router';
 import { APP_NAME, APP_TAGLINE, COMPANY_NAME, SUPPORT_EMAIL } from '@/config/app';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -140,6 +140,11 @@ export function LoginPage() {
               Esqueci minha senha.
             </a>
           </form>
+
+          <div className={styles.support}>
+            <p>Ainda não tem um escritório cadastrado?</p>
+            <Link to={paths.comecar}>Criar meu ERP</Link>
+          </div>
 
           <div className={styles.support}>
             <p>Precisa de ajuda para acessar? Fale com o suporte.</p>

@@ -1,5 +1,6 @@
 export const paths = {
   login: '/login',
+  comecar: '/comecar',
   dashboard: '/dashboard',
   copilot: '/copilot',
   vendas: '/vendas',
