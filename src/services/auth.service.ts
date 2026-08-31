@@ -81,3 +81,58 @@ export async function criarEscritorio(dados: DadosOnboarding): Promise<Sessao> {
   const { data } = await http.post<ApiLoginResponse>('/auth/signup', dados);
   return { usuario: mapApiUserToUsuario(data.user), token: data.token };
 }
+
+// ── Multi-escritório (usado pela área /comecar) ──────────────────────────────
+
+/** Um escritório onde o e-mail da sessão atual já é admin. */
+export interface EscritorioDaConta {
+  id: string;
+  nome: string;
+  nomeExibicao: string;
+  corPrimaria: string;
+  criadoEm: string;
+}
+
+interface ApiTenantResponse {
+  id: string;
+  nome: string;
+  config?: { branding?: { nomeExibicao?: string; corPrimaria?: string } };
+  created_at: string;
+}
+
+function mapApiTenant(api: ApiTenantResponse): EscritorioDaConta {
+  return {
+    id: api.id,
+    nome: api.nome,
+    nomeExibicao: api.config?.branding?.nomeExibicao || api.nome,
+    corPrimaria: api.config?.branding?.corPrimaria || '#3157d5',
+    criadoEm: api.created_at,
+  };
+}
+
+const ERRO_SO_API_REAL =
+  'Esta tela consulta o backend real e não tem versão mockada. Rode com VITE_USE_MOCKS=false.';
+
+/**
+ * Escritórios em que o e-mail da sessão atual é admin. O escopo é aplicado no
+ * servidor a partir do token — não passamos e-mail nenhum daqui.
+ */
+export async function listarMeusEscritorios(): Promise<EscritorioDaConta[]> {
+  if (USE_MOCKS) {
+    throw new Error(ERRO_SO_API_REAL);
+  }
+  const { data } = await http.get<ApiTenantResponse[]>('/auth/my-tenants');
+  return data.map(mapApiTenant);
+}
+
+/**
+ * Troca o tenant ativo sem pedir senha de novo. O servidor só emite o token se
+ * o e-mail do token atual já for admin do tenant pedido.
+ */
+export async function trocarEscritorio(tenantId: string): Promise<Sessao> {
+  if (USE_MOCKS) {
+    throw new Error(ERRO_SO_API_REAL);
+  }
+  const { data } = await http.post<ApiLoginResponse>('/auth/switch-tenant', { tenant_id: tenantId });
+  return { usuario: mapApiUserToUsuario(data.user), token: data.token };
+}

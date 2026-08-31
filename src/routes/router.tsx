@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router';
 import { AppLayout } from '@/layouts/AppLayout';
 import { AuthLayout } from '@/layouts/AuthLayout';
+import { BuilderLayout } from '@/layouts/BuilderLayout';
 import { LoginPage } from '@/pages/login/LoginPage';
 import { OnboardingPage } from '@/pages/onboarding/OnboardingPage';
 import { DashboardPage } from '@/pages/dashboard/DashboardPage';
@@ -13,6 +14,9 @@ import { PlanosPage } from '@/pages/configuracoes/PlanosPage';
 import { PlaceholderPage } from '@/pages/placeholder/PlaceholderPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { LandingPage } from '@/pages/landing/LandingPage';
+import { BuilderChatPage } from '@/pages/builder/BuilderChatPage';
+import { ArquivosPage } from '@/pages/builder/ArquivosPage';
+import { ContaPage } from '@/pages/builder/ContaPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnlyRoute } from './PublicOnlyRoute';
 import { paths } from './paths';
@@ -29,8 +33,30 @@ export const router = createBrowserRouter([
         element: <AuthLayout />,
         children: [
           { path: paths.login, element: <LoginPage /> },
-          { path: paths.comecar, element: <OnboardingPage /> },
         ],
+      },
+    ],
+  },
+  // Área /comecar — a shell de chat que monta o ERP.
+  //
+  // Sem PublicOnlyRoute de propósito: o tenant é criado NO MEIO do fluxo, o que
+  // torna a sessão autenticada. Sob PublicOnlyRoute o usuário seria expulso pro
+  // dashboard exatamente no momento de mostrar o preview. O wizard antigo
+  // (`OnboardingPage`) continua vivo em /comecar/wizard como fallback.
+  {
+    element: <BuilderLayout />,
+    children: [
+      { path: paths.comecar, element: <BuilderChatPage /> },
+      { path: paths.comecarArquivos, element: <ArquivosPage /> },
+      { path: paths.comecarConta, element: <ContaPage /> },
+    ],
+  },
+  {
+    element: <PublicOnlyRoute />,
+    children: [
+      {
+        element: <AuthLayout />,
+        children: [{ path: paths.comecarWizard, element: <OnboardingPage /> }],
       },
     ],
   },

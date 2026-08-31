@@ -1,0 +1,85 @@
+.pagina {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 36px) clamp(14px, 4vw, 28px) 40px;
+}
+
+.titulo {
+  margin: 0 0 var(--space-5);
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.cartao {
+  @include card;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--bd-brand-gradient);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dados {
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+
+  dt {
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-muted-2);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-size: 14px;
+  }
+}
+
+.sair {
+  @include reset-button;
+  @include focus-ring;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line-strong);
+  font-size: 13px;
+  font-weight: 550;
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.vazio {
+  font-size: 13.5px;
+  color: var(--color-muted);
+
+  a {
+    color: var(--color-accent);
+  }
+}

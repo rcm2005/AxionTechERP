@@ -4,6 +4,7 @@ import {
   login as loginService,
   logout as logoutService,
   criarEscritorio as criarEscritorioService,
+  trocarEscritorio as trocarEscritorioService,
   type DadosOnboarding,
   type Sessao,
 } from '@/services/auth.service';
@@ -51,6 +52,8 @@ interface AuthContextValue {
   tenantBranding: TenantBranding | null;
   login: (email: string, senha: string) => Promise<void>;
   criarEscritorio: (dados: DadosOnboarding) => Promise<void>;
+  /** Troca o tenant ativo por outro em que este e-mail já é admin (sem senha). */
+  trocarEscritorio: (tenantId: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -126,6 +129,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [commitSessao]
   );
 
+  const trocarEscritorio = useCallback(
+    async (tenantId: string) => {
+      await commitSessao(await trocarEscritorioService(tenantId));
+    },
+    [commitSessao]
+  );
+
   const logout = useCallback(async () => {
     await logoutService();
     localStorage.removeItem(STORAGE_KEY);
@@ -145,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tenantBranding,
         login,
         criarEscritorio,
+        trocarEscritorio,
         logout,
       }}
     >
