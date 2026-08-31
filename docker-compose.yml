@@ -1,0 +1,7 @@
+services:
+  axion-erp:
+    build: .
+    container_name: axiontech-erp
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8085:80"
