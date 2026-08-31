@@ -38,7 +38,7 @@ const SIDEBAR_ITEMS: SidebarNavItem[] = [
 ];
 
 export function Sidebar() {
-  const { usuario, empresaAtivaId } = useAuth();
+  const { usuario, empresaAtivaId, tenantBranding } = useAuth();
 
   const empresaAtiva = useMemo(() => {
     if (!empresaAtivaId) return null;
@@ -46,6 +46,7 @@ export function Sidebar() {
   }, [empresaAtivaId]);
 
   const nomeEmpresa =
+    tenantBranding?.nomeExibicao ||
     empresaAtiva?.nomeFantasia ||
     empresaAtiva?.razaoSocial ||
     usuario?.escritorioContabilNome ||

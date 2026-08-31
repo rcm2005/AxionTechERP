@@ -1,6 +1,16 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Usuario } from '@/types';
 import { login as loginService, logout as logoutService } from '@/services/auth.service';
+import { getTenantBranding, type TenantBranding } from '@/services/tenant.service';
+
+function aplicarBranding(branding: TenantBranding | null) {
+  const root = document.documentElement;
+  if (branding?.corPrimaria) {
+    root.style.setProperty('--color-accent', branding.corPrimaria);
+  } else {
+    root.style.removeProperty('--color-accent');
+  }
+}
 
 const STORAGE_KEY = 'axionerp.session';
 
@@ -32,6 +42,7 @@ interface AuthContextValue {
   empresaAtivaId: string;
   setEmpresaAtivaId: (id: string) => void;
   isAuthenticated: boolean;
+  tenantBranding: TenantBranding | null;
   login: (email: string, senha: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -45,6 +56,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (initialSession?.empresaAtivaId) return initialSession.empresaAtivaId;
     return resolveDefaultEmpresaId(initialSession?.usuario ?? null);
   });
+  const [tenantBranding, setTenantBranding] = useState<TenantBranding | null>(null);
+
+  // Ao montar com uma sessão já guardada (refresh de página autenticado),
+  // busca o branding do tenant de novo — não fica persistido no storage.
+  useEffect(() => {
+    if (!initialSession?.usuario) return;
+    let cancelado = false;
+    getTenantBranding()
+      .then((branding) => {
+        if (!cancelado) setTenantBranding(branding);
+      })
+      .catch(() => {
+        // sessão pode ter expirado; deixa o ProtectedRoute/interceptor lidar com isso
+      });
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    aplicarBranding(tenantBranding);
+  }, [tenantBranding]);
 
   const setEmpresaAtivaId = useCallback((id: string) => {
     setEmpresaAtivaIdState(id);
@@ -65,6 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionToStore));
     setUsuario(sessao.usuario);
     setEmpresaAtivaIdState(defaultEmpresaId);
+    try {
+      setTenantBranding(await getTenantBranding());
+    } catch {
+      setTenantBranding(null);
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -73,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('lawerp.session');
     setUsuario(null);
     setEmpresaAtivaIdState('');
+    setTenantBranding(null);
   }, []);
 
   return (
@@ -82,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         empresaAtivaId,
         setEmpresaAtivaId,
         isAuthenticated: usuario !== null,
+        tenantBranding,
         login,
         logout,
       }}
