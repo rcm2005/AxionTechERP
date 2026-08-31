@@ -71,6 +71,10 @@ export interface DadosOnboarding {
   adminNome: string;
   adminEmail: string;
   adminPassword: string;
+  modulos?: {
+    contratos: boolean;
+    honorarioExito: boolean;
+  };
 }
 
 export async function criarEscritorio(dados: DadosOnboarding): Promise<Sessao> {

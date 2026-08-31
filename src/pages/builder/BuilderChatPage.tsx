@@ -24,6 +24,7 @@ type Fase =
   | 'nomeEscritorio'
   | 'cnpjOuCpf'
   | 'corPrimaria'
+  | 'modulos'
   | 'adminNome'
   | 'adminEmail'
   | 'adminPassword'
@@ -56,6 +57,8 @@ const PERGUNTAS: Partial<Record<Fase, string>> = {
   cnpjOuCpf: 'Qual o CNPJ do escritório? Se ainda não tem CNPJ, pode ser o seu CPF.',
   corPrimaria:
     'Escolha a cor da marca. Ela não é decoração: já vai aparecer no login e no dashboard do seu ERP.',
+  modulos:
+    'Seu escritório atua com contratos consultivos, trabalha com honorário de êxito, os dois, ou nenhum dos dois por enquanto?',
   adminNome: 'E como você se chama? Você vai ser o administrador deste escritório.',
   adminEmail: 'Qual e-mail você vai usar pra entrar?',
   adminPassword: 'Por fim, crie uma senha de no mínimo 8 caracteres.',
@@ -90,12 +93,21 @@ function esperar(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-type Dados = DadosOnboarding;
+type Dados = DadosOnboarding & {
+  modulos: {
+    contratos: boolean;
+    honorarioExito: boolean;
+  };
+};
 
 const DADOS_VAZIOS: Dados = {
   nomeEscritorio: '',
   cnpjOuCpf: '',
   corPrimaria: CORES_MARCA[0].valor,
+  modulos: {
+    contratos: false,
+    honorarioExito: false,
+  },
   adminNome: '',
   adminEmail: '',
   adminPassword: '',
@@ -130,7 +142,8 @@ function validar(fase: Fase, valor: string): string | null {
 const PROXIMA: Partial<Record<Fase, Fase>> = {
   nomeEscritorio: 'cnpjOuCpf',
   cnpjOuCpf: 'corPrimaria',
-  corPrimaria: 'adminNome',
+  corPrimaria: 'modulos',
+  modulos: 'adminNome',
   adminNome: 'adminEmail',
   adminEmail: 'adminPassword',
   adminPassword: 'revisao',
@@ -394,6 +407,18 @@ export function BuilderChatPage() {
   function escolherCor(valor: string, nome: string) {
     dizer('usuario', nome);
     setDados((d) => ({ ...d, corPrimaria: valor }));
+    irPara('modulos');
+  }
+
+  function alternarModulo(chave: 'contratos' | 'honorarioExito') {
+    setDados((d) => ({ ...d, modulos: { ...d.modulos, [chave]: !d.modulos[chave] } }));
+  }
+
+  function confirmarModulos() {
+    const rotulos: string[] = [];
+    if (dados.modulos.contratos) rotulos.push('Contratos consultivos');
+    if (dados.modulos.honorarioExito) rotulos.push('Honorário de êxito');
+    dizer('usuario', rotulos.length > 0 ? rotulos.join(' + ') : 'Nenhum módulo extra por enquanto');
     irPara('adminNome');
   }
 
@@ -473,6 +498,30 @@ export function BuilderChatPage() {
             </div>
           )}
 
+          {fase === 'modulos' && (
+            <div className={styles.respostasRapidas} role="group" aria-label="Módulos do escritório">
+              <button
+                type="button"
+                className={dados.modulos.contratos ? styles.moduloToggleAtivo : styles.moduloToggle}
+                aria-pressed={dados.modulos.contratos}
+                onClick={() => alternarModulo('contratos')}
+              >
+                Contratos consultivos
+              </button>
+              <button
+                type="button"
+                className={dados.modulos.honorarioExito ? styles.moduloToggleAtivo : styles.moduloToggle}
+                aria-pressed={dados.modulos.honorarioExito}
+                onClick={() => alternarModulo('honorarioExito')}
+              >
+                Honorário de êxito
+              </button>
+              <button type="button" className={styles.btnPrimario} onClick={confirmarModulos}>
+                Continuar
+              </button>
+            </div>
+          )}
+
           {fase === 'confirmarFallback' && (
             <div className={styles.respostasRapidas}>
               <button type="button" className={styles.btnPrimario} onClick={seguirComJuridico}>
@@ -502,6 +551,15 @@ export function BuilderChatPage() {
                       <dd className={styles.revisaoCor}>
                         <span className={styles.swatchMini} style={{ background: dados.corPrimaria }} />
                         {CORES_MARCA.find((c) => c.valor === dados.corPrimaria)?.nome}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Módulos</dt>
+                      <dd>
+                        {[
+                          dados.modulos.contratos && 'Contratos consultivos',
+                          dados.modulos.honorarioExito && 'Honorário de êxito',
+                        ].filter(Boolean).join(' + ') || 'Nenhum módulo extra'}
                       </dd>
                     </div>
                     <div>
