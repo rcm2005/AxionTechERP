@@ -42,7 +42,12 @@ interface StoredSession {
 
 function readStoredSession(): StoredSession | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('lawerp.session');
+    // Só a chave atual conta como sessão válida — http.ts (readStoredToken)
+    // só lê 'axionerp.session'. Uma sessão só existindo em 'lawerp.session'
+    // (chave legada, de antes do produto se chamar Axion) faz isAuthenticated
+    // ficar true aqui mas o token nunca sair nas requisições reais, travando
+    // o app num 401 cru em vez de deslogar de verdade (ver BARRIERS B24).
+    const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as StoredSession) : null;
   } catch {
     return null;
@@ -151,12 +156,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    await logoutService();
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem('lawerp.session');
-    setUsuario(null);
-    setEmpresaAtivaIdState('');
-    setTenantConfig(null);
+    // Limpeza local sempre roda, mesmo se a chamada ao servidor falhar (rede
+    // fora, token já expirado, 500) — sem o finally, uma falha em
+    // logoutService() deixava a sessão travada no cliente pra sempre
+    // (ver BARRIERS B24, achado #6 da auditoria).
+    try {
+      await logoutService();
+    } finally {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('lawerp.session');
+      setUsuario(null);
+      setEmpresaAtivaIdState('');
+      setTenantConfig(null);
+    }
   }, []);
 
   const tenantBranding = tenantConfig?.branding ?? null;
