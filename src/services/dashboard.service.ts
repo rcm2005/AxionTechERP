@@ -1,8 +1,8 @@
 import type { Alerta, KpiResumo } from '@/types';
-import { db } from '@/mocks';
 import { formatBRL } from '@/utils/format';
-import { calcularResumoFinanceiro } from './financeiro.service';
-import { USE_MOCKS, delay } from './mockAdapter';
+import { listarClientes } from './clientes.service';
+import { calcularResumoFinanceiro, listarLancamentos } from './financeiro.service';
+import { delay } from './mockAdapter';
 
 export interface DashboardResumo {
   kpis: KpiResumo[];
@@ -11,16 +11,14 @@ export interface DashboardResumo {
 
 export async function buscarResumoDashboard(): Promise<DashboardResumo> {
   await delay();
-  if (!USE_MOCKS) {
-    throw new Error('Integração com API real ainda não implementada.');
-  }
+  const lancamentos = await listarLancamentos();
+  const clientes = await listarClientes();
 
-  const resumoFinanceiro = calcularResumoFinanceiro(db.lancamentos);
-  const clientesAtivos = db.pessoas.filter((p) => p.relacao === 'cliente' || p.relacao === 'ambos');
-  const clientesInadimplentes = db.pessoas.filter(
+  const resumoFinanceiro = calcularResumoFinanceiro(lancamentos);
+  const clientesAtivos = clientes.filter((p) => p.relacao === 'cliente' || p.relacao === 'ambos');
+  const clientesInadimplentes = clientes.filter(
     (p) => p.situacaoCredito === 'inadimplente' || p.valorEmAtrasoCentavos > 0,
   );
-  const produtosAbaixoMinimo = db.produtos.filter((p) => p.estoqueAtual <= p.estoqueMinimo);
 
   const kpis: KpiResumo[] = [
     {
@@ -51,7 +49,7 @@ export async function buscarResumoDashboard(): Promise<DashboardResumo> {
       id: 'carteira-clientes',
       label: 'Clientes & Parceiros',
       valor: String(clientesAtivos.length),
-      sub: `${db.pessoas.length} cadastros totais`,
+      sub: `${clientes.length} cadastros totais`,
       tipo: 'vendas',
     },
   ];
@@ -64,15 +62,6 @@ export async function buscarResumoDashboard(): Promise<DashboardResumo> {
       descricao: `Montante total em atraso: ${formatBRL(resumoFinanceiro.emAtrasoCentavos)}.`,
       tone: 'danger',
       modulo: 'financeiro',
-    });
-  }
-  if (produtosAbaixoMinimo.length > 0) {
-    alertas.push({
-      id: 'alerta-estoque',
-      titulo: `${produtosAbaixoMinimo.length} item(ns) abaixo do estoque mínimo`,
-      descricao: 'SKUs necessitam de reposição imediata no almoxarifado.',
-      tone: 'warning',
-      modulo: 'estoque',
     });
   }
 
