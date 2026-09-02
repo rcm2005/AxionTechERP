@@ -43,11 +43,11 @@ const PLANS: Plan[] = [
       'Suporte comunitário e base de conhecimento',
     ],
     limits: {
-      usuarios: '1',
-      armazenamento: '500 MB',
-      projetos: '3',
-      ia: 'Básico (sugestões)',
-      suporte: 'Comunidade',
+      users: '1',
+      storage: '500 MB',
+      projects: '3',
+      ai: 'Básico (sugestões)',
+      support: 'Comunidade',
     },
   },
   {
@@ -70,11 +70,11 @@ const PLANS: Plan[] = [
       'Suporte prioritário via chat e e-mail',
     ],
     limits: {
-      usuarios: '5',
-      armazenamento: '20 GB',
-      projetos: 'Ilimitados',
-      ia: 'Avançado com previsões',
-      suporte: 'Prioritário (chat e e-mail)',
+      users: '5',
+      storage: '20 GB',
+      projects: 'Ilimitados',
+      ai: 'Avançado com previsões',
+      support: 'Prioritário (chat e e-mail)',
     },
   },
   {
@@ -97,11 +97,11 @@ const PLANS: Plan[] = [
       'Gerente de contas dedicado + SLA 99.9%',
     ],
     limits: {
-      usuarios: 'Ilimitado',
-      armazenamento: '500 GB',
-      projetos: 'Ilimitados',
-      ia: 'Completa + Copilot Custom',
-      suporte: 'Dedicado 24/7 + SLA',
+      users: 'Ilimitado',
+      storage: '500 GB',
+      projects: 'Ilimitados',
+      ai: 'Completa + Copilot Custom',
+      support: 'Dedicado 24/7 + SLA',
     },
   },
 ];
@@ -164,7 +164,7 @@ export function PlanosPage() {
     setOpenFaqIndex((prev) => (prev === index ? null : index));
   };
 
-  // ── 1. Tela de Upgrade / Checkout ──────────────────────────────────────────
+  // ── 1. Upgrade / Checkout Screen ──────────────────────────────────────────
   if (view === 'upgrade' && selectedPlan) {
     return (
       <section className={styles.pageRoot}>
@@ -182,7 +182,7 @@ export function PlanosPage() {
     );
   }
 
-  // ── 2. Tela de Sucesso ─────────────────────────────────────────────────────
+  // ── 2. Success Screen ─────────────────────────────────────────────────────
   if (view === 'done' && selectedPlan) {
     return (
       <section className={styles.pageRoot}>
@@ -205,15 +205,15 @@ export function PlanosPage() {
 
           <div className={styles.successPlanCard}>
             <div className={styles.statItem}>
-              <strong>{selectedPlan.limits.usuarios}</strong>
+              <strong>{selectedPlan.limits.users}</strong>
               <span>Usuários inclusos</span>
             </div>
             <div className={styles.statItem}>
-              <strong>{selectedPlan.limits.armazenamento}</strong>
+              <strong>{selectedPlan.limits.storage}</strong>
               <span>Armazenamento</span>
             </div>
             <div className={styles.statItem}>
-              <strong>{selectedPlan.limits.projetos}</strong>
+              <strong>{selectedPlan.limits.projects}</strong>
               <span>Projetos liberados</span>
             </div>
           </div>
@@ -231,7 +231,7 @@ export function PlanosPage() {
     );
   }
 
-  // ── 3. Tela Principal de Planos ────────────────────────────────────────────
+  // ── 3. Main Plans Screen ────────────────────────────────────────────
   return (
     <section className={styles.pageRoot}>
       <PageHead
@@ -239,7 +239,7 @@ export function PlanosPage() {
         subtitle="Gerencie os limites do seu SaaS"
       />
 
-      {/* Banner de Limites e Uso da Conta Atual */}
+      {/* Current Account Limits and Usage Banner */}
       <div className={styles.usageCard}>
         <div className={styles.usageHeader}>
           <div className={styles.usageTitleGroup}>
@@ -294,7 +294,7 @@ export function PlanosPage() {
         </div>
       </div>
 
-      {/* Toggle Mensal / Anual */}
+      {/* Monthly / Annual Toggle */}
       <div className={styles.toggleWrapper}>
         <div className={styles.toggleContainer}>
           <button
@@ -319,7 +319,7 @@ export function PlanosPage() {
         </div>
       </div>
 
-      {/* Grid de Cards dos Planos */}
+      {/* Plan Cards Grid */}
       <div className={styles.plansGrid}>
         {PLANS.map((plan) => (
           <PlanCard
@@ -331,7 +331,7 @@ export function PlanosPage() {
         ))}
       </div>
 
-      {/* Benefícios e Garantias Institucionais */}
+      {/* Institutional Benefits and Guarantees */}
       <div className={styles.trustSection}>
         <div className={styles.trustCard}>
           <div className={styles.trustIconBox}>
@@ -374,7 +374,7 @@ export function PlanosPage() {
         </div>
       </div>
 
-      {/* Tabela de Comparação Detalhada */}
+      {/* Detailed Comparison Table */}
       <div className={styles.comparisonSection}>
         <div className={styles.comparisonHeader}>
           <h2>Comparação Detalhada de Recursos</h2>
@@ -394,7 +394,7 @@ export function PlanosPage() {
               </tr>
             </thead>
             <tbody>
-              {/* Categoria 1: Limites */}
+              {/* Category 1: Limits */}
               <tr className={styles.categoryHeaderRow}>
                 <td colSpan={4}>Limites e Capacidade</td>
               </tr>
@@ -427,7 +427,7 @@ export function PlanosPage() {
                 <td>Ilimitados</td>
               </tr>
 
-              {/* Categoria 2: Inteligência Artificial */}
+              {/* Category 2: Artificial Intelligence */}
               <tr className={styles.categoryHeaderRow}>
                 <td colSpan={4}>Inteligência Artificial & Copilot</td>
               </tr>
@@ -462,7 +462,7 @@ export function PlanosPage() {
                 </td>
               </tr>
 
-              {/* Categoria 3: Módulos e Fiscal */}
+              {/* Category 3: Modules and Fiscal */}
               <tr className={styles.categoryHeaderRow}>
                 <td colSpan={4}>Módulos e Operações</td>
               </tr>
@@ -509,7 +509,7 @@ export function PlanosPage() {
                 <td>Completo + API de Dados</td>
               </tr>
 
-              {/* Categoria 4: Suporte */}
+              {/* Category 4: Support */}
               <tr className={styles.categoryHeaderRow}>
                 <td colSpan={4}>Suporte e Atendimento</td>
               </tr>
@@ -530,7 +530,7 @@ export function PlanosPage() {
         </div>
       </div>
 
-      {/* Seção FAQ */}
+      {/* FAQ Section */}
       <div className={styles.faqSection}>
         <div className={styles.faqHeader}>
           <h3>Perguntas Frequentes sobre Assinatura</h3>

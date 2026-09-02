@@ -27,7 +27,7 @@ interface SidebarNavItem {
   icon: typeof LayoutDashboard;
 }
 
-const ITENS_CANONICOS: Record<string, { path: string; icon: typeof LayoutDashboard }> = {
+const CANONICAL_ITEMS: Record<string, { path: string; icon: typeof LayoutDashboard }> = {
   dashboard: { path: '/dashboard', icon: LayoutDashboard },
   copilot: { path: '/copilot', icon: Bot },
   processos: { path: '/processos', icon: Scale },
@@ -56,35 +56,35 @@ const DEFAULT_SIDEBAR_ITEMS: SidebarNavItem[] = [
 export function Sidebar() {
   const { usuario, empresaAtivaId, tenantBranding, tenantNavegacao } = useAuth();
 
-  const empresaAtiva = useMemo(() => {
+  const activeCompany = useMemo(() => {
     if (!empresaAtivaId) return null;
     return db.tenants.find((t) => t.id === empresaAtivaId);
   }, [empresaAtivaId]);
 
-  const itens = useMemo<SidebarNavItem[]>(() => {
+  const items = useMemo<SidebarNavItem[]>(() => {
     if (!tenantNavegacao) {
       return DEFAULT_SIDEBAR_ITEMS;
     }
 
-    const resultado: SidebarNavItem[] = [];
+    const result: SidebarNavItem[] = [];
     for (const item of tenantNavegacao) {
       if (!item.visivel) continue;
-      const canonico = ITENS_CANONICOS[item.id];
-      if (!canonico) continue;
-      resultado.push({
+      const canonicalItem = CANONICAL_ITEMS[item.id];
+      if (!canonicalItem) continue;
+      result.push({
         id: item.id,
-        path: canonico.path,
+        path: canonicalItem.path,
         label: item.label,
-        icon: canonico.icon,
+        icon: canonicalItem.icon,
       });
     }
-    return resultado;
+    return result;
   }, [tenantNavegacao]);
 
-  const nomeEmpresa =
+  const companyName =
     tenantBranding?.nomeExibicao ||
-    empresaAtiva?.nomeFantasia ||
-    empresaAtiva?.razaoSocial ||
+    activeCompany?.nomeFantasia ||
+    activeCompany?.razaoSocial ||
     usuario?.escritorioContabilNome ||
     'Empresa Ativa';
 
@@ -101,7 +101,7 @@ export function Sidebar() {
       </div>
 
       <nav className={styles.nav} aria-label="Navegação principal">
-        {itens.map((item) => {
+        {items.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
@@ -128,8 +128,8 @@ export function Sidebar() {
             <span className={styles.userName}>
               {usuario?.nomeExibicao ?? usuario?.nome ?? 'Administrador'}
             </span>
-            <span className={styles.userRole} title={nomeEmpresa}>
-              {nomeEmpresa}
+            <span className={styles.userRole} title={companyName}>
+              {companyName}
             </span>
           </div>
         </div>

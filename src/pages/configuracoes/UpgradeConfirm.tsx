@@ -31,7 +31,7 @@ export function UpgradeConfirm({
   onBack,
   onSuccess,
 }: UpgradeConfirmProps) {
-  const { usuario } = useAuth();
+  const { usuario: user } = useAuth();
   const toast = useToast();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('credit_card');
@@ -42,7 +42,7 @@ export function UpgradeConfirm({
   // Form state
   const [cardNumber, setCardNumber] = useState('4532 •••• •••• 8892');
   const [cardName, setCardName] = useState(
-    usuario?.nomeExibicao || usuario?.nome || 'EMPRESA SA'
+    user?.nomeExibicao || user?.nome || 'EMPRESA SA'
   );
   const [cardExpiry, setCardExpiry] = useState('12/29');
   const [cardCvv, setCardCvv] = useState('382');
@@ -88,7 +88,7 @@ export function UpgradeConfirm({
       </button>
 
       <form className={styles.checkoutGrid} onSubmit={handleConfirmUpgrade}>
-        {/* Coluna Esquerda: Dados de Pagamento */}
+        {/* Left Column: Payment Details */}
         <div className={styles.formPanel}>
           <div>
             <h2 className={styles.panelTitle}>Método de Pagamento</h2>
@@ -97,7 +97,7 @@ export function UpgradeConfirm({
             </p>
           </div>
 
-          {/* Abas de seleção de método */}
+          {/* Method selection tabs */}
           <div className={styles.paymentTabs}>
             <button
               type="button"
@@ -134,7 +134,7 @@ export function UpgradeConfirm({
             </button>
           </div>
 
-          {/* Conteúdo específico de cada forma */}
+          {/* Specific content for each method */}
           {paymentMethod === 'credit_card' && (
             <div className={styles.formSection}>
               <div className={styles.fieldGroup}>
@@ -262,7 +262,7 @@ export function UpgradeConfirm({
             </div>
           )}
 
-          {/* Termos */}
+          {/* Terms */}
           <label className={styles.termsRow}>
             <input
               type="checkbox"
@@ -275,7 +275,7 @@ export function UpgradeConfirm({
           </label>
         </div>
 
-        {/* Coluna Direita: Resumo do Pedido */}
+        {/* Right Column: Order Summary */}
         <div className={styles.summaryPanel}>
           <div className={styles.summaryHeader}>
             <span className={styles.selectedPlanBadge}>Plano Escolhido</span>

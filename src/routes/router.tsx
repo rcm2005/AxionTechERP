@@ -75,7 +75,7 @@ export const router = createBrowserRouter([
           { path: paths.dashboard, element: <DashboardPage /> },
           { path: paths.copilot, element: <CopilotPage /> },
           { path: paths.financeiro, element: <FinanceiroPage /> },
-          { path: paths.fiscal, element: <PlaceholderPage moduloOverride="fiscal" /> },
+          { path: paths.fiscal, element: <PlaceholderPage moduleOverride="fiscal" /> },
           { path: paths.clientes, element: <ClientesPage /> },
           { path: `${paths.clientes}/:clienteId`, element: <ClienteDetailPage /> },
           { path: paths.processos, element: <ProcessosPage /> },

@@ -15,11 +15,11 @@ export interface Plan {
   current?: boolean;
   features: string[];
   limits: {
-    usuarios: string;
-    armazenamento: string;
-    projetos: string;
-    ia: string;
-    suporte: string;
+    users: string;
+    storage: string;
+    projects: string;
+    ai: string;
+    support: string;
   };
 }
 
@@ -42,7 +42,7 @@ export function PlanCard({ plan, billingCycle, onSelect }: PlanCardProps) {
         plan.current && styles.current,
       )}
     >
-      {/* Badges superiores */}
+      {/* Top badges */}
       {plan.highlighted && (
         <span className={styles.topBadge}>
           <Sparkles size={12} style={{ display: 'inline', marginRight: 4 }} />
@@ -53,13 +53,13 @@ export function PlanCard({ plan, billingCycle, onSelect }: PlanCardProps) {
         <span className={styles.currentBadge}>Plano Atual</span>
       )}
 
-      {/* Cabeçalho */}
+      {/* Header */}
       <div className={styles.header}>
         <h3 className={styles.planName}>{plan.name}</h3>
         <p className={styles.planDesc}>{plan.description}</p>
       </div>
 
-      {/* Preço */}
+      {/* Price */}
       <div className={styles.priceWrapper}>
         <div className={styles.priceRow}>
           {isFree ? (
@@ -87,7 +87,7 @@ export function PlanCard({ plan, billingCycle, onSelect }: PlanCardProps) {
         )}
       </div>
 
-      {/* Ação */}
+      {/* Action */}
       <div className={styles.ctaWrapper}>
         {plan.current ? (
           <Button variant="ghost" disabled style={{ opacity: 0.85, cursor: 'default' }}>
@@ -103,7 +103,7 @@ export function PlanCard({ plan, billingCycle, onSelect }: PlanCardProps) {
         )}
       </div>
 
-      {/* Recursos inclusos */}
+      {/* Included features */}
       <div className={styles.featuresSection}>
         <span className={styles.featuresTitle}>O que está incluso:</span>
         <ul className={styles.featureList}>

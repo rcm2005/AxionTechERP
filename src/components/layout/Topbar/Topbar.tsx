@@ -18,21 +18,21 @@ export function Topbar() {
   const location = useLocation();
   const { usuario, empresaAtivaId, setEmpresaAtivaId, logout, tenantBranding, trocarEscritorio } = useAuth();
   const toast = useToast();
-  const [busca, setBusca] = useState('');
-  const [menuAberto, setMenuAberto] = useState(false);
+  const [search, setSearch] = useState('');
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
 
-  const paginaAtual = NAV_ITEMS.find((item) =>
+  const currentPage = NAV_ITEMS.find((item) =>
     item.path === '/dashboard'
       ? location.pathname === '/dashboard' || location.pathname === '/'
       : location.pathname.startsWith(item.path),
   );
 
-  const temPortfolioMultiplo = (usuario?.portfolioTenantIds?.length ?? 0) >= 2;
-  const podeTrocarEmpresa = USE_MOCKS || temPortfolioMultiplo;
+  const hasMultiplePortfolio = (usuario?.portfolioTenantIds?.length ?? 0) >= 2;
+  const canSwitchCompany = USE_MOCKS || hasMultiplePortfolio;
 
-  // Lista de empresas acessíveis ao usuário (modo mock)
-  const empresasAcessiveis = useMemo(() => {
+  // List of companies accessible to the user (mock mode)
+  const accessibleCompanies = useMemo(() => {
     if (!USE_MOCKS) return [];
     if (!usuario) return [];
     const ids = Array.from(
@@ -44,53 +44,53 @@ export function Topbar() {
     if (ids.length === 0) {
       return db.tenants;
     }
-    const filtradas = db.tenants.filter((t) => ids.includes(t.id));
-    return filtradas.length > 0 ? filtradas : db.tenants;
+    const filtered = db.tenants.filter((t) => ids.includes(t.id));
+    return filtered.length > 0 ? filtered : db.tenants;
   }, [usuario]);
 
-  // Empresa ativa atual (modo mock)
-  const empresaAtiva = useMemo(() => {
+  // Current active company (mock mode)
+  const activeCompany = useMemo(() => {
     if (!USE_MOCKS) return null;
     return (
-      empresasAcessiveis.find((t) => t.id === empresaAtivaId) ??
-      empresasAcessiveis[0] ??
+      accessibleCompanies.find((t) => t.id === empresaAtivaId) ??
+      accessibleCompanies[0] ??
       null
     );
-  }, [empresasAcessiveis, empresaAtivaId]);
+  }, [accessibleCompanies, empresaAtivaId]);
 
-  // Lista de escritórios reais para usuários com 2+ tenants em portfolioTenantIds (modo real)
-  const [escritorios, setEscritorios] = useState<EscritorioDaConta[]>([]);
+  // List of real firms for users with 2+ tenants in portfolioTenantIds (real mode)
+  const [firms, setFirms] = useState<EscritorioDaConta[]>([]);
 
   useEffect(() => {
-    if (USE_MOCKS || !usuario || !temPortfolioMultiplo) return;
+    if (USE_MOCKS || !usuario || !hasMultiplePortfolio) return;
 
-    let ativo = true;
+    let active = true;
     listarMeusEscritorios()
-      .then((lista) => {
-        if (ativo) {
-          setEscritorios(lista);
+      .then((list) => {
+        if (active) {
+          setFirms(list);
         }
       })
       .catch(() => {
-        if (ativo) {
-          setEscritorios([]);
+        if (active) {
+          setFirms([]);
         }
       });
 
     return () => {
-      ativo = false;
+      active = false;
     };
-  }, [usuario, temPortfolioMultiplo]);
+  }, [usuario, hasMultiplePortfolio]);
 
-  // Nome da empresa ativa (modo real / mock) com fallbacks
-  const nomeEmpresaAtiva = useMemo(() => {
+  // Active company name (real / mock mode) with fallbacks
+  const activeCompanyName = useMemo(() => {
     if (USE_MOCKS) {
-      return empresaAtiva?.nomeFantasia || empresaAtiva?.razaoSocial || '';
+      return activeCompany?.nomeFantasia || activeCompany?.razaoSocial || '';
     }
-    if (temPortfolioMultiplo) {
-      const ativa = escritorios.find((e) => e.id === empresaAtivaId) ?? escritorios[0];
+    if (hasMultiplePortfolio) {
+      const activeFirm = firms.find((e) => e.id === empresaAtivaId) ?? firms[0];
       return (
-        ativa?.nomeExibicao ||
+        activeFirm?.nomeExibicao ||
         tenantBranding?.nomeExibicao ||
         usuario?.escritorioContabilNome ||
         'Empresa Ativa'
@@ -102,16 +102,16 @@ export function Topbar() {
       'Empresa Ativa'
     );
   }, [
-    empresaAtiva,
-    temPortfolioMultiplo,
-    escritorios,
+    activeCompany,
+    hasMultiplePortfolio,
+    firms,
     empresaAtivaId,
     tenantBranding,
     usuario,
   ]);
 
-  // Notificações reais: chamada silenciosa a listEntries() quando !USE_MOCKS
-  const { data: lancamentosReais } = useAsync(
+  // Real notifications: silent call to listEntries() when !USE_MOCKS
+  const { data: realEntries } = useAsync(
     async () => {
       if (USE_MOCKS) return [];
       try {
@@ -123,10 +123,10 @@ export function Topbar() {
     [empresaAtivaId],
   );
 
-  // Notificações: títulos em atraso ou alertas da empresa ativa
-  const notificacoes = useMemo(() => {
-    const lancamentos = USE_MOCKS ? (db.lancamentos ?? []) : (lancamentosReais ?? []);
-    return lancamentos
+  // Notifications: overdue entries or active company alerts
+  const notifications = useMemo(() => {
+    const entries = USE_MOCKS ? (db.lancamentos ?? []) : (realEntries ?? []);
+    return entries
       .filter(
         (l) =>
           l.status === 'atrasado' &&
@@ -138,20 +138,20 @@ export function Topbar() {
         meta: `${formatBRL(l.valorCentavos)} • Vencimento ${formatDate(l.vencimento)}`,
         prioridade: 'urgente' as const,
       }));
-  }, [empresaAtivaId, lancamentosReais]);
+  }, [empresaAtivaId, realEntries]);
 
   function handleSearch(event: FormEvent) {
     event.preventDefault();
-    if (busca.trim()) {
-      toast.show(`Pesquisa por "${busca.trim()}" no ERP`);
+    if (search.trim()) {
+      toast.show(`Pesquisa por "${search.trim()}" no ERP`);
     }
   }
 
   return (
     <header className={styles.root}>
       <div className={styles.crumb}>
-        {(USE_MOCKS ? empresaAtiva?.nomeFantasia : nomeEmpresaAtiva) || 'Axion ERP'} /{' '}
-        <strong>{paginaAtual?.label ?? 'Dashboard'}</strong>
+        {(USE_MOCKS ? activeCompany?.nomeFantasia : activeCompanyName) || 'Axion ERP'} /{' '}
+        <strong>{currentPage?.label ?? 'Dashboard'}</strong>
       </div>
 
       <div className={styles.actions}>
@@ -160,19 +160,19 @@ export function Topbar() {
           <input
             className={styles.search}
             placeholder="Pesquisar no ERP..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </form>
 
         {/* Tenant Switcher */}
         <div
           className={styles.tenantSwitcher}
-          title={podeTrocarEmpresa ? 'Alternar Empresa Ativa' : undefined}
+          title={canSwitchCompany ? 'Alternar Empresa Ativa' : undefined}
         >
           <Building2 size={16} className={styles.tenantIcon} />
           <div className={styles.tenantSelectWrap}>
-            {podeTrocarEmpresa ? (
+            {canSwitchCompany ? (
               <>
                 <label htmlFor="tenant-select" className={styles.tenantLabel}>
                   Empresa
@@ -182,24 +182,24 @@ export function Topbar() {
                   className={styles.tenantSelect}
                   value={
                     USE_MOCKS
-                      ? empresaAtivaId || (empresasAcessiveis[0]?.id ?? '')
-                      : empresaAtivaId || (escritorios[0]?.id ?? '')
+                      ? empresaAtivaId || (accessibleCompanies[0]?.id ?? '')
+                      : empresaAtivaId || (firms[0]?.id ?? '')
                   }
                   onChange={(e) => {
-                    const novoId = e.target.value;
+                    const newId = e.target.value;
                     if (USE_MOCKS) {
-                      setEmpresaAtivaId(novoId);
-                      const selecionada = empresasAcessiveis.find((t) => t.id === novoId);
-                      if (selecionada) {
-                        toast.show(`Empresa ativa: ${selecionada.nomeFantasia || selecionada.razaoSocial}`);
+                      setEmpresaAtivaId(newId);
+                      const selected = accessibleCompanies.find((t) => t.id === newId);
+                      if (selected) {
+                        toast.show(`Empresa ativa: ${selected.nomeFantasia || selected.razaoSocial}`);
                       }
                     } else {
                       void (async () => {
                         try {
-                          await trocarEscritorio(novoId);
-                          const selecionada = escritorios.find((t) => t.id === novoId);
-                          if (selecionada) {
-                            toast.show(`Empresa ativa: ${selecionada.nomeExibicao}`);
+                          await trocarEscritorio(newId);
+                          const selected = firms.find((t) => t.id === newId);
+                          if (selected) {
+                            toast.show(`Empresa ativa: ${selected.nomeExibicao}`);
                           }
                         } catch {
                           toast.show('Não foi possível trocar de empresa.');
@@ -210,19 +210,19 @@ export function Topbar() {
                   aria-label="Selecionar Empresa / Tenant Ativo"
                 >
                   {USE_MOCKS ? (
-                    empresasAcessiveis.map((empresa) => (
-                      <option key={empresa.id} value={empresa.id}>
-                        {empresa.nomeFantasia || empresa.razaoSocial}
+                    accessibleCompanies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.nomeFantasia || company.razaoSocial}
                       </option>
                     ))
-                  ) : escritorios.length > 0 ? (
-                    escritorios.map((empresa) => (
-                      <option key={empresa.id} value={empresa.id}>
-                        {empresa.nomeExibicao}
+                  ) : firms.length > 0 ? (
+                    firms.map((firm) => (
+                      <option key={firm.id} value={firm.id}>
+                        {firm.nomeExibicao}
                       </option>
                     ))
                   ) : (
-                    <option value={empresaAtivaId || ''}>{nomeEmpresaAtiva}</option>
+                    <option value={empresaAtivaId || ''}>{activeCompanyName}</option>
                   )}
                 </select>
               </>
@@ -233,15 +233,15 @@ export function Topbar() {
                   className={styles.tenantSelect}
                   style={{ cursor: 'default', paddingRight: 0 }}
                 >
-                  {nomeEmpresaAtiva}
+                  {activeCompanyName}
                 </span>
               </>
             )}
           </div>
-          {podeTrocarEmpresa && <ChevronDown size={14} className={styles.tenantChevron} />}
+          {canSwitchCompany && <ChevronDown size={14} className={styles.tenantChevron} />}
         </div>
 
-        {/* Sino de notificações */}
+        {/* Notification bell */}
         <div className={styles.notifWrap}>
           <button
             type="button"
@@ -249,11 +249,11 @@ export function Topbar() {
             onClick={() => setNotifOpen((v) => !v)}
             aria-haspopup="true"
             aria-expanded={notifOpen}
-            aria-label={`Notificações${notificacoes.length > 0 ? ` (${notificacoes.length})` : ''}`}
+            aria-label={`Notificações${notifications.length > 0 ? ` (${notifications.length})` : ''}`}
           >
             <Bell size={18} className={styles.notifIcon} />
-            {notificacoes.length > 0 && (
-              <span className={styles.badge}>{notificacoes.length}</span>
+            {notifications.length > 0 && (
+              <span className={styles.badge}>{notifications.length}</span>
             )}
           </button>
 
@@ -261,13 +261,13 @@ export function Topbar() {
             <div className={styles.notifDropdown}>
               <div className={styles.notifHeader}>
                 <strong>Notificações</strong>
-                <span className={styles.notifCount}>{notificacoes.length} pendentes</span>
+                <span className={styles.notifCount}>{notifications.length} pendentes</span>
               </div>
-              {notificacoes.length === 0 ? (
+              {notifications.length === 0 ? (
                 <div className={styles.notifEmpty}>Nenhuma notificação urgente.</div>
               ) : (
                 <ul className={styles.notifList}>
-                  {notificacoes.map((item) => (
+                  {notifications.map((item) => (
                     <li key={item.id} className={styles.notifItem}>
                       <span
                         className={styles.notifDot}
@@ -285,31 +285,31 @@ export function Topbar() {
           )}
         </div>
 
-        {/* Menu do Usuário */}
+        {/* User menu */}
         <div className={styles.userMenu}>
           <button
             type="button"
             className={styles.avatarButton}
-            onClick={() => setMenuAberto((v) => !v)}
+            onClick={() => setUserMenuOpen((v) => !v)}
             aria-haspopup="menu"
-            aria-expanded={menuAberto}
+            aria-expanded={userMenuOpen}
             aria-label="Menu do Usuário"
           >
             <Avatar iniciais={usuario?.iniciais ?? '--'} />
           </button>
 
-          {menuAberto && (
+          {userMenuOpen && (
             <div className={styles.menu} role="menu">
               <div className={styles.menuHeader}>
                 <div className={styles.menuName}>{usuario?.nomeExibicao || usuario?.nome}</div>
                 <div className={styles.menuEmail}>{usuario?.email}</div>
-                {(USE_MOCKS ? Boolean(empresaAtiva) : Boolean(nomeEmpresaAtiva)) && (
+                {(USE_MOCKS ? Boolean(activeCompany) : Boolean(activeCompanyName)) && (
                   <div className={styles.menuTenant}>
                     <Building2 size={12} />
                     <span>
                       {USE_MOCKS
-                        ? empresaAtiva?.nomeFantasia || empresaAtiva?.razaoSocial
-                        : nomeEmpresaAtiva}
+                        ? activeCompany?.nomeFantasia || activeCompany?.razaoSocial
+                        : activeCompanyName}
                     </span>
                   </div>
                 )}
@@ -317,12 +317,12 @@ export function Topbar() {
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setMenuAberto(false);
+                  setUserMenuOpen(false);
                   void (async () => {
                     try {
                       await logout();
                     } catch {
-                      // cleanup local de sessão já é garantido dentro do próprio logout() (ver AuthContext)
+                      // local session cleanup is already guaranteed inside logout() itself (see AuthContext)
                     }
                   })();
                 }}
