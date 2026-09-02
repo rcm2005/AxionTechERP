@@ -14,13 +14,21 @@ import {
   type NavItem,
   type TenantConfig,
 } from '@/services/tenant.service';
+import { derivarPaletaAccent } from '@/utils/paletaAccent';
 
 function aplicarBranding(branding: TenantBranding | null) {
   const root = document.documentElement;
   if (branding?.corPrimaria) {
     root.style.setProperty('--color-accent', branding.corPrimaria);
+    const paleta = derivarPaletaAccent(branding.corPrimaria);
+    root.style.setProperty('--color-accent-hover', paleta.accentHover);
+    root.style.setProperty('--color-accent-dim', paleta.accentDim);
+    root.style.setProperty('--color-on-accent', paleta.onAccent);
   } else {
     root.style.removeProperty('--color-accent');
+    root.style.removeProperty('--color-accent-hover');
+    root.style.removeProperty('--color-accent-dim');
+    root.style.removeProperty('--color-on-accent');
   }
 }
 
