@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button/Button';
 import { Toolbar } from '@/components/ui/Toolbar/Toolbar';
 import { SelectField } from '@/components/ui/SelectField/SelectField';
 import { Card } from '@/components/ui/Card/Card';
+import { Alert } from '@/components/ui/Alert/Alert';
 import { KpiCard } from '@/components/ui/KpiCard/KpiCard';
 import { DataTable } from '@/components/ui/DataTable/DataTable';
 import { criarPrazosColumns } from '@/components/prazos/prazosColumns';
@@ -41,7 +42,7 @@ export function PrazosPage() {
   const [novoOpen, setNovoOpen] = useState(false);
   const [salvandoId, setSalvandoId] = useState<string>();
 
-  const { data: prazos, loading, reload } = usePrazos({ status });
+  const { data: prazos, loading, error, reload } = usePrazos({ status });
   const { data: processos } = useProcessos();
 
   const rotuloProcesso = useMemo(() => {
@@ -102,45 +103,60 @@ export function PrazosPage() {
         }
       />
 
-      <div className={styles.kpis}>
-        <KpiCard label="Prazos pendentes" value={String(resumo.pendentes)} />
-        <KpiCard
-          label="Vencendo em até 3 dias"
-          value={String(resumo.criticos)}
-          sub={resumo.criticos > 0 ? 'Exigem ação imediata' : 'Nada crítico agora'}
-          subTone={resumo.criticos > 0 ? 'red' : 'green'}
+      {error ? (
+        <Alert
+          tone="danger"
+          title="Erro ao carregar dados"
+          description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+          action={
+            <Button variant="ghost" onClick={reload}>
+              Tentar novamente
+            </Button>
+          }
         />
-        <KpiCard
-          label="Já vencidos e pendentes"
-          value={String(resumo.vencidos)}
-          sub={resumo.vencidos > 0 ? 'Verificar perda de prazo' : 'Nenhum em atraso'}
-          subTone={resumo.vencidos > 0 ? 'red' : 'green'}
-        />
-      </div>
+      ) : (
+        <>
+          <div className={styles.kpis}>
+            <KpiCard label="Prazos pendentes" value={String(resumo.pendentes)} />
+            <KpiCard
+              label="Vencendo em até 3 dias"
+              value={String(resumo.criticos)}
+              sub={resumo.criticos > 0 ? 'Exigem ação imediata' : 'Nada crítico agora'}
+              subTone={resumo.criticos > 0 ? 'red' : 'green'}
+            />
+            <KpiCard
+              label="Já vencidos e pendentes"
+              value={String(resumo.vencidos)}
+              sub={resumo.vencidos > 0 ? 'Verificar perda de prazo' : 'Nenhum em atraso'}
+              subTone={resumo.vencidos > 0 ? 'red' : 'green'}
+            />
+          </div>
 
-      <Toolbar>
-        <SelectField
-          options={STATUS_OPTIONS}
-          value={status}
-          onChange={(e) => setStatus(e.target.value as PrazoStatus | 'todos')}
-        />
-        <SelectField
-          options={URGENCIA_OPTIONS}
-          value={urgencia}
-          onChange={(e) => setUrgencia(e.target.value)}
-        />
-      </Toolbar>
+          <Toolbar>
+            <SelectField
+              options={STATUS_OPTIONS}
+              value={status}
+              onChange={(e) => setStatus(e.target.value as PrazoStatus | 'todos')}
+            />
+            <SelectField
+              options={URGENCIA_OPTIONS}
+              value={urgencia}
+              onChange={(e) => setUrgencia(e.target.value)}
+            />
+          </Toolbar>
 
-      <Card>
-        <DataTable
-          columns={columns}
-          rows={linhas}
-          getRowId={(p) => p.id}
-          loading={loading}
-          emptyMessage="Nenhum prazo encontrado para os filtros selecionados."
-          onRowClick={(p) => navigate(paths.processo(p.processo_id))}
-        />
-      </Card>
+          <Card>
+            <DataTable
+              columns={columns}
+              rows={linhas}
+              getRowId={(p) => p.id}
+              loading={loading}
+              emptyMessage="Nenhum prazo encontrado para os filtros selecionados."
+              onRowClick={(p) => navigate(paths.processo(p.processo_id))}
+            />
+          </Card>
+        </>
+      )}
 
       <NovoPrazoModal open={novoOpen} onClose={() => setNovoOpen(false)} onCreated={reload} />
     </section>

@@ -14,6 +14,7 @@ import { DataTable } from '@/components/ui/DataTable/DataTable';
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 import { Button } from '@/components/ui/Button/Button';
+import { Alert } from '@/components/ui/Alert/Alert';
 import { AgendaLista } from '@/components/agenda/AgendaLista';
 import { criarPrazosColumns } from '@/components/prazos/prazosColumns';
 import { toneDoStatusProcesso } from '@/components/processos/processosColumns';
@@ -41,14 +42,25 @@ export function ProcessoDetailPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const { data: processo, loading: loadingProcesso } = useProcesso(processoId);
+  const {
+    data: processo,
+    loading: loadingProcesso,
+    error: erroProcesso,
+    reload: reloadProcesso,
+  } = useProcesso(processoId);
   const { data: cliente } = useCliente(processo?.cliente_id);
-  const { data: prazos, loading: loadingPrazos, reload: reloadPrazos } = usePrazos(
-    processoId ? { processo_id: processoId } : {},
-  );
-  const { data: eventos, loading: loadingEventos, reload: reloadEventos } = useAgenda(
-    processoId ? { processo_id: processoId } : {},
-  );
+  const {
+    data: prazos,
+    loading: loadingPrazos,
+    error: erroPrazos,
+    reload: reloadPrazos,
+  } = usePrazos(processoId ? { processo_id: processoId } : {});
+  const {
+    data: eventos,
+    loading: loadingEventos,
+    error: erroEventos,
+    reload: reloadEventos,
+  } = useAgenda(processoId ? { processo_id: processoId } : {});
   const { data: usuarios } = useUsuarios();
 
   const [novoPrazoOpen, setNovoPrazoOpen] = useState(false);
@@ -101,6 +113,20 @@ export function ProcessoDetailPage() {
   );
 
   if (loadingProcesso) return <Skeleton height="400px" />;
+  if (erroProcesso) {
+    return (
+      <Alert
+        tone="danger"
+        title="Erro ao carregar dados"
+        description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+        action={
+          <Button variant="ghost" onClick={reloadProcesso}>
+            Tentar novamente
+          </Button>
+        }
+      />
+    );
+  }
   if (!processo) return <EmptyState title="Processo não encontrado." />;
 
   return (
@@ -173,13 +199,28 @@ export function ProcessoDetailPage() {
             </Button>
           }
         />
-        <DataTable
-          columns={prazosColumns}
-          rows={prazos ?? []}
-          getRowId={(p) => p.id}
-          loading={loadingPrazos}
-          emptyMessage="Nenhum prazo cadastrado para este processo."
-        />
+        {erroPrazos ? (
+          <CardBody>
+            <Alert
+              tone="danger"
+              title="Erro ao carregar dados"
+              description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+              action={
+                <Button variant="ghost" onClick={reloadPrazos}>
+                  Tentar novamente
+                </Button>
+              }
+            />
+          </CardBody>
+        ) : (
+          <DataTable
+            columns={prazosColumns}
+            rows={prazos ?? []}
+            getRowId={(p) => p.id}
+            loading={loadingPrazos}
+            emptyMessage="Nenhum prazo cadastrado para este processo."
+          />
+        )}
       </Card>
 
       <Card className={styles.secao}>
@@ -192,12 +233,25 @@ export function ProcessoDetailPage() {
           }
         />
         <CardBody>
-          <AgendaLista
-            eventos={eventos ?? []}
-            loading={loadingEventos}
-            nomeResponsavel={nomeResponsavel}
-            emptyMessage="Nenhum compromisso agendado para este processo."
-          />
+          {erroEventos ? (
+            <Alert
+              tone="danger"
+              title="Erro ao carregar dados"
+              description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+              action={
+                <Button variant="ghost" onClick={reloadEventos}>
+                  Tentar novamente
+                </Button>
+              }
+            />
+          ) : (
+            <AgendaLista
+              eventos={eventos ?? []}
+              loading={loadingEventos}
+              nomeResponsavel={nomeResponsavel}
+              emptyMessage="Nenhum compromisso agendado para este processo."
+            />
+          )}
         </CardBody>
       </Card>
 

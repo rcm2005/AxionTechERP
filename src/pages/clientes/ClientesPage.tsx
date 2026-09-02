@@ -6,6 +6,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useToast } from '@/contexts/ToastContext';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Button } from '@/components/ui/Button/Button';
+import { Alert } from '@/components/ui/Alert/Alert';
 import { Toolbar } from '@/components/ui/Toolbar/Toolbar';
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { SelectField } from '@/components/ui/SelectField/SelectField';
@@ -42,7 +43,12 @@ export function ClientesPage() {
   const [novoClienteOpen, setNovoClienteOpen] = useState(false);
   const buscaDebounced = useDebounce(busca);
 
-  const { data: clientes, loading } = useClientes({
+  const {
+    data: clientes,
+    loading,
+    error,
+    reload,
+  } = useClientes({
     busca: buscaDebounced,
     status,
     relacao,
@@ -82,14 +88,27 @@ export function ClientesPage() {
       </Toolbar>
 
       <Card>
-        <DataTable
-          columns={clientesColumns}
-          rows={clientes ?? []}
-          getRowId={(c) => c.id}
-          loading={loading}
-          emptyMessage="Nenhum parceiro comercial encontrado para os filtros selecionados."
-          onRowClick={(c) => navigate(paths.cliente(c.id))}
-        />
+        {error ? (
+          <Alert
+            tone="danger"
+            title="Erro ao carregar dados"
+            description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+            action={
+              <Button variant="ghost" onClick={reload}>
+                Tentar novamente
+              </Button>
+            }
+          />
+        ) : (
+          <DataTable
+            columns={clientesColumns}
+            rows={clientes ?? []}
+            getRowId={(c) => c.id}
+            loading={loading}
+            emptyMessage="Nenhum parceiro comercial encontrado para os filtros selecionados."
+            onRowClick={(c) => navigate(paths.cliente(c.id))}
+          />
+        )}
       </Card>
 
       <NovoClienteModal open={novoClienteOpen} onClose={() => setNovoClienteOpen(false)} />

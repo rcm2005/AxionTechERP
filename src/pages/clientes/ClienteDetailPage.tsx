@@ -12,6 +12,7 @@ import { DataTable } from '@/components/ui/DataTable/DataTable';
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 import { Button } from '@/components/ui/Button/Button';
+import { Alert } from '@/components/ui/Alert/Alert';
 import { paths } from '@/routes/paths';
 import { formatBRL, formatDate } from '@/utils/format';
 import { pessoaStatusMeta, situacaoCreditoMeta, tipoRelacaoMeta, lancamentoStatusMeta } from '@/utils/statusMaps';
@@ -51,8 +52,18 @@ type TabKey = (typeof TABS)[number];
 export function ClienteDetailPage() {
   const { clienteId } = useParams<{ clienteId: string }>();
   const navigate = useNavigate();
-  const { data: cliente, loading: loadingCliente } = useCliente(clienteId);
-  const { data: todosLancamentos, loading: loadingLancamentos } = useAsync(() => listarLancamentos(), []);
+  const {
+    data: cliente,
+    loading: loadingCliente,
+    error: erroCliente,
+    reload: recarregarCliente,
+  } = useCliente(clienteId);
+  const {
+    data: todosLancamentos,
+    loading: loadingLancamentos,
+    error: erroLancamentos,
+    reload: recarregarLancamentos,
+  } = useAsync(() => listarLancamentos(), []);
   const [tab, setTab] = useState<TabKey>('financeiro');
 
   useDocumentTitle(cliente?.razaoSocialOuNome ?? 'Parceiro Comercial');
@@ -76,6 +87,20 @@ export function ClienteDetailPage() {
   );
 
   if (loadingCliente) return <Skeleton height="400px" />;
+  if (erroCliente) {
+    return (
+      <Alert
+        tone="danger"
+        title="Erro ao carregar dados"
+        description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+        action={
+          <Button variant="ghost" onClick={recarregarCliente}>
+            Tentar novamente
+          </Button>
+        }
+      />
+    );
+  }
   if (!cliente) return <EmptyState title="Parceiro comercial não encontrado." />;
 
   const statusMeta = pessoaStatusMeta[cliente.status] ?? { label: cliente.status, tone: 'neutral' };
@@ -130,13 +155,28 @@ export function ClienteDetailPage() {
             label="Limite de Crédito"
             value={cliente.limiteCreditoCentavos ? formatBRL(cliente.limiteCreditoCentavos) : 'Ilimitado'}
           />
-          <KpiCard label="Receita Realizada" value={formatBRL(totalReceitas)} subTone="green" />
-          <KpiCard
-            label="Títulos Pendentes"
-            value={formatBRL(totalPendente)}
-            sub={totalAtraso > 0 ? `${formatBRL(totalAtraso)} em atraso` : 'Em dia'}
-            subTone={totalAtraso > 0 ? 'red' : 'green'}
-          />
+          {erroLancamentos ? (
+            <Alert
+              tone="danger"
+              title="Erro ao carregar dados"
+              description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+              action={
+                <Button variant="ghost" onClick={recarregarLancamentos}>
+                  Tentar novamente
+                </Button>
+              }
+            />
+          ) : (
+            <>
+              <KpiCard label="Receita Realizada" value={formatBRL(totalReceitas)} subTone="green" />
+              <KpiCard
+                label="Títulos Pendentes"
+                value={formatBRL(totalPendente)}
+                sub={totalAtraso > 0 ? `${formatBRL(totalAtraso)} em atraso` : 'Em dia'}
+                subTone={totalAtraso > 0 ? 'red' : 'green'}
+              />
+            </>
+          )}
         </div>
       </div>
 
@@ -157,13 +197,26 @@ export function ClienteDetailPage() {
 
         <div className={styles.tabBody}>
           {tab === 'financeiro' && (
-            <DataTable
-              columns={lancamentosColumns}
-              rows={lancamentos}
-              getRowId={(l) => l.id}
-              loading={loadingLancamentos}
-              emptyMessage="Nenhum lançamento financeiro registrado para este parceiro."
-            />
+            erroLancamentos ? (
+              <Alert
+                tone="danger"
+                title="Erro ao carregar dados"
+                description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+                action={
+                  <Button variant="ghost" onClick={recarregarLancamentos}>
+                    Tentar novamente
+                  </Button>
+                }
+              />
+            ) : (
+              <DataTable
+                columns={lancamentosColumns}
+                rows={lancamentos}
+                getRowId={(l) => l.id}
+                loading={loadingLancamentos}
+                emptyMessage="Nenhum lançamento financeiro registrado para este parceiro."
+              />
+            )
           )}
 
           {tab === 'cadastro' && (

@@ -6,6 +6,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Button } from '@/components/ui/Button/Button';
+import { Alert } from '@/components/ui/Alert/Alert';
 import { Toolbar } from '@/components/ui/Toolbar/Toolbar';
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { SelectField } from '@/components/ui/SelectField/SelectField';
@@ -33,13 +34,25 @@ export function ProcessosPage() {
   const {
     data: processos,
     loading,
-    reload,
+    error: errorProcessos,
+    reload: reloadProcessos,
   } = useProcessos({
     busca: buscaDebounced,
     ...(status !== 'todos' ? { status } : {}),
   });
 
-  const { data: clientes } = useClientes();
+  const {
+    data: clientes,
+    error: errorClientes,
+    reload: reloadClientes,
+  } = useClientes();
+
+  const erro = errorProcessos || errorClientes;
+  const handleReload = () => {
+    reloadProcessos();
+    reloadClientes();
+  };
+
   const nomeCliente = useMemo(() => {
     const mapa = new Map((clientes ?? []).map((c) => [c.id, c.razaoSocialOuNome]));
     // Cliente pode não estar na lista carregada (filtro/soft-delete); não some a linha por isso.
@@ -74,17 +87,30 @@ export function ProcessosPage() {
       </Toolbar>
 
       <Card>
-        <DataTable
-          columns={columns}
-          rows={processos ?? []}
-          getRowId={(p) => p.id}
-          loading={loading}
-          emptyMessage="Nenhum processo encontrado para os filtros selecionados."
-          onRowClick={(p) => navigate(paths.processo(p.id))}
-        />
+        {erro ? (
+          <Alert
+            tone="danger"
+            title="Erro ao carregar dados"
+            description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+            action={
+              <Button variant="ghost" onClick={handleReload}>
+                Tentar novamente
+              </Button>
+            }
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            rows={processos ?? []}
+            getRowId={(p) => p.id}
+            loading={loading}
+            emptyMessage="Nenhum processo encontrado para os filtros selecionados."
+            onRowClick={(p) => navigate(paths.processo(p.id))}
+          />
+        )}
       </Card>
 
-      <NovoProcessoModal open={novoOpen} onClose={() => setNovoOpen(false)} onCreated={reload} />
+      <NovoProcessoModal open={novoOpen} onClose={() => setNovoOpen(false)} onCreated={reloadProcessos} />
     </section>
   );
 }
