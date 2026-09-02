@@ -80,6 +80,8 @@ export function NovaCobrancaModal({ open, onClose }: Props) {
       toast.show('Lançamento criado com sucesso!');
       handleClose();
       window.location.reload();
+    } catch {
+      toast.show('Não foi possível cadastrar o lançamento.');
     } finally {
       setSaving(false);
     }

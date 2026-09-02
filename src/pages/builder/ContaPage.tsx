@@ -16,10 +16,12 @@ export function ContaPage() {
     setSaindo(true);
     try {
       await logout();
-      navigate(paths.comecar);
+    } catch {
+      // cleanup local de sessão já é garantido dentro do próprio logout() (ver AuthContext)
     } finally {
       setSaindo(false);
     }
+    navigate(paths.comecar);
   }
 
   return (
