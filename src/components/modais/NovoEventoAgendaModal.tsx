@@ -5,15 +5,15 @@ import { Alert } from '@/components/ui/Alert/Alert';
 import { useToast } from '@/contexts/ToastContext';
 import { useProcessos } from '@/hooks/useProcessos';
 import { useUsuarios } from '@/hooks/useAgenda';
-import { ConflitoAgendaError, criarAgendaEvento } from '@/services/agenda.service';
+import { ScheduleConflictError, createScheduleEvent } from '@/services/agenda.service';
 import type { AgendaEvento, AgendaEventoTipo } from '@/types';
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** Quando aberto a partir de um processo, o vínculo já vem fixado. */
+  /** When opened from a case, the link is already fixed. */
   processoIdFixo?: string;
-  onCreated?: (evento: AgendaEvento) => void;
+  onCreated?: (event: AgendaEvento) => void;
 }
 
 export function NovoEventoAgendaModal({ open, onClose, processoIdFixo, onCreated }: Props) {
@@ -29,9 +29,9 @@ export function NovoEventoAgendaModal({ open, onClose, processoIdFixo, onCreated
   const [duracao, setDuracao] = useState('60');
   const [local, setLocal] = useState('');
   const [status, setStatus] = useState('agendado');
-  const [erros, setErros] = useState<Record<string, string>>({});
-  /** Mensagem de conflito de horário devolvida pelo servidor (HTTP 409). */
-  const [conflito, setConflito] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  /** Schedule conflict message returned by the server (HTTP 409). */
+  const [conflict, setConflict] = useState('');
   const [saving, setSaving] = useState(false);
 
   function reset() {
@@ -43,8 +43,8 @@ export function NovoEventoAgendaModal({ open, onClose, processoIdFixo, onCreated
     setDuracao('60');
     setLocal('');
     setStatus('agendado');
-    setErros({});
-    setConflito('');
+    setErrors({});
+    setConflict('');
   }
 
   function handleClose() {
@@ -52,28 +52,28 @@ export function NovoEventoAgendaModal({ open, onClose, processoIdFixo, onCreated
     onClose();
   }
 
-  function validar(): boolean {
-    const novos: Record<string, string> = {};
-    if (!responsavelId) novos.responsavelId = 'Selecione o responsável.';
-    if (!data) novos.data = 'Informe a data.';
-    if (!hora) novos.hora = 'Informe o horário.';
-    if (!local.trim()) novos.local = 'Informe o local (fórum, sala, link).';
-    const minutos = Number(duracao);
-    if (!Number.isFinite(minutos) || minutos <= 0) novos.duracao = 'Duração deve ser maior que zero.';
-    setErros(novos);
-    return Object.keys(novos).length === 0;
+  function validate(): boolean {
+    const newErrors: Record<string, string> = {};
+    if (!responsavelId) newErrors.responsavelId = 'Selecione o responsável.';
+    if (!data) newErrors.data = 'Informe a data.';
+    if (!hora) newErrors.hora = 'Informe o horário.';
+    if (!local.trim()) newErrors.local = 'Informe o local (fórum, sala, link).';
+    const minutes = Number(duracao);
+    if (!Number.isFinite(minutes) || minutes <= 0) newErrors.duracao = 'Duração deve ser maior que zero.';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   }
 
   async function handleSave() {
-    setConflito('');
-    if (!validar()) return;
+    setConflict('');
+    if (!validate()) return;
     setSaving(true);
     try {
-      const novo = await criarAgendaEvento({
+      const newEvent = await createScheduleEvent({
         processo_id: processoId || null,
         responsavel_usuario_id: responsavelId,
         tipo,
-        // O input é local; o backend trabalha em ISO/UTC.
+        // Input is local; backend operates in ISO/UTC.
         data_hora: new Date(`${data}T${hora}`).toISOString(),
         duracao_minutos: Number(duracao),
         local: local.trim(),
@@ -81,12 +81,12 @@ export function NovoEventoAgendaModal({ open, onClose, processoIdFixo, onCreated
       });
       toast.show('Compromisso agendado com sucesso!');
       handleClose();
-      onCreated?.(novo);
-    } catch (erro) {
-      // Conflito de horário é validação de negócio, não falha: a mensagem do
-      // servidor fica no formulário e o usuário escolhe outro horário.
-      if (erro instanceof ConflitoAgendaError) {
-        setConflito(erro.message);
+      onCreated?.(newEvent);
+    } catch (error) {
+      // Schedule conflict is a business validation, not a failure: the server
+      // message stays on the form and the user chooses another time.
+      if (error instanceof ScheduleConflictError) {
+        setConflict(error.message);
       } else {
         toast.show('Não foi possível agendar o compromisso.');
       }
@@ -103,11 +103,11 @@ export function NovoEventoAgendaModal({ open, onClose, processoIdFixo, onCreated
       width="560px"
       footer={<ModalFooter onCancel={handleClose} onConfirm={handleSave} loading={saving} confirmLabel="Agendar" />}
     >
-      {conflito && (
-        <Alert tone="danger" title="Conflito de agenda" description={conflito} />
+      {conflict && (
+        <Alert tone="danger" title="Conflito de agenda" description={conflict} />
       )}
 
-      <ModalField label="Responsável" required error={erros.responsavelId}>
+      <ModalField label="Responsável" required error={errors.responsavelId}>
         <TextSelect value={responsavelId} onChange={(e) => setResponsavelId(e.target.value)}>
           <option value="">Selecione o responsável…</option>
           {(usuarios ?? []).map((u) => (
@@ -139,15 +139,15 @@ export function NovoEventoAgendaModal({ open, onClose, processoIdFixo, onCreated
         </ModalField>
       )}
 
-      <ModalField label="Data" required error={erros.data}>
+      <ModalField label="Data" required error={errors.data}>
         <TextInput type="date" value={data} onChange={(e) => setData(e.target.value)} />
       </ModalField>
 
-      <ModalField label="Horário" required error={erros.hora}>
+      <ModalField label="Horário" required error={errors.hora}>
         <TextInput type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
       </ModalField>
 
-      <ModalField label="Duração (minutos)" required error={erros.duracao}>
+      <ModalField label="Duração (minutos)" required error={errors.duracao}>
         <TextInput
           type="number"
           min={5}
@@ -157,7 +157,7 @@ export function NovoEventoAgendaModal({ open, onClose, processoIdFixo, onCreated
         />
       </ModalField>
 
-      <ModalField label="Local" required error={erros.local}>
+      <ModalField label="Local" required error={errors.local}>
         <TextInput
           value={local}
           onChange={(e) => setLocal(e.target.value)}

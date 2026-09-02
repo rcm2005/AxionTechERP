@@ -37,7 +37,7 @@ export function AgendaPage() {
   const { data: usuarios } = useUsuarios();
   const { data: processos } = useProcessos();
   const {
-    data: eventos,
+    data: events,
     loading,
     error,
     reload,
@@ -110,7 +110,7 @@ export function AgendaPage() {
             />
           ) : (
             <AgendaLista
-              eventos={eventos ?? []}
+              events={events ?? []}
               loading={loading}
               nomeResponsavel={nomeResponsavel}
               rotuloProcesso={rotuloProcesso}
