@@ -4,22 +4,22 @@ import { Pill } from '@/components/ui/Pill/Pill';
 import { Alert } from '@/components/ui/Alert/Alert';
 import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 
-interface AlertasCardProps {
-  alertas: Alerta[];
+interface AlertsCardProps {
+  alerts: Alerta[];
 }
 
-export function AlertasCard({ alertas }: AlertasCardProps) {
+export function AlertsCard({ alerts }: AlertsCardProps) {
   return (
     <Card>
-      <CardHead title="Alertas importantes" action={alertas.length > 0 && <Pill tone="red">{alertas.length}</Pill>} />
+      <CardHead title="Alertas importantes" action={alerts.length > 0 && <Pill tone="red">{alerts.length}</Pill>} />
       <CardBody>
-        {alertas.length === 0 && <EmptyState title="Nenhum alerta no momento." icon="✓" />}
-        {alertas.map((alerta) => (
+        {alerts.length === 0 && <EmptyState title="Nenhum alerta no momento." icon="✓" />}
+        {alerts.map((item) => (
           <Alert
-            key={alerta.id}
-            tone={alerta.tone === 'danger' ? 'danger' : 'warning'}
-            title={alerta.titulo}
-            description={alerta.descricao}
+            key={item.id}
+            tone={item.tone === 'danger' ? 'danger' : 'warning'}
+            title={item.titulo}
+            description={item.descricao}
           />
         ))}
       </CardBody>

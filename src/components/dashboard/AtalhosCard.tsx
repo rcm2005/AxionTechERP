@@ -6,10 +6,10 @@ import { NovaCobrancaModal } from '@/components/modais/NovaCobrancaModal';
 import { paths } from '@/routes/paths';
 import styles from './AtalhosCard.module.scss';
 
-export function AtalhosCard() {
+export function QuickActionsCard() {
   const navigate = useNavigate();
-  const [novoClienteOpen, setNovoClienteOpen] = useState(false);
-  const [novaCobrancaOpen, setNovaCobrancaOpen] = useState(false);
+  const [newClientOpen, setNewClientOpen] = useState(false);
+  const [newChargeOpen, setNewChargeOpen] = useState(false);
 
   return (
     <>
@@ -17,10 +17,10 @@ export function AtalhosCard() {
         <CardHead title="Ações Rápidas" />
         <CardBody>
           <div className={styles.grid}>
-            <button type="button" onClick={() => setNovoClienteOpen(true)}>
+            <button type="button" onClick={() => setNewClientOpen(true)}>
               + Novo cliente / parceiro
             </button>
-            <button type="button" onClick={() => setNovaCobrancaOpen(true)}>
+            <button type="button" onClick={() => setNewChargeOpen(true)}>
               + Novo lançamento financeiro
             </button>
             <button type="button" onClick={() => navigate(paths.clientes)}>
@@ -33,8 +33,8 @@ export function AtalhosCard() {
         </CardBody>
       </Card>
 
-      <NovoClienteModal open={novoClienteOpen} onClose={() => setNovoClienteOpen(false)} />
-      <NovaCobrancaModal open={novaCobrancaOpen} onClose={() => setNovaCobrancaOpen(false)} />
+      <NovoClienteModal open={newClientOpen} onClose={() => setNewClientOpen(false)} />
+      <NovaCobrancaModal open={newChargeOpen} onClose={() => setNewChargeOpen(false)} />
     </>
   );
 }
