@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { Modal, ModalField, ModalFooter } from '@/components/ui/Modal/Modal';
 import { TextInput, TextSelect } from '@/components/ui/TextField/TextField';
 import { useToast } from '@/contexts/ToastContext';
-import { criarCliente } from '@/services/clientes.service';
+import { createClient } from '@/services/clientes.service';
 import { db } from '@/mocks';
 import { paths } from '@/routes/paths';
 import type { TipoPessoa, TipoRelacao, PessoaStatus, SituacaoCredito } from '@/types';
@@ -25,7 +25,7 @@ export function NovoClienteModal({ open, onClose }: Props) {
   const [email, setEmail] = useState('');
   const [segmento, setSegmento] = useState('');
   const [status, setStatus] = useState<PessoaStatus>('ativo');
-  const [nomeError, setNomeError] = useState('');
+  const [nameError, setNameError] = useState('');
   const [saving, setSaving] = useState(false);
 
   function reset() {
@@ -38,7 +38,7 @@ export function NovoClienteModal({ open, onClose }: Props) {
     setEmail('');
     setSegmento('');
     setStatus('ativo');
-    setNomeError('');
+    setNameError('');
   }
 
   function handleClose() {
@@ -48,12 +48,12 @@ export function NovoClienteModal({ open, onClose }: Props) {
 
   async function handleSave() {
     if (!razaoSocialOuNome.trim()) {
-      setNomeError('Razão social ou nome é obrigatório.');
+      setNameError('Razão social ou nome é obrigatório.');
       return;
     }
     setSaving(true);
     try {
-      const novo = await criarCliente({
+      const created = await createClient({
         tenantId: db.tenants[0]?.id ?? 'tenant-ind-plast',
         tipoPessoa,
         relacao,
@@ -77,7 +77,7 @@ export function NovoClienteModal({ open, onClose }: Props) {
       });
       toast.show('Parceiro comercial cadastrado com sucesso!');
       handleClose();
-      navigate(paths.cliente(novo.id));
+      navigate(paths.cliente(created.id));
     } catch {
       toast.show('Não foi possível cadastrar o cliente.');
     } finally {
@@ -92,12 +92,12 @@ export function NovoClienteModal({ open, onClose }: Props) {
       title="Novo Parceiro Comercial / Cliente"
       footer={<ModalFooter onCancel={handleClose} onConfirm={handleSave} loading={saving} />}
     >
-      <ModalField label="Razão Social / Nome Completo" required error={nomeError}>
+      <ModalField label="Razão Social / Nome Completo" required error={nameError}>
         <TextInput
           value={razaoSocialOuNome}
           onChange={(e) => {
             setRazaoSocialOuNome(e.target.value);
-            setNomeError('');
+            setNameError('');
           }}
           placeholder="Ex: Indústria Química Paulista S.A."
         />

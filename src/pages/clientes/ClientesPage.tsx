@@ -37,21 +37,21 @@ export function ClientesPage() {
   useDocumentTitle('Clientes e Parceiros');
   const toast = useToast();
   const navigate = useNavigate();
-  const [busca, setBusca] = useState('');
+  const [search, setSearch] = useState('');
   const [status, setStatus] = useState<PessoaStatus | 'todos'>('todos');
-  const [relacao, setRelacao] = useState<TipoRelacao | 'todos'>('todos');
-  const [novoClienteOpen, setNovoClienteOpen] = useState(false);
-  const buscaDebounced = useDebounce(busca);
+  const [relation, setRelation] = useState<TipoRelacao | 'todos'>('todos');
+  const [newClientOpen, setNewClientOpen] = useState(false);
+  const debouncedSearch = useDebounce(search);
 
   const {
-    data: clientes,
+    data: clients,
     loading,
     error,
     reload,
   } = useClientes({
-    busca: buscaDebounced,
+    busca: debouncedSearch,
     status,
-    relacao,
+    relacao: relation,
   });
 
   return (
@@ -62,7 +62,7 @@ export function ClientesPage() {
         actions={
           <>
             <Button onClick={() => toast.show('Relatório de parceiros exportado!')}>Exportar</Button>
-            <Button variant="primary" onClick={() => setNovoClienteOpen(true)}>
+            <Button variant="primary" onClick={() => setNewClientOpen(true)}>
               + Novo parceiro
             </Button>
           </>
@@ -72,8 +72,8 @@ export function ClientesPage() {
       <Toolbar>
         <SearchInput
           placeholder="Buscar por razão social, fantasia, CNPJ/CPF..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
         <SelectField
           options={STATUS_OPTIONS}
@@ -82,8 +82,8 @@ export function ClientesPage() {
         />
         <SelectField
           options={RELACAO_OPTIONS}
-          value={relacao}
-          onChange={(e) => setRelacao(e.target.value as TipoRelacao | 'todos')}
+          value={relation}
+          onChange={(e) => setRelation(e.target.value as TipoRelacao | 'todos')}
         />
       </Toolbar>
 
@@ -102,16 +102,16 @@ export function ClientesPage() {
         ) : (
           <DataTable
             columns={clientesColumns}
-            rows={clientes ?? []}
-            getRowId={(c) => c.id}
+            rows={clients ?? []}
+            getRowId={(client) => client.id}
             loading={loading}
             emptyMessage="Nenhum parceiro comercial encontrado para os filtros selecionados."
-            onRowClick={(c) => navigate(paths.cliente(c.id))}
+            onRowClick={(client) => navigate(paths.cliente(client.id))}
           />
         )}
       </Card>
 
-      <NovoClienteModal open={novoClienteOpen} onClose={() => setNovoClienteOpen(false)} />
+      <NovoClienteModal open={newClientOpen} onClose={() => setNewClientOpen(false)} />
     </section>
   );
 }
