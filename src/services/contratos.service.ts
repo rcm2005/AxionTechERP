@@ -3,74 +3,75 @@ import { contratosMock } from '@/mocks/juridico.mock';
 import { USE_MOCKS, delay } from './mockAdapter';
 import { http } from './http';
 
-/** Ver nota sobre persistência em `processos.service.ts`. */
+/** See note on persistence in `processos.service.ts`. */
 const store: Contrato[] = [...contratosMock];
 
-function aplicarFiltros(contratos: Contrato[], filtros: ContratoFiltros): Contrato[] {
-  const busca = filtros.busca?.trim().toLowerCase();
-  return contratos.filter((c) => {
-    if (filtros.cliente_id && c.cliente_id !== filtros.cliente_id) return false;
-    if (filtros.status && c.status !== filtros.status) return false;
-    if (busca && !`${c.titulo} ${c.tipo}`.toLowerCase().includes(busca)) return false;
+function applyFilters(contracts: Contrato[], filters: ContratoFiltros): Contrato[] {
+  const search = filters.busca?.trim().toLowerCase();
+  return contracts.filter((contract) => {
+    if (filters.cliente_id && contract.cliente_id !== filters.cliente_id) return false;
+    if (filters.status && contract.status !== filters.status) return false;
+    if (search && !`${contract.titulo} ${contract.tipo}`.toLowerCase().includes(search)) return false;
     return true;
   });
 }
 
-function paramsDeFiltro(filtros: ContratoFiltros) {
-  const { cliente_id, status } = filtros;
+function filterParams(filters: ContratoFiltros) {
+  const { cliente_id, status } = filters;
   return {
     ...(cliente_id ? { cliente_id } : {}),
     ...(status ? { status } : {}),
   };
 }
 
-export async function listarContratos(filtros: ContratoFiltros = {}): Promise<Contrato[]> {
+export async function listContracts(filters: ContratoFiltros = {}): Promise<Contrato[]> {
   if (USE_MOCKS) {
     await delay();
-    return aplicarFiltros(store, filtros);
+    return applyFilters(store, filters);
   }
-  const { data } = await http.get<Contrato[]>('/contratos', { params: paramsDeFiltro(filtros) });
-  return aplicarFiltros(data, { busca: filtros.busca });
+  const { data } = await http.get<Contrato[]>('/contratos', { params: filterParams(filters) });
+  return applyFilters(data, { busca: filters.busca });
 }
 
-export async function buscarContrato(id: string): Promise<Contrato | undefined> {
+export async function getContract(id: string): Promise<Contrato | undefined> {
   if (USE_MOCKS) {
     await delay();
-    return store.find((c) => c.id === id);
+    return store.find((contract) => contract.id === id);
   }
   const { data } = await http.get<Contrato>(`/contratos/${id}`);
   return data;
 }
 
-export async function criarContrato(dados: ContratoInput): Promise<Contrato> {
+export async function createContract(input: ContratoInput): Promise<Contrato> {
   if (USE_MOCKS) {
     await delay(300);
-    const novo: Contrato = { ...dados, id: `ctr-${Date.now()}`, created_at: new Date().toISOString() };
-    store.push(novo);
-    return novo;
+    const newContract: Contrato = { ...input, id: `ctr-${Date.now()}`, created_at: new Date().toISOString() };
+    store.push(newContract);
+    return newContract;
   }
-  const { data } = await http.post<Contrato>('/contratos', dados);
+  const { data } = await http.post<Contrato>('/contratos', input);
   return data;
 }
 
-export async function atualizarContrato(id: string, dados: ContratoInput): Promise<Contrato> {
+export async function updateContract(id: string, input: ContratoInput): Promise<Contrato> {
   if (USE_MOCKS) {
     await delay(300);
-    const i = store.findIndex((c) => c.id === id);
-    if (i < 0) throw new Error('Contrato não encontrado.');
-    store[i] = { ...store[i], ...dados, updated_at: new Date().toISOString() };
-    return store[i];
+    const index = store.findIndex((contract) => contract.id === id);
+    if (index < 0) throw new Error('Contrato não encontrado.');
+    store[index] = { ...store[index], ...input, updated_at: new Date().toISOString() };
+    return store[index];
   }
-  const { data } = await http.put<Contrato>(`/contratos/${id}`, dados);
+  const { data } = await http.put<Contrato>(`/contratos/${id}`, input);
   return data;
 }
 
-export async function excluirContrato(id: string): Promise<void> {
+export async function deleteContract(id: string): Promise<void> {
   if (USE_MOCKS) {
     await delay(300);
-    const i = store.findIndex((c) => c.id === id);
-    if (i >= 0) store.splice(i, 1);
+    const index = store.findIndex((contract) => contract.id === id);
+    if (index >= 0) store.splice(index, 1);
     return;
   }
   await http.delete(`/contratos/${id}`);
 }
+
