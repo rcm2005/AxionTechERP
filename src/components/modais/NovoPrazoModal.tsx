@@ -3,38 +3,38 @@ import { Modal, ModalField, ModalFooter } from '@/components/ui/Modal/Modal';
 import { TextInput, TextSelect } from '@/components/ui/TextField/TextField';
 import { useToast } from '@/contexts/ToastContext';
 import { useProcessos } from '@/hooks/useProcessos';
-import { criarPrazo } from '@/services/prazos.service';
+import { createDeadline } from '@/services/prazos.service';
 import type { Prazo, PrazoStatus } from '@/types';
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** Quando aberto a partir de um processo, o vínculo já vem fixado. */
+  /** When opened from a case, the binding is already fixed. */
   processoIdFixo?: string;
-  onCreated?: (prazo: Prazo) => void;
+  onCreated?: (deadline: Prazo) => void;
 }
 
 export function NovoPrazoModal({ open, onClose, processoIdFixo, onCreated }: Props) {
   const toast = useToast();
-  const { data: processos } = useProcessos();
+  const { data: cases } = useProcessos();
 
   const [processoId, setProcessoId] = useState(processoIdFixo ?? '');
-  const [descricao, setDescricao] = useState('');
-  const [dataIntimacao, setDataIntimacao] = useState('');
-  const [prazoFatal, setPrazoFatal] = useState('');
-  const [diasUteis, setDiasUteis] = useState('');
+  const [description, setDescription] = useState('');
+  const [noticeDate, setNoticeDate] = useState('');
+  const [fatalDeadline, setFatalDeadline] = useState('');
+  const [businessDays, setBusinessDays] = useState('');
   const [status, setStatus] = useState<PrazoStatus>('pendente');
-  const [erros, setErros] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   function reset() {
     setProcessoId(processoIdFixo ?? '');
-    setDescricao('');
-    setDataIntimacao('');
-    setPrazoFatal('');
-    setDiasUteis('');
+    setDescription('');
+    setNoticeDate('');
+    setFatalDeadline('');
+    setBusinessDays('');
     setStatus('pendente');
-    setErros({});
+    setErrors({});
   }
 
   function handleClose() {
@@ -42,37 +42,37 @@ export function NovoPrazoModal({ open, onClose, processoIdFixo, onCreated }: Pro
     onClose();
   }
 
-  function validar(): boolean {
-    const novos: Record<string, string> = {};
-    if (!processoId) novos.processoId = 'Selecione o processo.';
-    if (!descricao.trim()) novos.descricao = 'Descreva o ato a ser praticado.';
-    if (!prazoFatal) novos.prazoFatal = 'O prazo fatal é obrigatório.';
-    if (dataIntimacao && prazoFatal && dataIntimacao > prazoFatal) {
-      novos.prazoFatal = 'O prazo fatal não pode ser anterior à intimação.';
+  function validate(): boolean {
+    const newErrors: Record<string, string> = {};
+    if (!processoId) newErrors.processoId = 'Selecione o processo.';
+    if (!description.trim()) newErrors.description = 'Descreva o ato a ser praticado.';
+    if (!fatalDeadline) newErrors.fatalDeadline = 'O prazo fatal é obrigatório.';
+    if (noticeDate && fatalDeadline && noticeDate > fatalDeadline) {
+      newErrors.fatalDeadline = 'O prazo fatal não pode ser anterior à intimação.';
     }
-    setErros(novos);
-    return Object.keys(novos).length === 0;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   }
 
   async function handleSave() {
-    if (!validar()) return;
+    if (!validate()) return;
     setSaving(true);
     try {
-      const dias = Number(diasUteis);
-      const novo = await criarPrazo({
+      const days = Number(businessDays);
+      const newDeadline = await createDeadline({
         processo_id: processoId,
-        descricao: descricao.trim(),
-        data_intimacao: dataIntimacao || null,
-        prazo_fatal: prazoFatal,
-        dias_uteis: diasUteis && Number.isFinite(dias) ? dias : null,
-        // A UI só produz prazos manuais; 'automatico' é reservado à futura
-        // captura de publicações feita pelo backend.
+        descricao: description.trim(),
+        data_intimacao: noticeDate || null,
+        prazo_fatal: fatalDeadline,
+        dias_uteis: businessDays && Number.isFinite(days) ? days : null,
+        // The UI only produces manual deadlines; 'automatico' is reserved for future
+        // publication scraping handled by the backend.
         origem: 'manual',
         status,
       });
       toast.show('Prazo cadastrado com sucesso!');
       handleClose();
-      onCreated?.(novo);
+      onCreated?.(newDeadline);
     } catch {
       toast.show('Não foi possível cadastrar o prazo.');
     } finally {
@@ -89,22 +89,22 @@ export function NovoPrazoModal({ open, onClose, processoIdFixo, onCreated }: Pro
       footer={<ModalFooter onCancel={handleClose} onConfirm={handleSave} loading={saving} />}
     >
       {!processoIdFixo && (
-        <ModalField label="Processo" required error={erros.processoId}>
+        <ModalField label="Processo" required error={errors.processoId}>
           <TextSelect value={processoId} onChange={(e) => setProcessoId(e.target.value)}>
             <option value="">Selecione o processo…</option>
-            {(processos ?? []).map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.numero_cnj} — {p.vara}
+            {(cases ?? []).map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.numero_cnj} — {c.vara}
               </option>
             ))}
           </TextSelect>
         </ModalField>
       )}
 
-      <ModalField label="Descrição do ato" required error={erros.descricao}>
+      <ModalField label="Descrição do ato" required error={errors.description}>
         <TextInput
-          value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           placeholder="Ex: Contestação, recurso ordinário, manifestação sobre laudo"
         />
       </ModalField>
@@ -112,25 +112,25 @@ export function NovoPrazoModal({ open, onClose, processoIdFixo, onCreated }: Pro
       <ModalField label="Data da intimação">
         <TextInput
           type="date"
-          value={dataIntimacao}
-          onChange={(e) => setDataIntimacao(e.target.value)}
+          value={noticeDate}
+          onChange={(e) => setNoticeDate(e.target.value)}
         />
       </ModalField>
 
       <ModalField
         label="PRAZO FATAL — data limite para praticar o ato"
         required
-        error={erros.prazoFatal}
+        error={errors.fatalDeadline}
       >
-        <TextInput type="date" value={prazoFatal} onChange={(e) => setPrazoFatal(e.target.value)} />
+        <TextInput type="date" value={fatalDeadline} onChange={(e) => setFatalDeadline(e.target.value)} />
       </ModalField>
 
       <ModalField label="Prazo processual (dias úteis)">
         <TextInput
           type="number"
           min={1}
-          value={diasUteis}
-          onChange={(e) => setDiasUteis(e.target.value)}
+          value={businessDays}
+          onChange={(e) => setBusinessDays(e.target.value)}
           placeholder="Ex: 15"
         />
       </ModalField>

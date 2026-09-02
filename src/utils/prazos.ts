@@ -2,70 +2,70 @@ import { differenceInCalendarDays, parseISO, startOfDay } from 'date-fns';
 import type { Prazo, PrazoStatus } from '@/types';
 import type { Tone } from '@/types';
 
-/** Janela (em dias) em que um prazo fatal pendente passa a ser tratado como urgente. */
-export const JANELA_URGENCIA_DIAS = 3;
+/** Window (in days) in which a pending fatal deadline is treated as urgent. */
+export const URGENCY_WINDOW_DAYS = 3;
 
-export type UrgenciaPrazo = 'vencido' | 'urgente' | 'proximo' | 'tranquilo' | 'encerrado';
+export type DeadlineUrgencyLevel = 'vencido' | 'urgente' | 'proximo' | 'tranquilo' | 'encerrado';
 
-export interface PrazoUrgencia {
-  urgencia: UrgenciaPrazo;
-  /** Negativo = já venceu. 0 = vence hoje. */
-  diasRestantes: number;
+export interface DeadlineUrgency {
+  urgencyLevel: DeadlineUrgencyLevel;
+  /** Negative = already overdue. 0 = due today. */
+  remainingDays: number;
   tone: Tone;
   label: string;
 }
 
 /**
- * Classifica um prazo FATAL em relação a hoje.
+ * Classifies a FATAL deadline relative to today.
  *
- * Prazos já cumpridos/perdidos não recebem tratamento de urgência — o
- * destaque visual existe para provocar ação, e não há ação possível neles.
- * Usa data real do sistema (não a REFERENCE_DATE dos mocks) porque o valor
- * do recurso depende de estar ancorado no "hoje" verdadeiro do usuário.
+ * Deadlines already completed/lost do not receive urgency styling — the
+ * visual highlight exists to prompt action, and there is no possible action on them.
+ * Uses real system date (not REFERENCE_DATE from mocks) because the value
+ * of the feature depends on being anchored in the user's true "today".
  */
-export function classificarPrazo(prazo: Prazo, hoje: Date = new Date()): PrazoUrgencia {
-  const diasRestantes = diasAtePrazo(prazo.prazo_fatal, hoje);
+export function classifyDeadline(deadline: Prazo, today: Date = new Date()): DeadlineUrgency {
+  const remainingDays = daysUntilDeadline(deadline.prazo_fatal, today);
 
-  if (prazo.status !== 'pendente') {
+  if (deadline.status !== 'pendente') {
     return {
-      urgencia: 'encerrado',
-      diasRestantes,
-      tone: prazo.status === 'cumprido' ? 'green' : 'red',
-      label: prazo.status === 'cumprido' ? 'Cumprido' : 'Perdido',
+      urgencyLevel: 'encerrado',
+      remainingDays,
+      tone: deadline.status === 'cumprido' ? 'green' : 'red',
+      label: deadline.status === 'cumprido' ? 'Cumprido' : 'Perdido',
     };
   }
 
-  if (diasRestantes < 0) {
+  if (remainingDays < 0) {
     return {
-      urgencia: 'vencido',
-      diasRestantes,
+      urgencyLevel: 'vencido',
+      remainingDays,
       tone: 'red',
-      label: `Vencido há ${Math.abs(diasRestantes)} d`,
+      label: `Vencido há ${Math.abs(remainingDays)} d`,
     };
   }
-  if (diasRestantes === 0) {
-    return { urgencia: 'urgente', diasRestantes, tone: 'red', label: 'Vence hoje' };
+  if (remainingDays === 0) {
+    return { urgencyLevel: 'urgente', remainingDays, tone: 'red', label: 'Vence hoje' };
   }
-  if (diasRestantes <= JANELA_URGENCIA_DIAS) {
+  if (remainingDays <= URGENCY_WINDOW_DAYS) {
     return {
-      urgencia: 'urgente',
-      diasRestantes,
+      urgencyLevel: 'urgente',
+      remainingDays,
       tone: 'red',
-      label: `Faltam ${diasRestantes} d`,
+      label: `Faltam ${remainingDays} d`,
     };
   }
-  if (diasRestantes <= 10) {
-    return { urgencia: 'proximo', diasRestantes, tone: 'orange', label: `Faltam ${diasRestantes} d` };
+  if (remainingDays <= 10) {
+    return { urgencyLevel: 'proximo', remainingDays, tone: 'orange', label: `Faltam ${remainingDays} d` };
   }
-  return { urgencia: 'tranquilo', diasRestantes, tone: 'neutral', label: `Faltam ${diasRestantes} d` };
+  return { urgencyLevel: 'tranquilo', remainingDays, tone: 'neutral', label: `Faltam ${remainingDays} d` };
 }
 
-/** Dias corridos entre hoje e uma data "YYYY-MM-DD". */
-export function diasAtePrazo(dataIso: string, hoje: Date = new Date()): number {
-  return differenceInCalendarDays(startOfDay(parseISO(dataIso)), startOfDay(hoje));
+/** Calendar days between today and a "YYYY-MM-DD" date. */
+export function daysUntilDeadline(isoDate: string, today: Date = new Date()): number {
+  return differenceInCalendarDays(startOfDay(parseISO(isoDate)), startOfDay(today));
 }
 
-export const prazoStatusMeta: Record<PrazoStatus, { label: string; tone: Tone }> = {
+export const deadlineStatusMeta: Record<PrazoStatus, { label: string; tone: Tone }> = {
   pendente: { label: 'Pendente', tone: 'blue' },
   cumprido: { label: 'Cumprido', tone: 'green' },
   perdido: { label: 'Perdido', tone: 'red' },

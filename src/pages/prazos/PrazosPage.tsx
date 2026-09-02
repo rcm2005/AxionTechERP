@@ -14,8 +14,8 @@ import { KpiCard } from '@/components/ui/KpiCard/KpiCard';
 import { DataTable } from '@/components/ui/DataTable/DataTable';
 import { criarPrazosColumns } from '@/components/prazos/prazosColumns';
 import { NovoPrazoModal } from '@/components/modais/NovoPrazoModal';
-import { alterarStatusPrazo } from '@/services/prazos.service';
-import { classificarPrazo } from '@/utils/prazos';
+import { changeDeadlineStatus } from '@/services/prazos.service';
+import { classifyDeadline } from '@/utils/prazos';
 import { paths } from '@/routes/paths';
 import type { Prazo, PrazoStatus } from '@/types';
 import styles from './PrazosPage.module.scss';
@@ -27,7 +27,7 @@ const STATUS_OPTIONS = [
   { value: 'perdido', label: 'Perdidos' },
 ];
 
-const URGENCIA_OPTIONS = [
+const URGENCY_OPTIONS = [
   { value: 'todos', label: 'Todos os prazos' },
   { value: 'criticos', label: 'Somente críticos (vencidos ou até 3 dias)' },
 ];
@@ -38,57 +38,57 @@ export function PrazosPage() {
   const toast = useToast();
 
   const [status, setStatus] = useState<PrazoStatus | 'todos'>('pendente');
-  const [urgencia, setUrgencia] = useState('todos');
-  const [novoOpen, setNovoOpen] = useState(false);
-  const [salvandoId, setSalvandoId] = useState<string>();
+  const [urgency, setUrgency] = useState('todos');
+  const [newOpen, setNewOpen] = useState(false);
+  const [savingId, setSavingId] = useState<string>();
 
-  const { data: prazos, loading, error, reload } = usePrazos({ status });
-  const { data: processos } = useProcessos();
+  const { data: deadlines, loading, error, reload } = usePrazos({ status });
+  const { data: cases } = useProcessos();
 
-  const rotuloProcesso = useMemo(() => {
-    const mapa = new Map((processos ?? []).map((p) => [p.id, p.numero_cnj]));
-    return (id: string) => mapa.get(id) ?? '—';
-  }, [processos]);
+  const caseLabel = useMemo(() => {
+    const map = new Map((cases ?? []).map((c) => [c.id, c.numero_cnj]));
+    return (id: string) => map.get(id) ?? '—';
+  }, [cases]);
 
-  /** Urgência depende da data de hoje, não do backend — por isso é filtro local. */
-  const linhas = useMemo(() => {
-    const todos = prazos ?? [];
-    if (urgencia !== 'criticos') return todos;
-    return todos.filter((p) => {
-      const c = classificarPrazo(p);
-      return c.urgencia === 'vencido' || c.urgencia === 'urgente';
+  /** Urgency depends on today's date, not the backend — that's why it is a local filter. */
+  const rows = useMemo(() => {
+    const all = deadlines ?? [];
+    if (urgency !== 'criticos') return all;
+    return all.filter((deadline) => {
+      const c = classifyDeadline(deadline);
+      return c.urgencyLevel === 'vencido' || c.urgencyLevel === 'urgente';
     });
-  }, [prazos, urgencia]);
+  }, [deadlines, urgency]);
 
-  const resumo = useMemo(() => {
-    const pendentes = (prazos ?? []).filter((p) => p.status === 'pendente');
-    let vencidos = 0;
-    let criticos = 0;
-    for (const p of pendentes) {
-      const { urgencia: u } = classificarPrazo(p);
-      if (u === 'vencido') vencidos += 1;
-      else if (u === 'urgente') criticos += 1;
+  const summary = useMemo(() => {
+    const pending = (deadlines ?? []).filter((d) => d.status === 'pendente');
+    let overdue = 0;
+    let critical = 0;
+    for (const deadline of pending) {
+      const { urgencyLevel: u } = classifyDeadline(deadline);
+      if (u === 'vencido') overdue += 1;
+      else if (u === 'urgente') critical += 1;
     }
-    return { pendentes: pendentes.length, vencidos, criticos };
-  }, [prazos]);
+    return { pending: pending.length, overdue, critical };
+  }, [deadlines]);
 
-  async function handleMarcarCumprido(prazo: Prazo) {
-    setSalvandoId(prazo.id);
+  async function handleMarkCompleted(deadline: Prazo) {
+    setSavingId(deadline.id);
     try {
-      await alterarStatusPrazo(prazo.id, 'cumprido');
+      await changeDeadlineStatus(deadline.id, 'cumprido');
       toast.show('Prazo marcado como cumprido.');
       reload();
     } catch {
       toast.show('Não foi possível atualizar o prazo.');
     } finally {
-      setSalvandoId(undefined);
+      setSavingId(undefined);
     }
   }
 
   const columns = useMemo(
-    () => criarPrazosColumns({ rotuloProcesso, onMarcarCumprido: handleMarcarCumprido, salvandoId }),
+    () => criarPrazosColumns({ rotuloProcesso: caseLabel, onMarcarCumprido: handleMarkCompleted, salvandoId: savingId }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rotuloProcesso, salvandoId],
+    [caseLabel, savingId],
   );
 
   return (
@@ -97,7 +97,7 @@ export function PrazosPage() {
         title="Prazos"
         subtitle="Prazos fatais do escritório. Perder um prazo fatal extingue o direito processual — o painel prioriza o que vence primeiro."
         actions={
-          <Button variant="primary" onClick={() => setNovoOpen(true)}>
+          <Button variant="primary" onClick={() => setNewOpen(true)}>
             + Novo prazo
           </Button>
         }
@@ -117,18 +117,18 @@ export function PrazosPage() {
       ) : (
         <>
           <div className={styles.kpis}>
-            <KpiCard label="Prazos pendentes" value={String(resumo.pendentes)} />
+            <KpiCard label="Prazos pendentes" value={String(summary.pending)} />
             <KpiCard
               label="Vencendo em até 3 dias"
-              value={String(resumo.criticos)}
-              sub={resumo.criticos > 0 ? 'Exigem ação imediata' : 'Nada crítico agora'}
-              subTone={resumo.criticos > 0 ? 'red' : 'green'}
+              value={String(summary.critical)}
+              sub={summary.critical > 0 ? 'Exigem ação imediata' : 'Nada crítico agora'}
+              subTone={summary.critical > 0 ? 'red' : 'green'}
             />
             <KpiCard
               label="Já vencidos e pendentes"
-              value={String(resumo.vencidos)}
-              sub={resumo.vencidos > 0 ? 'Verificar perda de prazo' : 'Nenhum em atraso'}
-              subTone={resumo.vencidos > 0 ? 'red' : 'green'}
+              value={String(summary.overdue)}
+              sub={summary.overdue > 0 ? 'Verificar perda de prazo' : 'Nenhum em atraso'}
+              subTone={summary.overdue > 0 ? 'red' : 'green'}
             />
           </div>
 
@@ -139,26 +139,26 @@ export function PrazosPage() {
               onChange={(e) => setStatus(e.target.value as PrazoStatus | 'todos')}
             />
             <SelectField
-              options={URGENCIA_OPTIONS}
-              value={urgencia}
-              onChange={(e) => setUrgencia(e.target.value)}
+              options={URGENCY_OPTIONS}
+              value={urgency}
+              onChange={(e) => setUrgency(e.target.value)}
             />
           </Toolbar>
 
           <Card>
             <DataTable
               columns={columns}
-              rows={linhas}
-              getRowId={(p) => p.id}
+              rows={rows}
+              getRowId={(d) => d.id}
               loading={loading}
               emptyMessage="Nenhum prazo encontrado para os filtros selecionados."
-              onRowClick={(p) => navigate(paths.processo(p.processo_id))}
+              onRowClick={(d) => navigate(paths.processo(d.processo_id))}
             />
           </Card>
         </>
       )}
 
-      <NovoPrazoModal open={novoOpen} onClose={() => setNovoOpen(false)} onCreated={reload} />
+      <NovoPrazoModal open={newOpen} onClose={() => setNewOpen(false)} onCreated={reload} />
     </section>
   );
 }
