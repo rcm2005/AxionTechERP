@@ -14,16 +14,16 @@ export type RevisaoResultado = {
 };
 
 /**
- * Classifica a primeira mensagem do onboarding usando o backend de IA.
- * Em caso de mock, timeout ou erro de rede, devolve `{ disponivel: false }`
- * sem subir exceção para que o chamador use o fallback determinístico local.
+ * Classifies the initial onboarding message using the AI backend.
+ * In case of mock, timeout or network error, returns `{ disponivel: false }`
+ * without throwing so the caller can use the deterministic local fallback.
  */
-export async function interpretarPedido(texto: string): Promise<InterpretacaoOnboarding> {
+export async function interpretRequest(text: string): Promise<InterpretacaoOnboarding> {
   if (USE_MOCKS) {
     return { disponivel: false };
   }
   try {
-    const { data } = await http.post<InterpretacaoOnboarding>('/onboarding/interpretar', { texto });
+    const { data } = await http.post<InterpretacaoOnboarding>('/onboarding/interpretar', { texto: text });
     return data;
   } catch {
     return { disponivel: false };
@@ -31,21 +31,21 @@ export async function interpretarPedido(texto: string): Promise<InterpretacaoOnb
 }
 
 /**
- * Envia texto livre na etapa de confirmação do onboarding para identificar
- * se o usuário confirmou, quer recomeçar ou pediu correção de campos específicos.
- * Em caso de mock, timeout ou erro de rede, devolve `null` sem subir exceção.
+ * Sends freeform text in the onboarding confirmation step to identify
+ * whether the user confirmed, wants to restart, or requested corrections to specific fields.
+ * In case of mock, timeout or network error, returns `null` without throwing.
  */
-export async function revisarConfirmacao(
-  texto: string,
-  dadosAtuais: Record<PatchCampo, string>,
+export async function reviewConfirmation(
+  text: string,
+  currentData: Record<PatchCampo, string>,
 ): Promise<RevisaoResultado | null> {
   if (USE_MOCKS) {
     return null;
   }
   try {
     const { data } = await http.post<RevisaoResultado>('/onboarding/revisar', {
-      texto,
-      dadosAtuais,
+      texto: text,
+      dadosAtuais: currentData,
     });
     return data;
   } catch {
@@ -63,12 +63,12 @@ export interface ResultadoCobertura {
   descobertos: RequisitoCobertura[];
 }
 
-export async function diagnosticoVarejo(
-  respostas: Record<string, unknown>
+export async function getRetailDiagnosis(
+  answers: Record<string, unknown>
 ): Promise<ResultadoCobertura | null> {
   if (USE_MOCKS) return null;
   try {
-    const { data } = await http.post<ResultadoCobertura>('/onboarding/diagnostico-varejo', { respostas });
+    const { data } = await http.post<ResultadoCobertura>('/onboarding/diagnostico-varejo', { respostas: answers });
     return data;
   } catch {
     return null;

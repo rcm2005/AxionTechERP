@@ -19,22 +19,22 @@ export function LoginPage() {
   const location = useLocation();
 
   const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setErro(null);
+    setError(null);
     setSubmitting(true);
     try {
-      await login(email, senha);
+      await login(email, password);
       const state = location.state as LocationState | null;
-      const destino = state?.from?.pathname ?? paths.comecarProjetos;
-      navigate(destino, { replace: true });
+      const destination = state?.from?.pathname ?? paths.comecarProjetos;
+      navigate(destination, { replace: true });
     } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Não foi possível entrar.');
+      setError(err instanceof Error ? err.message : 'Não foi possível entrar.');
       setSubmitting(false);
     }
   }
@@ -99,20 +99,20 @@ export function LoginPage() {
               </span>
               <div className={styles.passWrap}>
                 <input
-                  type={mostrarSenha ? 'text' : 'password'}
-                  name="senha"
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
                   autoComplete="current-password"
                   placeholder="••••••••"
                   required
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   type="button"
                   className={styles.eye}
-                  aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
-                  aria-pressed={mostrarSenha}
-                  onClick={() => setMostrarSenha((v) => !v)}
+                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((v) => !v)}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -126,9 +126,9 @@ export function LoginPage() {
               </div>
             </label>
 
-            {erro && (
+            {error && (
               <p className={styles.error} role="alert">
-                {erro}
+                {error}
               </p>
             )}
 

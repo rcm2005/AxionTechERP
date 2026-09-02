@@ -9,63 +9,63 @@ import { formatDate } from '@/utils/format';
 import styles from './ProjetosPage.module.scss';
 
 /**
- * Lista os escritórios (tenants) em que o e-mail da sessão atual já é admin.
- * O escopo vem do servidor a partir do Bearer token — nada é filtrado no cliente.
+ * Lists firms (tenants) where the current session email is already an admin.
+ * Scope comes from the server via Bearer token — nothing is filtered on client.
  */
 export function ProjetosPage() {
   useDocumentTitle('Projetos');
   const { isAuthenticated, trocarEscritorio } = useAuth();
   const navigate = useNavigate();
 
-  const [escritorios, setEscritorios] = useState<EscritorioDaConta[] | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  // Já começa "carregando" quando há sessão: assim o efeito abaixo não precisa
-  // disparar um setState síncrono só pra ligar o spinner.
-  const [carregando, setCarregando] = useState(isAuthenticated);
-  const [entrandoEm, setEntrandoEm] = useState<string | null>(null);
+  const [firms, setFirms] = useState<EscritorioDaConta[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Starts "loading" when there is a session: thus the effect below doesn't need
+  // to trigger a synchronous setState just to turn on the spinner.
+  const [loading, setLoading] = useState(isAuthenticated);
+  const [enteringId, setEnteringId] = useState<string | null>(null);
 
-  const carregar = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
-      setEscritorios(await listarMeusEscritorios());
-      setErro(null);
+      setFirms(await listarMeusEscritorios());
+      setError(null);
     } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Não foi possível carregar seus ERPs.');
-      setEscritorios(null);
+      setError(err instanceof Error ? err.message : 'Não foi possível carregar seus ERPs.');
+      setFirms(null);
     } finally {
-      setCarregando(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // Buscar a lista no servidor É sincronização com sistema externo, que é
-    // justamente o caso de uso legítimo de useEffect. O estado só muda depois
-    // do await; a regra não consegue enxergar isso através do useCallback.
+    // Fetching the list from the server IS synchronization with an external system, which is
+    // precisely the legitimate use case for useEffect. State only changes after
+    // the await; the lint rule cannot see this through useCallback.
     // oxlint-disable-next-line react/set-state-in-effect
-    if (isAuthenticated) void carregar();
-  }, [isAuthenticated, carregar]);
+    if (isAuthenticated) void load();
+  }, [isAuthenticated, load]);
 
-  function recarregar() {
-    setCarregando(true);
-    setErro(null);
-    void carregar();
+  function reload() {
+    setLoading(true);
+    setError(null);
+    void load();
   }
 
-  async function entrar(escritorio: EscritorioDaConta) {
-    setEntrandoEm(escritorio.id);
-    setErro(null);
+  async function enterFirm(firm: EscritorioDaConta) {
+    setEnteringId(firm.id);
+    setError(null);
     try {
-      await trocarEscritorio(escritorio.id);
+      await trocarEscritorio(firm.id);
       navigate(paths.dashboard);
     } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Não foi possível entrar neste ERP.');
-      setEntrandoEm(null);
+      setError(err instanceof Error ? err.message : 'Não foi possível entrar neste ERP.');
+      setEnteringId(null);
     }
   }
 
   if (!isAuthenticated) {
     return (
       <div className={styles.pagina}>
-        <Cabecalho />
+        <Header />
         <p className={styles.vazio}>
           Você ainda não está em nenhuma sessão. <Link to={paths.comecar}>Crie o seu ERP</Link> ou{' '}
           <Link to={paths.login}>entre com sua conta</Link> para ver o que já existe aqui.
@@ -74,32 +74,32 @@ export function ProjetosPage() {
     );
   }
 
-  const temProjetos = !carregando && Boolean(escritorios && escritorios.length > 0);
+  const hasProjects = !loading && Boolean(firms && firms.length > 0);
 
   return (
     <div className={styles.pagina}>
-      <Cabecalho mostrarNovoProjeto={temProjetos} />
+      <Header showNewProject={hasProjects} />
 
-      {erro && (
+      {error && (
         <p className={styles.erro} role="alert">
-          {erro}{' '}
-          <button type="button" className={styles.recarregar} onClick={recarregar}>
+          {error}{' '}
+          <button type="button" className={styles.recarregar} onClick={reload}>
             <RefreshCw size={13} aria-hidden="true" /> Tentar de novo
           </button>
         </p>
       )}
 
-      {carregando && <p className={styles.vazio}>Carregando seus ERPs...</p>}
+      {loading && <p className={styles.vazio}>Carregando seus ERPs...</p>}
 
-      {!carregando && escritorios?.length === 0 && (
+      {!loading && firms?.length === 0 && (
         <p className={styles.vazio}>
           Nenhum ERP ainda. <Link to={paths.comecar}>Monte o primeiro</Link>.
         </p>
       )}
 
-      {!carregando && escritorios && escritorios.length > 0 && (
+      {!loading && firms && firms.length > 0 && (
         <ul className={styles.grade}>
-          {escritorios.map((e) => (
+          {firms.map((e) => (
             <li key={e.id} className={styles.card}>
               <span className={styles.amostra} style={{ background: e.corPrimaria }} aria-hidden="true" />
               <h3 className={styles.nome}>{e.nomeExibicao}</h3>
@@ -107,10 +107,10 @@ export function ProjetosPage() {
               <button
                 type="button"
                 className={styles.entrar}
-                onClick={() => void entrar(e)}
-                disabled={entrandoEm !== null}
+                onClick={() => void enterFirm(e)}
+                disabled={enteringId !== null}
               >
-                {entrandoEm === e.id ? 'Entrando...' : 'Entrar'}
+                {enteringId === e.id ? 'Entrando...' : 'Entrar'}
                 <ArrowRight size={14} aria-hidden="true" />
               </button>
             </li>
@@ -121,7 +121,7 @@ export function ProjetosPage() {
   );
 }
 
-function Cabecalho({ mostrarNovoProjeto }: { mostrarNovoProjeto?: boolean }) {
+function Header({ showNewProject }: { showNewProject?: boolean }) {
   return (
     <header className={styles.cabecalho}>
       <div className={styles.cabecalhoTopo}>
@@ -129,7 +129,7 @@ function Cabecalho({ mostrarNovoProjeto }: { mostrarNovoProjeto?: boolean }) {
           <h2 className={styles.titulo}>Seus ERPs</h2>
           <p className={styles.sub}>Todos os escritórios em que este e-mail é administrador.</p>
         </div>
-        {mostrarNovoProjeto && (
+        {showNewProject && (
           <Link to={paths.comecar} className={styles.novoProjeto}>
             + Novo projeto
           </Link>

@@ -3,31 +3,45 @@ import { USE_MOCKS, delay } from './mockAdapter';
 import { http } from './http';
 
 /**
- * Shape real de `GET /api/usuarios` — bem mais enxuto que `Usuario` (que
- * carrega campos de um modelo multi-tenant/contador que a API não tem, ver
- * `auth.service.ts`). Usar este tipo aqui evita reivindicar campos
- * (`nomeExibicao`, `iniciais`, `tenantIds`...) que só existem no mock.
+ * Real shape of `GET /api/usuarios` — leaner than `Usuario` (which
+ * carries fields from a multi-tenant/accountant model that the API does not have,
+ * see `auth.service.ts`). Using this type here avoids asserting fields
+ * (`nomeExibicao`, `iniciais`, `tenantIds`...) that only exist in the mock.
  */
-export interface UsuarioResumo {
+export interface UserSummary {
   id: string;
   tenant_id: string;
-  nome: string;
+  name: string;
   email: string;
   role: 'admin' | 'user';
   created_at: string;
 }
 
 /**
- * Serviço mínimo (somente leitura) de usuários.
+ * Minimal (read-only) users service.
  *
- * Existe hoje só para popular o select de "responsável" na agenda. Escrita de
- * usuários (convite, papéis, desativação) não faz parte deste escopo.
+ * Currently exists only to populate the "assignee" select in the schedule.
+ * User mutations (invitation, roles, deactivation) are out of scope.
  */
-export async function listarUsuarios(): Promise<UsuarioResumo[]> {
+export async function listUsers(): Promise<UserSummary[]> {
   if (USE_MOCKS) {
     await delay();
-    return db.usuarios as unknown as UsuarioResumo[];
+    return db.usuarios.map((u) => ({
+      id: u.id,
+      tenant_id: u.tenantAtivoId ?? u.tenantIds[0] ?? '',
+      name: u.nome,
+      email: u.email,
+      role: u.role === 'admin' ? 'admin' : 'user',
+      created_at: u.criadoEm,
+    }));
   }
-  const { data } = await http.get<UsuarioResumo[]>('/usuarios');
-  return data;
+  const { data } = await http.get<Array<{ id: string; tenant_id: string; nome: string; email: string; role: 'admin' | 'user'; created_at: string }>>('/usuarios');
+  return data.map((u) => ({
+    id: u.id,
+    tenant_id: u.tenant_id,
+    name: u.nome,
+    email: u.email,
+    role: u.role,
+    created_at: u.created_at,
+  }));
 }

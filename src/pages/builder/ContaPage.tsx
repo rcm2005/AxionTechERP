@@ -10,16 +10,16 @@ export function ContaPage() {
   useDocumentTitle('Conta');
   const { usuario, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
-  const [saindo, setSaindo] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  async function sair() {
-    setSaindo(true);
+  async function handleLogout() {
+    setIsLoggingOut(true);
     try {
       await logout();
     } catch {
-      // cleanup local de sessão já é garantido dentro do próprio logout() (ver AuthContext)
+      // Local session cleanup is already guaranteed inside logout() itself (see AuthContext)
     } finally {
-      setSaindo(false);
+      setIsLoggingOut(false);
     }
     navigate(paths.comecar);
   }
@@ -48,9 +48,9 @@ export function ContaPage() {
               <dd>{usuario.email}</dd>
             </div>
           </dl>
-          <button type="button" className={styles.sair} onClick={() => void sair()} disabled={saindo}>
+          <button type="button" className={styles.sair} onClick={() => void handleLogout()} disabled={isLoggingOut}>
             <LogOut size={15} aria-hidden="true" />
-            {saindo ? 'Saindo...' : 'Sair'}
+            {isLoggingOut ? 'Saindo...' : 'Sair'}
           </button>
         </div>
       )}

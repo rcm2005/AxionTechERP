@@ -27,14 +27,14 @@ export interface PerguntaVarejo {
 
 export type RespostasVarejo = Record<string, string | string[]>;
 
-type Fase = 'pergunta' | 'reflexao' | 'fim';
+type Phase = 'pergunta' | 'reflexao' | 'fim';
 
-interface Mensagem {
+interface Message {
   id: number;
-  autor: 'usuario' | 'assistente';
-  texto: string;
-  porQue?: string;
-  variante?: 'erro';
+  author: 'user' | 'assistant';
+  text: string;
+  why?: string;
+  variant?: 'error';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -201,68 +201,68 @@ const MENSAGEM_ABERTURA =
   'Você está no modo de teste do onboarding de varejo — ainda não é o fluxo público. Vou te fazer algumas perguntas de verdade sobre como seu negócio funciona, do jeito que uma consultoria de implantação faria.';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers de Formatação e Resumo
+// Formatting and Summary Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-function obterRotulo(perguntaId: string, valor: string | string[] | undefined): string {
-  const pergunta = PERGUNTAS_VAREJO.find((p) => p.id === perguntaId);
-  if (!pergunta || valor === undefined) return '—';
+function getOptionLabel(questionId: string, value: string | string[] | undefined): string {
+  const question = PERGUNTAS_VAREJO.find((p) => p.id === questionId);
+  if (!question || value === undefined) return '—';
 
-  if (Array.isArray(valor)) {
-    if (valor.length === 0) return 'Nenhum';
-    const rotulos = pergunta.opcoes
-      .filter((o) => valor.includes(o.id))
+  if (Array.isArray(value)) {
+    if (value.length === 0) return 'Nenhum';
+    const labels = question.opcoes
+      .filter((o) => value.includes(o.id))
       .map((o) => o.rotulo);
-    return rotulos.length > 0 ? rotulos.join(', ') : 'Nenhum';
+    return labels.length > 0 ? labels.join(', ') : 'Nenhum';
   }
 
-  const opcao = pergunta.opcoes.find((o) => o.id === valor);
-  return opcao ? opcao.rotulo : valor;
+  const option = question.opcoes.find((o) => o.id === value);
+  return option ? option.rotulo : value;
 }
 
-function gerarResumoTexto(respostas: RespostasVarejo): string {
-  const canal = obterRotulo('canal_venda', respostas.canal_venda);
-  const seg = obterRotulo('segmento', respostas.segmento);
-  const regime = obterRotulo('regime_tributario', respostas.regime_tributario);
-  const doc = obterRotulo('documento_fiscal', respostas.documento_fiscal);
-  const cliente = obterRotulo('perfil_cliente', respostas.perfil_cliente);
-  const est = obterRotulo('estoque', respostas.estoque);
-  const pag = obterRotulo('formas_pagamento', respostas.formas_pagamento);
-  const filiais = respostas.multiplas_filiais === 'sim' ? 'com múltiplas filiais/depósitos' : 'com filial única';
-  const cred = respostas.crediario === 'sim' ? 'com oferta de crediário próprio' : 'sem crediário próprio';
+function generateSummaryText(answers: RespostasVarejo): string {
+  const canal = getOptionLabel('canal_venda', answers.canal_venda);
+  const seg = getOptionLabel('segmento', answers.segmento);
+  const regime = getOptionLabel('regime_tributario', answers.regime_tributario);
+  const doc = getOptionLabel('documento_fiscal', answers.documento_fiscal);
+  const cliente = getOptionLabel('perfil_cliente', answers.perfil_cliente);
+  const est = getOptionLabel('estoque', answers.estoque);
+  const pag = getOptionLabel('formas_pagamento', answers.formas_pagamento);
+  const filiais = answers.multiplas_filiais === 'sim' ? 'com múltiplas filiais/depósitos' : 'com filial única';
+  const cred = answers.crediario === 'sim' ? 'com oferta de crediário próprio' : 'sem crediário próprio';
 
   return `Entendi o perfil da sua operação: você opera com ${canal}, no segmento de ${seg}, enquadrado no ${regime}. Vende para ${cliente} com emissão de ${doc}, operando com ${est} (${filiais}, ${cred}) e aceitando como formas de pagamento: ${pag}.`;
 }
 
-function gerarMensagemLacunas(respostas: RespostasVarejo): string {
+function generateGapsMessage(answers: RespostasVarejo): string {
   const lacunas: string[] = [];
 
   // Incondicional: nota fiscal de verdade
   lacunas.push('Emissão de nota fiscal de verdade (NFC-e / NF-e) — hoje o sistema não emite nem transmite notas à SEFAZ.');
 
   // Estoque em consignação
-  if (respostas.estoque === 'consignacao' || respostas.estoque === 'misto') {
+  if (answers.estoque === 'consignacao' || answers.estoque === 'misto') {
     lacunas.push('Controle de estoque em consignação (mercadoria de terceiros sem nota de compra).');
   }
 
   // Múltiplas filiais
-  if (respostas.multiplas_filiais === 'sim') {
+  if (answers.multiplas_filiais === 'sim') {
     lacunas.push('Gestão de múltiplas lojas/filiais e controle de estoque individualizado com transferências.');
   }
 
   // Segmento moda
-  if (respostas.segmento === 'moda') {
+  if (answers.segmento === 'moda') {
     lacunas.push('Grade de tamanho e cor para vestuário (produtos pai e SKUs filhos).');
   }
 
   // Marketplaces selecionados
-  const mkt = Array.isArray(respostas.marketplaces) ? respostas.marketplaces : [];
+  const mkt = Array.isArray(answers.marketplaces) ? answers.marketplaces : [];
   if (mkt.length > 0) {
     lacunas.push('Integração com marketplaces (sincronização de pedidos e anúncios via API/hub).');
   }
 
   // Crediário próprio
-  if (respostas.crediario === 'sim') {
+  if (answers.crediario === 'sim') {
     lacunas.push('Boleto bancário e régua de cobrança automática para crediário.');
   }
 
@@ -278,159 +278,159 @@ function gerarMensagemLacunas(respostas: RespostasVarejo): string {
 export function BuilderChatVarejoPage() {
   useDocumentTitle('Onboarding Varejo (Beta) · Axion');
 
-  const [fase, setFase] = useState<Fase>('pergunta');
-  const [perguntaAtualIndex, setPerguntaAtualIndex] = useState(0);
-  const [respostas, setRespostas] = useState<RespostasVarejo>({});
-  const [selecaoMultipla, setSelecaoMultipla] = useState<string[]>([]);
-  const [mensagens, setMensagens] = useState<Mensagem[]>([
+  const [phase, setPhase] = useState<Phase>('pergunta');
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<RespostasVarejo>({});
+  const [multipleSelection, setMultipleSelection] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: 0,
-      autor: 'assistente',
-      texto: MENSAGEM_ABERTURA,
+      author: 'assistant',
+      text: MENSAGEM_ABERTURA,
     },
     {
       id: 1,
-      autor: 'assistente',
-      texto: PERGUNTAS_VAREJO[0].texto,
-      porQue: PERGUNTAS_VAREJO[0].porQue,
+      author: 'assistant',
+      text: PERGUNTAS_VAREJO[0].texto,
+      why: PERGUNTAS_VAREJO[0].porQue,
     },
   ]);
 
-  const proximoId = useRef(2);
-  const fimDaLista = useRef<HTMLDivElement>(null);
+  const nextId = useRef(2);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const dizer = useCallback(
-    (autor: Mensagem['autor'], texto: string, porQue?: string, variante?: 'erro') => {
-      setMensagens((atual) => [
-        ...atual,
-        { id: proximoId.current++, autor, texto, porQue, variante },
+  const addMessage = useCallback(
+    (author: Message['author'], text: string, why?: string, variant?: 'error') => {
+      setMessages((current) => [
+        ...current,
+        { id: nextId.current++, author, text, why, variant },
       ]);
     },
     []
   );
 
   useEffect(() => {
-    fimDaLista.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [mensagens, fase, perguntaAtualIndex]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, phase, currentQuestionIndex]);
 
-  const perguntaAtual = PERGUNTAS_VAREJO[perguntaAtualIndex];
+  const currentQuestion = PERGUNTAS_VAREJO[currentQuestionIndex];
 
-  function avancar(indiceAtual: number, respostasAtualizadas: RespostasVarejo) {
-    let proximoIdx = indiceAtual + 1;
+  function advance(currentIndex: number, updatedAnswers: RespostasVarejo) {
+    let nextIdx = currentIndex + 1;
     while (
-      proximoIdx < PERGUNTAS_VAREJO.length &&
-      PERGUNTAS_VAREJO[proximoIdx].pular?.(respostasAtualizadas)
+      nextIdx < PERGUNTAS_VAREJO.length &&
+      PERGUNTAS_VAREJO[nextIdx].pular?.(updatedAnswers)
     ) {
-      proximoIdx++;
+      nextIdx++;
     }
 
-    if (proximoIdx < PERGUNTAS_VAREJO.length) {
-      setPerguntaAtualIndex(proximoIdx);
-      const proxPergunta = PERGUNTAS_VAREJO[proximoIdx];
-      dizer('assistente', proxPergunta.texto, proxPergunta.porQue);
+    if (nextIdx < PERGUNTAS_VAREJO.length) {
+      setCurrentQuestionIndex(nextIdx);
+      const nextQuestion = PERGUNTAS_VAREJO[nextIdx];
+      addMessage('assistant', nextQuestion.texto, nextQuestion.porQue);
     } else {
-      setFase('reflexao');
-      const resumo = gerarResumoTexto(respostasAtualizadas);
-      dizer('assistente', resumo);
+      setPhase('reflexao');
+      const summary = generateSummaryText(updatedAnswers);
+      addMessage('assistant', summary);
     }
   }
 
-  function responderUnica(opcao: OpcaoPergunta) {
-    if (!perguntaAtual) return;
-    const novasRespostas: RespostasVarejo = {
-      ...respostas,
-      [perguntaAtual.id]: opcao.id,
+  function handleSingleChoice(option: OpcaoPergunta) {
+    if (!currentQuestion) return;
+    const newAnswers: RespostasVarejo = {
+      ...answers,
+      [currentQuestion.id]: option.id,
     };
-    setRespostas(novasRespostas);
-    dizer('usuario', opcao.rotulo);
-    avancar(perguntaAtualIndex, novasRespostas);
+    setAnswers(newAnswers);
+    addMessage('user', option.rotulo);
+    advance(currentQuestionIndex, newAnswers);
   }
 
-  function alternarOpcaoMultipla(id: string) {
-    setSelecaoMultipla((atual) =>
-      atual.includes(id) ? atual.filter((x) => x !== id) : [...atual, id]
+  function handleToggleMultipleOption(id: string) {
+    setMultipleSelection((current) =>
+      current.includes(id) ? current.filter((x) => x !== id) : [...current, id]
     );
   }
 
-  function confirmarMultipla() {
-    if (!perguntaAtual) return;
-    const novasRespostas: RespostasVarejo = {
-      ...respostas,
-      [perguntaAtual.id]: selecaoMultipla,
+  function handleConfirmMultiple() {
+    if (!currentQuestion) return;
+    const newAnswers: RespostasVarejo = {
+      ...answers,
+      [currentQuestion.id]: multipleSelection,
     };
-    setRespostas(novasRespostas);
+    setAnswers(newAnswers);
 
-    const rotulosEscolhidos = perguntaAtual.opcoes
-      .filter((o) => selecaoMultipla.includes(o.id))
+    const chosenLabels = currentQuestion.opcoes
+      .filter((o) => multipleSelection.includes(o.id))
       .map((o) => o.rotulo);
 
-    const textoUsuario =
-      rotulosEscolhidos.length > 0 ? rotulosEscolhidos.join(', ') : 'Nenhuma das opções';
+    const userText =
+      chosenLabels.length > 0 ? chosenLabels.join(', ') : 'Nenhuma das opções';
 
-    dizer('usuario', textoUsuario);
-    setSelecaoMultipla([]);
-    avancar(perguntaAtualIndex, novasRespostas);
+    addMessage('user', userText);
+    setMultipleSelection([]);
+    advance(currentQuestionIndex, newAnswers);
   }
 
-  async function confirmarReflexao() {
-    dizer('usuario', 'Confirmar');
-    setFase('fim');
-    const resultado = await onboardingService.diagnosticoVarejo(respostas);
-    if (resultado) {
-      const linhasItens = resultado.descobertos.map((d) => `• ${d.descricao}`).join('\n');
-      const textoCobertos =
-        resultado.cobertos.length > 0
-          ? resultado.cobertos.map((c) => c.descricao.charAt(0).toLowerCase() + c.descricao.slice(1)).join(', e ')
+  async function handleConfirmReflection() {
+    addMessage('user', 'Confirmar');
+    setPhase('fim');
+    const result = await onboardingService.getRetailDiagnosis(answers);
+    if (result) {
+      const itemLines = result.descobertos.map((d) => `• ${d.descricao}`).join('\n');
+      const coveredText =
+        result.cobertos.length > 0
+          ? result.cobertos.map((c) => c.descricao.charAt(0).toLowerCase() + c.descricao.slice(1)).join(', e ')
           : 'cadastro de produto com preço/estoque, e venda com item, cliente e forma de pagamento — inclusive fiado';
-      const msg = `Com base no diagnóstico da sua operação, aqui está o contrato de honestidade sobre o que o sistema AINDA NÃO faz hoje:\n\n${linhasItens}\n\nO que eu já registro de verdade hoje: ${textoCobertos}. O resto virou prioridade real, não promessa vazia.`;
-      dizer('assistente', msg);
+      const msg = `Com base no diagnóstico da sua operação, aqui está o contrato de honestidade sobre o que o sistema AINDA NÃO faz hoje:\n\n${itemLines}\n\nO que eu já registro de verdade hoje: ${coveredText}. O resto virou prioridade real, não promessa vazia.`;
+      addMessage('assistant', msg);
     } else {
-      const msgLacunas = gerarMensagemLacunas(respostas);
-      dizer('assistente', msgLacunas);
+      const gapsMsg = generateGapsMessage(answers);
+      addMessage('assistant', gapsMsg);
     }
   }
 
-  function recomecar() {
-    setRespostas({});
-    setPerguntaAtualIndex(0);
-    setSelecaoMultipla([]);
-    proximoId.current = 2;
-    setMensagens([
+  function handleRestart() {
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    setMultipleSelection([]);
+    nextId.current = 2;
+    setMessages([
       {
         id: 0,
-        autor: 'assistente',
-        texto: MENSAGEM_ABERTURA,
+        author: 'assistant',
+        text: MENSAGEM_ABERTURA,
       },
       {
         id: 1,
-        autor: 'assistente',
-        texto: PERGUNTAS_VAREJO[0].texto,
-        porQue: PERGUNTAS_VAREJO[0].porQue,
+        author: 'assistant',
+        text: PERGUNTAS_VAREJO[0].texto,
+        why: PERGUNTAS_VAREJO[0].porQue,
       },
     ]);
-    setFase('pergunta');
+    setPhase('pergunta');
   }
 
   return (
     <div className={styles.pagina}>
       <div className={styles.transcript}>
         <div className={styles.coluna}>
-          {mensagens.map((msg) => (
+          {messages.map((msg) => (
             <div
               key={msg.id}
-              className={msg.autor === 'usuario' ? styles.linhaUsuario : styles.linhaAssistente}
+              className={msg.author === 'user' ? styles.linhaUsuario : styles.linhaAssistente}
             >
               <div
                 className={
-                  msg.autor === 'usuario'
+                  msg.author === 'user'
                     ? styles.balaoUsuario
-                    : msg.variante === 'erro'
+                    : msg.variant === 'error'
                       ? styles.balaoErro
                       : styles.balaoAssistente
                 }
               >
-                <div>{msg.texto}</div>
-                {msg.porQue && (
+                <div>{msg.text}</div>
+                {msg.why && (
                   <small
                     style={{
                       display: 'block',
@@ -441,7 +441,7 @@ export function BuilderChatVarejoPage() {
                       paddingTop: '6px',
                     }}
                   >
-                    💡 <em>Por que importa:</em> {msg.porQue}
+                    💡 <em>Por que importa:</em> {msg.why}
                   </small>
                 )}
               </div>
@@ -449,14 +449,14 @@ export function BuilderChatVarejoPage() {
           ))}
 
           {/* Camada B: Pergunta de seleção única */}
-          {fase === 'pergunta' && perguntaAtual && perguntaAtual.tipo === 'unica' && (
-            <div className={styles.respostasRapidas} role="group" aria-label={perguntaAtual.texto}>
-              {perguntaAtual.opcoes.map((opcao) => (
+          {phase === 'pergunta' && currentQuestion && currentQuestion.tipo === 'unica' && (
+            <div className={styles.respostasRapidas} role="group" aria-label={currentQuestion.texto}>
+              {currentQuestion.opcoes.map((opcao) => (
                 <button
                   key={opcao.id}
                   type="button"
                   className={styles.btnSecundario}
-                  onClick={() => responderUnica(opcao)}
+                  onClick={() => handleSingleChoice(opcao)}
                 >
                   {opcao.rotulo}
                 </button>
@@ -465,43 +465,43 @@ export function BuilderChatVarejoPage() {
           )}
 
           {/* Camada B: Pergunta de seleção múltipla */}
-          {fase === 'pergunta' && perguntaAtual && perguntaAtual.tipo === 'multipla' && (
-            <div className={styles.respostasRapidas} role="group" aria-label={perguntaAtual.texto}>
-              {perguntaAtual.opcoes.map((opcao) => {
-                const ativo = selecaoMultipla.includes(opcao.id);
+          {phase === 'pergunta' && currentQuestion && currentQuestion.tipo === 'multipla' && (
+            <div className={styles.respostasRapidas} role="group" aria-label={currentQuestion.texto}>
+              {currentQuestion.opcoes.map((opcao) => {
+                const active = multipleSelection.includes(opcao.id);
                 return (
                   <button
                     key={opcao.id}
                     type="button"
-                    className={ativo ? styles.moduloToggleAtivo : styles.moduloToggle}
-                    aria-pressed={ativo}
-                    onClick={() => alternarOpcaoMultipla(opcao.id)}
+                    className={active ? styles.moduloToggleAtivo : styles.moduloToggle}
+                    aria-pressed={active}
+                    onClick={() => handleToggleMultipleOption(opcao.id)}
                   >
                     {opcao.rotulo}
                   </button>
                 );
               })}
-              <button type="button" className={styles.btnPrimario} onClick={confirmarMultipla}>
+              <button type="button" className={styles.btnPrimario} onClick={handleConfirmMultiple}>
                 Continuar
               </button>
             </div>
           )}
 
           {/* Camada C: Reflexão e confirmação */}
-          {fase === 'reflexao' && (
+          {phase === 'reflexao' && (
             <>
               <div className={styles.linhaAssistente}>
                 <div className={styles.balaoAssistente}>
                   <dl className={styles.revisao}>
                     {PERGUNTAS_VAREJO.map((p) => {
-                      const pulou = p.pular?.(respostas);
-                      const valorExibicao = pulou
+                      const skipped = p.pular?.(answers);
+                      const displayValue = skipped
                         ? 'Não se aplica (só loja física)'
-                        : obterRotulo(p.id, respostas[p.id]);
+                        : getOptionLabel(p.id, answers[p.id]);
                       return (
                         <div key={p.id}>
                           <dt>{p.rotuloCurto}</dt>
-                          <dd>{valorExibicao}</dd>
+                          <dd>{displayValue}</dd>
                         </div>
                       );
                     })}
@@ -509,10 +509,10 @@ export function BuilderChatVarejoPage() {
                 </div>
               </div>
               <div className={styles.respostasRapidas}>
-                <button type="button" className={styles.btnPrimario} onClick={() => void confirmarReflexao()}>
+                <button type="button" className={styles.btnPrimario} onClick={() => void handleConfirmReflection()}>
                   Confirmar
                 </button>
-                <button type="button" className={styles.btnSecundario} onClick={recomecar}>
+                <button type="button" className={styles.btnSecundario} onClick={handleRestart}>
                   Recomeçar
                 </button>
               </div>
@@ -520,15 +520,15 @@ export function BuilderChatVarejoPage() {
           )}
 
           {/* Camada D / Fim: Contrato de lacunas */}
-          {fase === 'fim' && (
+          {phase === 'fim' && (
             <div className={styles.respostasRapidas}>
-              <button type="button" className={styles.btnSecundario} onClick={recomecar}>
+              <button type="button" className={styles.btnSecundario} onClick={handleRestart}>
                 Recomeçar do zero
               </button>
             </div>
           )}
 
-          <div ref={fimDaLista} />
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
@@ -538,7 +538,7 @@ export function BuilderChatVarejoPage() {
             className={styles.campo}
             value=""
             placeholder={
-              fase === 'fim'
+              phase === 'fim'
                 ? 'Diagnóstico finalizado. Clique em recomeçar se quiser rodar de novo.'
                 : 'Selecione uma opção acima para responder...'
             }

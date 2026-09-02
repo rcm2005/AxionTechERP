@@ -24,16 +24,16 @@ interface FormState {
   adminPassword: string;
 }
 
-const ETAPAS = ['Escritório', 'Marca', 'Seu acesso', 'Revisão'] as const;
+const STEPS = ['Escritório', 'Marca', 'Seu acesso', 'Revisão'] as const;
 
 export function OnboardingPage() {
   useDocumentTitle('Criar meu ERP');
   const { criarEscritorio } = useAuth();
   const navigate = useNavigate();
 
-  const [passo, setPasso] = useState(0);
+  const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
     nomeEscritorio: '',
     cnpjOuCpf: '',
@@ -43,38 +43,38 @@ export function OnboardingPage() {
     adminPassword: '',
   });
 
-  function atualizar<K extends keyof FormState>(campo: K, valor: FormState[K]) {
+  function updateField<K extends keyof FormState>(campo: K, valor: FormState[K]) {
     setForm((f) => ({ ...f, [campo]: valor }));
   }
 
-  const podeAvancarPasso0 = form.nomeEscritorio.trim().length > 0 && form.cnpjOuCpf.trim().length >= 11;
-  const podeAvancarPasso1 = Boolean(form.corPrimaria);
-  const podeAvancarPasso2 =
+  const canAdvanceStep0 = form.nomeEscritorio.trim().length > 0 && form.cnpjOuCpf.trim().length >= 11;
+  const canAdvanceStep1 = Boolean(form.corPrimaria);
+  const canAdvanceStep2 =
     form.adminNome.trim().length > 0 &&
     /\S+@\S+\.\S+/.test(form.adminEmail) &&
     form.adminPassword.length >= 8;
 
-  const podeAvancar = [podeAvancarPasso0, podeAvancarPasso1, podeAvancarPasso2, true][passo];
+  const canAdvance = [canAdvanceStep0, canAdvanceStep1, canAdvanceStep2, true][step];
 
-  function handleAvancar(event: FormEvent) {
+  function handleAdvance(event: FormEvent) {
     event.preventDefault();
-    if (!podeAvancar) return;
-    setErro(null);
-    if (passo < ETAPAS.length - 1) {
-      setPasso((p) => p + 1);
+    if (!canAdvance) return;
+    setError(null);
+    if (step < STEPS.length - 1) {
+      setStep((p) => p + 1);
     } else {
-      void handleCriar();
+      void handleCreate();
     }
   }
 
-  async function handleCriar() {
+  async function handleCreate() {
     setSubmitting(true);
-    setErro(null);
+    setError(null);
     try {
       await criarEscritorio(form);
       navigate(paths.dashboard, { replace: true });
     } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Não foi possível criar o escritório.');
+      setError(err instanceof Error ? err.message : 'Não foi possível criar o escritório.');
       setSubmitting(false);
     }
   }
@@ -89,25 +89,25 @@ export function OnboardingPage() {
           <span className={styles.brandName}>Axion Tech</span>
         </div>
 
-        <div className={styles.progress} aria-label={`Passo ${passo + 1} de ${ETAPAS.length}`}>
-          {ETAPAS.map((etapa, i) => (
+        <div className={styles.progress} aria-label={`Passo ${step + 1} de ${STEPS.length}`}>
+          {STEPS.map((etapa, i) => (
             <div key={etapa} className={styles.progressItem}>
               <span
                 className={
-                  i < passo ? styles.dotDone : i === passo ? styles.dotAtivo : styles.dot
+                  i < step ? styles.dotDone : i === step ? styles.dotAtivo : styles.dot
                 }
               >
-                {i < passo ? <Check size={12} /> : i + 1}
+                {i < step ? <Check size={12} /> : i + 1}
               </span>
-              <span className={i === passo ? styles.progressLabelAtivo : styles.progressLabel}>
+              <span className={i === step ? styles.progressLabelAtivo : styles.progressLabel}>
                 {etapa}
               </span>
             </div>
           ))}
         </div>
 
-        <form onSubmit={handleAvancar} noValidate>
-          {passo === 0 && (
+        <form onSubmit={handleAdvance} noValidate>
+          {step === 0 && (
             <fieldset className={styles.step}>
               <legend className={styles.stepTitle}>Como se chama o seu escritório?</legend>
               <p className={styles.stepSub}>
@@ -123,7 +123,7 @@ export function OnboardingPage() {
                   autoFocus
                   placeholder="Ex: Silva & Santos Advocacia"
                   value={form.nomeEscritorio}
-                  onChange={(e) => atualizar('nomeEscritorio', e.target.value)}
+                  onChange={(e) => updateField('nomeEscritorio', e.target.value)}
                 />
               </label>
 
@@ -134,13 +134,13 @@ export function OnboardingPage() {
                 <input
                   placeholder="00.000.000/0001-00"
                   value={form.cnpjOuCpf}
-                  onChange={(e) => atualizar('cnpjOuCpf', e.target.value)}
+                  onChange={(e) => updateField('cnpjOuCpf', e.target.value)}
                 />
               </label>
             </fieldset>
           )}
 
-          {passo === 1 && (
+          {step === 1 && (
             <fieldset className={styles.step}>
               <legend className={styles.stepTitle}>Escolha a cor da sua marca</legend>
               <p className={styles.stepSub}>
@@ -155,7 +155,7 @@ export function OnboardingPage() {
                     role="radio"
                     aria-checked={form.corPrimaria === cor.valor}
                     className={styles.swatchBtn}
-                    onClick={() => atualizar('corPrimaria', cor.valor)}
+                    onClick={() => updateField('corPrimaria', cor.valor)}
                   >
                     <span
                       className={styles.swatch}
@@ -171,7 +171,7 @@ export function OnboardingPage() {
             </fieldset>
           )}
 
-          {passo === 2 && (
+          {step === 2 && (
             <fieldset className={styles.step}>
               <legend className={styles.stepTitle}>Seus dados de acesso</legend>
               <p className={styles.stepSub}>Você vai ser o administrador deste escritório.</p>
@@ -184,7 +184,7 @@ export function OnboardingPage() {
                   autoFocus
                   placeholder="Ex: Dra. Ana Ribeiro"
                   value={form.adminNome}
-                  onChange={(e) => atualizar('adminNome', e.target.value)}
+                  onChange={(e) => updateField('adminNome', e.target.value)}
                 />
               </label>
 
@@ -196,7 +196,7 @@ export function OnboardingPage() {
                   type="email"
                   placeholder="voce@escritorio.com.br"
                   value={form.adminEmail}
-                  onChange={(e) => atualizar('adminEmail', e.target.value)}
+                  onChange={(e) => updateField('adminEmail', e.target.value)}
                 />
               </label>
 
@@ -208,13 +208,13 @@ export function OnboardingPage() {
                   type="password"
                   placeholder="Mínimo 8 caracteres"
                   value={form.adminPassword}
-                  onChange={(e) => atualizar('adminPassword', e.target.value)}
+                  onChange={(e) => updateField('adminPassword', e.target.value)}
                 />
               </label>
             </fieldset>
           )}
 
-          {passo === 3 && (
+          {step === 3 && (
             <fieldset className={styles.step}>
               <legend className={styles.stepTitle}>Confere se está tudo certo</legend>
               <p className={styles.stepSub}>É só isso — o resto (processos, prazos, financeiro) já vem pronto.</p>
@@ -245,18 +245,18 @@ export function OnboardingPage() {
             </fieldset>
           )}
 
-          {erro && (
+          {error && (
             <p className={styles.error} role="alert">
-              {erro}
+              {error}
             </p>
           )}
 
           <div className={styles.nav}>
-            {passo > 0 ? (
+            {step > 0 ? (
               <button
                 type="button"
                 className={styles.btnVoltar}
-                onClick={() => setPasso((p) => p - 1)}
+                onClick={() => setStep((p) => p - 1)}
                 disabled={submitting}
               >
                 <ArrowLeft size={15} />
@@ -266,10 +266,10 @@ export function OnboardingPage() {
               <span />
             )}
 
-            <button type="submit" className={styles.btnAvancar} disabled={!podeAvancar || submitting}>
+            <button type="submit" className={styles.btnAvancar} disabled={!canAdvance || submitting}>
               {submitting
                 ? 'Criando...'
-                : passo === ETAPAS.length - 1
+                : step === STEPS.length - 1
                   ? 'Criar meu ERP'
                   : 'Continuar'}
               {!submitting && <ArrowRight size={15} />}
