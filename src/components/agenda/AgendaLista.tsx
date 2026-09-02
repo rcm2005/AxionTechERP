@@ -7,13 +7,13 @@ import { formatLongDate, formatTime } from '@/utils/format';
 import type { AgendaEvento, AgendaEventoTipo, Tone } from '@/types';
 import styles from './AgendaLista.module.scss';
 
-const TIPO_META: Record<AgendaEventoTipo, { label: string; tone: Tone }> = {
+const TYPE_META: Record<AgendaEventoTipo, { label: string; tone: Tone }> = {
   audiencia: { label: 'Audiência', tone: 'purple' },
   reuniao: { label: 'Reunião', tone: 'blue' },
   outro: { label: 'Outro', tone: 'neutral' },
 };
 
-function toneDoStatus(status: string): Tone {
+function getStatusTone(status: string): Tone {
   switch (status.toLowerCase()) {
     case 'realizado':
       return 'green';
@@ -25,64 +25,64 @@ function toneDoStatus(status: string): Tone {
 }
 
 interface Props {
-  eventos: AgendaEvento[];
+  events: AgendaEvento[];
   loading?: boolean;
-  /** Nome do responsável — não vem no payload do evento, só o id. */
+  /** Assignee name — not in the event payload, only the id. */
   nomeResponsavel?: (usuarioId: string) => string;
-  /** Rótulo do processo vinculado (número CNJ), quando houver. */
+  /** Linked case label (CNJ number), if any. */
   rotuloProcesso?: (processoId: string) => string;
   emptyMessage?: string;
 }
 
 /**
- * Agenda em lista agrupada por dia.
+ * Schedule list grouped by day.
  *
- * Uma tabela plana esconderia o que essa tela precisa comunicar (o que é hoje,
- * o que é amanhã, quanto tempo sobra entre um compromisso e outro). Um grid de
- * calendário completo seria muito mais código para o mesmo ganho neste momento.
+ * A flat table would hide what this screen needs to communicate (what is today,
+ * what is tomorrow, how much time is left between appointments). A full calendar
+ * grid would be much more code for the same benefit at this point.
  */
 export function AgendaLista({
-  eventos,
+  events,
   loading,
   nomeResponsavel,
   rotuloProcesso,
   emptyMessage = 'Nenhum compromisso encontrado.',
 }: Props) {
-  const grupos = useMemo(() => agruparPorDia(eventos), [eventos]);
+  const groups = useMemo(() => groupByDay(events), [events]);
 
   if (loading) return <Skeleton height="320px" />;
-  if (eventos.length === 0) return <EmptyState title={emptyMessage} />;
+  if (events.length === 0) return <EmptyState title={emptyMessage} />;
 
   return (
     <div className={styles.root}>
-      {grupos.map(([diaIso, doDia]) => (
-        <section key={diaIso} className={styles.grupo}>
+      {groups.map(([dayIso, dayEvents]) => (
+        <section key={dayIso} className={styles.grupo}>
           <header className={styles.grupoHead}>
-            <h3>{rotuloDoDia(diaIso)}</h3>
+            <h3>{getDayLabel(dayIso)}</h3>
             <span className={styles.contagem}>
-              {doDia.length} {doDia.length === 1 ? 'compromisso' : 'compromissos'}
+              {dayEvents.length} {dayEvents.length === 1 ? 'compromisso' : 'compromissos'}
             </span>
           </header>
 
           <ul className={styles.lista}>
-            {doDia.map((ev) => (
-              <li key={ev.id} className={styles.item}>
+            {dayEvents.map((event) => (
+              <li key={event.id} className={styles.item}>
                 <div className={styles.hora}>
-                  <strong>{formatTime(ev.data_hora)}</strong>
-                  <small>{ev.duracao_minutos} min</small>
+                  <strong>{formatTime(event.data_hora)}</strong>
+                  <small>{event.duracao_minutos} min</small>
                 </div>
                 <div className={styles.corpo}>
                   <div className={styles.linhaTopo}>
-                    <Pill tone={TIPO_META[ev.tipo]?.tone ?? 'neutral'}>
-                      {TIPO_META[ev.tipo]?.label ?? ev.tipo}
+                    <Pill tone={TYPE_META[event.tipo]?.tone ?? 'neutral'}>
+                      {TYPE_META[event.tipo]?.label ?? event.tipo}
                     </Pill>
-                    <Pill tone={toneDoStatus(ev.status)}>{ev.status}</Pill>
+                    <Pill tone={getStatusTone(event.status)}>{event.status}</Pill>
                   </div>
-                  <div className={styles.local}>{ev.local}</div>
+                  <div className={styles.local}>{event.local}</div>
                   <small className={styles.meta}>
-                    {nomeResponsavel ? `Responsável: ${nomeResponsavel(ev.responsavel_usuario_id)}` : ''}
-                    {ev.processo_id && rotuloProcesso
-                      ? `${nomeResponsavel ? ' • ' : ''}Processo ${rotuloProcesso(ev.processo_id)}`
+                    {nomeResponsavel ? `Responsável: ${nomeResponsavel(event.responsavel_usuario_id)}` : ''}
+                    {event.processo_id && rotuloProcesso
+                      ? `${nomeResponsavel ? ' • ' : ''}Processo ${rotuloProcesso(event.processo_id)}`
                       : ''}
                   </small>
                 </div>
@@ -95,29 +95,29 @@ export function AgendaLista({
   );
 }
 
-/** Agrupa por dia local preservando a ordem cronológica que veio do serviço. */
-function agruparPorDia(eventos: AgendaEvento[]): [string, AgendaEvento[]][] {
-  const mapa = new Map<string, AgendaEvento[]>();
-  for (const ev of eventos) {
-    const dia = chaveDoDia(ev.data_hora);
-    const atual = mapa.get(dia);
-    if (atual) atual.push(ev);
-    else mapa.set(dia, [ev]);
+/** Groups by local day preserving chronological order from the service. */
+function groupByDay(events: AgendaEvento[]): [string, AgendaEvento[]][] {
+  const map = new Map<string, AgendaEvento[]>();
+  for (const event of events) {
+    const day = getDayKey(event.data_hora);
+    const current = map.get(day);
+    if (current) current.push(event);
+    else map.set(day, [event]);
   }
-  return [...mapa.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 }
 
-/** "YYYY-MM-DD" no fuso do usuário (não em UTC, senão eventos noturnos pulam de dia). */
-function chaveDoDia(iso: string): string {
+/** "YYYY-MM-DD" in user's timezone (not in UTC, otherwise night events jump to next day). */
+function getDayKey(iso: string): string {
   const d = new Date(iso);
-  const mes = `${d.getMonth() + 1}`.padStart(2, '0');
-  const dia = `${d.getDate()}`.padStart(2, '0');
-  return `${d.getFullYear()}-${mes}-${dia}`;
+  const month = `${d.getMonth() + 1}`.padStart(2, '0');
+  const day = `${d.getDate()}`.padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
 }
 
-function rotuloDoDia(diaIso: string): string {
-  const data = parseISO(diaIso);
-  if (isToday(data)) return `Hoje — ${formatLongDate(diaIso)}`;
-  if (isTomorrow(data)) return `Amanhã — ${formatLongDate(diaIso)}`;
-  return formatLongDate(diaIso);
+function getDayLabel(dayIso: string): string {
+  const date = parseISO(dayIso);
+  if (isToday(date)) return `Hoje — ${formatLongDate(dayIso)}`;
+  if (isTomorrow(date)) return `Amanhã — ${formatLongDate(dayIso)}`;
+  return formatLongDate(dayIso);
 }
