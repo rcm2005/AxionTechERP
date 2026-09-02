@@ -1,30 +1,30 @@
-// Classificação determinística da primeira mensagem do usuário.
+// Deterministic classification of the initial user message.
 //
-// LIMITE HONESTO: não há LLM ligado neste ambiente. Isto é busca por palavra-
-// chave sobre texto normalizado (minúsculo, sem acento) — não é compreensão de
-// linguagem natural. O objetivo é apenas separar três casos:
+// HONEST LIMIT: there is no LLM enabled in this environment. This is keyword
+// matching on normalized text (lowercase, without accents) — not natural language
+// understanding. The goal is only to distinguish three cases:
 //
-//   'juridico' — o usuário pediu explicitamente o vertical que existe;
-//   'outro'    — o usuário nomeou um vertical que NÃO existe (responder com
-//                honestidade, nunca fingir que dá pra montar);
-//   'generico' — pedido vago ou vazio ("quero um ERP"). Como jurídico é o
-//                único vertical existente, tratamos como match implícito.
+//   'juridico' — user explicitly requested the vertical that actually exists;
+//   'outro'    — user named a vertical that does NOT exist (respond with
+//                honesty, never pretend we can build one);
+//   'generico' — vague or empty request ("I want an ERP"). Since legal is the
+//                only existing vertical, we treat as implicit match.
 
 export type ResultadoVertical =
   | { tipo: 'juridico' }
   | { tipo: 'generico' }
   | { tipo: 'outro'; termo: string };
 
-/** minúsculas + sem diacríticos, pra "jurídico" e "juridico" baterem igual. */
-export function normalizar(texto: string): string {
-  return texto
+/** Lowercase + no diacritics, so "jurídico" and "juridico" match equally. */
+export function normalizar(text: string): string {
+  return text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
 }
 
-// Radicais (não palavras inteiras) pra pegar flexões: advogado/advogada/
+// Stems (not whole words) to catch inflections: advogado/advogada/
 // advogados, juridico/juridica, etc.
 const RADICAIS_JURIDICO = [
   'juridic',
@@ -38,8 +38,8 @@ const RADICAIS_JURIDICO = [
   'oab',
 ];
 
-// Verticais que este produto reconhece pelo nome mas NÃO sabe montar.
-// O rótulo é usado na resposta ("um ERP para restaurante"), por isso o par.
+// Verticals that this product recognizes by name but does NOT know how to build.
+// The label is used in the response ("an ERP for restaurant"), hence the pair.
 const OUTROS_VERTICAIS: ReadonlyArray<{ radical: string; rotulo: string }> = [
   { radical: 'loja', rotulo: 'varejo' },
   { radical: 'varejo', rotulo: 'varejo' },
@@ -79,18 +79,18 @@ const OUTROS_VERTICAIS: ReadonlyArray<{ radical: string; rotulo: string }> = [
   { radical: 'contabil', rotulo: 'contabilidade' },
 ];
 
-export function classificarPedido(textoBruto: string): ResultadoVertical {
-  const texto = normalizar(textoBruto);
-  if (!texto) return { tipo: 'generico' };
+export function classificarPedido(rawText: string): ResultadoVertical {
+  const text = normalizar(rawText);
+  if (!text) return { tipo: 'generico' };
 
-  // Jurídico ganha do resto: "escritório de advocacia que também tem loja"
-  // continua sendo um escritório de advocacia.
-  if (RADICAIS_JURIDICO.some((r) => texto.includes(r))) {
+  // Legal wins over the rest: "law firm that also has a store"
+  // is still a law firm.
+  if (RADICAIS_JURIDICO.some((r) => text.includes(r))) {
     return { tipo: 'juridico' };
   }
 
-  const outro = OUTROS_VERTICAIS.find((v) => texto.includes(v.radical));
-  if (outro) return { tipo: 'outro', termo: outro.rotulo };
+  const other = OUTROS_VERTICAIS.find((v) => text.includes(v.radical));
+  if (other) return { tipo: 'outro', termo: other.rotulo };
 
   return { tipo: 'generico' };
 }

@@ -3,15 +3,15 @@ import { usuarioLogadoMock } from '@/mocks';
 import { USE_MOCKS, delay } from './mockAdapter';
 import { http } from './http';
 
-export interface Sessao {
-  usuario: Usuario;
+export interface Session {
+  user: Usuario;
   token: string;
 }
 
-// Shape retornado pela API real (apps/api `POST /auth/login`) — mais enxuto
-// que o `Usuario` do frontend (que carrega campos de um modelo multi-tenant/
-// contador que a API ainda não tem). Mapeamos pro shape do frontend com
-// defaults razoáveis nos campos que a API não expõe ainda.
+// Shape returned by the real API (apps/api `POST /auth/login`) — leaner
+// than the frontend's `Usuario` (which carries fields from a multi-tenant/
+// accountant model that the API does not yet have). We map to the frontend shape with
+// sensible defaults for fields the API does not expose yet.
 interface ApiLoginResponse {
   token: string;
   user: {
@@ -23,18 +23,18 @@ interface ApiLoginResponse {
   };
 }
 
-function iniciaisDe(nome: string): string {
-  const partes = nome.trim().split(/\s+/).filter(Boolean);
-  const primeiras = partes.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '');
-  return primeiras.join('') || 'US';
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const firstChars = parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '');
+  return firstChars.join('') || 'US';
 }
 
-function mapApiUserToUsuario(api: ApiLoginResponse['user']): Usuario {
+function mapApiUserToUser(api: ApiLoginResponse['user']): Usuario {
   return {
     id: api.id,
     nome: api.nome,
     nomeExibicao: api.nome,
-    iniciais: iniciaisDe(api.nome),
+    iniciais: getInitials(api.nome),
     email: api.email,
     role: api.role === 'admin' ? 'admin' : 'operador',
     tenantIds: [api.tenant_id],
@@ -44,16 +44,16 @@ function mapApiUserToUsuario(api: ApiLoginResponse['user']): Usuario {
   };
 }
 
-export async function login(email: string, senha: string): Promise<Sessao> {
+export async function login(email: string, password: string): Promise<Session> {
   if (USE_MOCKS) {
     await delay(700);
-    if (!email || !senha) {
+    if (!email || !password) {
       throw new Error('E-mail e senha são obrigatórios.');
     }
-    return { usuario: usuarioLogadoMock, token: 'mock-token' };
+    return { user: usuarioLogadoMock, token: 'mock-token' };
   }
-  const { data } = await http.post<ApiLoginResponse>('/auth/login', { email, password: senha });
-  return { usuario: mapApiUserToUsuario(data.user), token: data.token };
+  const { data } = await http.post<ApiLoginResponse>('/auth/login', { email, password });
+  return { user: mapApiUserToUser(data.user), token: data.token };
 }
 
 export async function logout(): Promise<void> {
@@ -77,18 +77,18 @@ export interface DadosOnboarding {
   };
 }
 
-export async function criarEscritorio(dados: DadosOnboarding): Promise<Sessao> {
+export async function criarEscritorio(data: DadosOnboarding): Promise<Session> {
   if (USE_MOCKS) {
     await delay(900);
-    return { usuario: usuarioLogadoMock, token: 'mock-token' };
+    return { user: usuarioLogadoMock, token: 'mock-token' };
   }
-  const { data } = await http.post<ApiLoginResponse>('/auth/signup', dados);
-  return { usuario: mapApiUserToUsuario(data.user), token: data.token };
+  const { data: resData } = await http.post<ApiLoginResponse>('/auth/signup', data);
+  return { user: mapApiUserToUser(resData.user), token: resData.token };
 }
 
-// ── Multi-escritório (usado pela área /comecar) ──────────────────────────────
+// ── Multi-firm (used by the /comecar area) ──────────────────────────────────
 
-/** Um escritório onde o e-mail da sessão atual já é admin. */
+/** A firm where the current session email is already an admin. */
 export interface EscritorioDaConta {
   id: string;
   nome: string;
@@ -114,29 +114,29 @@ function mapApiTenant(api: ApiTenantResponse): EscritorioDaConta {
   };
 }
 
-const ERRO_SO_API_REAL =
+const REAL_API_ONLY_ERROR =
   'Esta tela consulta o backend real e não tem versão mockada. Rode com VITE_USE_MOCKS=false.';
 
 /**
- * Escritórios em que o e-mail da sessão atual é admin. O escopo é aplicado no
- * servidor a partir do token — não passamos e-mail nenhum daqui.
+ * Firms where the current session email is an admin. The scope is applied on
+ * the server from the token — we do not pass any email from here.
  */
 export async function listarMeusEscritorios(): Promise<EscritorioDaConta[]> {
   if (USE_MOCKS) {
-    throw new Error(ERRO_SO_API_REAL);
+    throw new Error(REAL_API_ONLY_ERROR);
   }
   const { data } = await http.get<ApiTenantResponse[]>('/auth/my-tenants');
   return data.map(mapApiTenant);
 }
 
 /**
- * Troca o tenant ativo sem pedir senha de novo. O servidor só emite o token se
- * o e-mail do token atual já for admin do tenant pedido.
+ * Switches the active tenant without asking for password again. The server only
+ * issues the token if the current token email is already an admin of the requested tenant.
  */
-export async function trocarEscritorio(tenantId: string): Promise<Sessao> {
+export async function trocarEscritorio(tenantId: string): Promise<Session> {
   if (USE_MOCKS) {
-    throw new Error(ERRO_SO_API_REAL);
+    throw new Error(REAL_API_ONLY_ERROR);
   }
   const { data } = await http.post<ApiLoginResponse>('/auth/switch-tenant', { tenant_id: tenantId });
-  return { usuario: mapApiUserToUsuario(data.user), token: data.token };
+  return { user: mapApiUserToUser(data.user), token: data.token };
 }

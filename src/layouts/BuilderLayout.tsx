@@ -5,18 +5,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { paths } from '@/routes/paths';
 import styles from './BuilderLayout.module.scss';
 
-interface ItemRail {
+interface RailItem {
   key: string;
   label: string;
   icon: LucideIcon;
-  /** Ausente = seção ainda não existe; renderiza desabilitada ("Em breve"). */
+  /** Missing = section does not exist yet; renders disabled ("Em breve"). */
   to?: string;
 }
 
-// Financeiro, o bot e o histórico aparecem por fidelidade visual à referência,
-// mas não têm destino real ainda. Preferimos um botão desabilitado honesto a
-// uma página falsa.
-const ITENS_TOPO: ItemRail[] = [
+// Financial, bot and history appear for visual fidelity to reference,
+// but do not have a real destination yet. We prefer an honest disabled button
+// over a fake page.
+const TOP_ITEMS: RailItem[] = [
   { key: 'home', label: 'Início', icon: Home, to: paths.comecar },
   { key: 'projetos', label: 'Projetos', icon: FolderClosed, to: paths.comecarProjetos },
   { key: 'financeiro', label: 'Financeiro', icon: DollarSign },
@@ -24,7 +24,7 @@ const ITENS_TOPO: ItemRail[] = [
   { key: 'historico', label: 'Histórico', icon: History },
 ];
 
-const TITULOS: Record<string, string> = {
+const TITLES: Record<string, string> = {
   [paths.comecar]: 'Início',
   [paths.comecarProjetos]: 'Projetos',
   [paths.comecarConta]: 'Conta',
@@ -33,7 +33,7 @@ const TITULOS: Record<string, string> = {
 export function BuilderLayout() {
   const { usuario } = useAuth();
   const { pathname } = useLocation();
-  const secao = TITULOS[pathname] ?? 'Início';
+  const section = TITLES[pathname] ?? 'Início';
 
   return (
     <div className={`theme-builder ${styles.root}`}>
@@ -41,15 +41,15 @@ export function BuilderLayout() {
         <span className={styles.logo} aria-hidden="true" />
 
         <ul className={styles.railList}>
-          {ITENS_TOPO.map((item) => (
+          {TOP_ITEMS.map((item) => (
             <li key={item.key}>
-              <ItemDoRail item={item} />
+              <RailNavItem item={item} />
             </li>
           ))}
         </ul>
 
         <div className={styles.railFooter}>
-          <ItemDoRail item={{ key: 'conta', label: 'Conta', icon: UserRound, to: paths.comecarConta }} />
+          <RailNavItem item={{ key: 'conta', label: 'Conta', icon: UserRound, to: paths.comecarConta }} />
         </div>
       </nav>
 
@@ -58,7 +58,7 @@ export function BuilderLayout() {
           <h1 className={styles.tituloBarra}>
             <span className={styles.marca}>Axion Tech</span>
             <span className={styles.divisor} aria-hidden="true" />
-            <span className={styles.secao}>{secao}</span>
+            <span className={styles.secao}>{section}</span>
           </h1>
 
           <div className={styles.usuario}>
@@ -77,8 +77,8 @@ export function BuilderLayout() {
   );
 }
 
-function ItemDoRail({ item }: { item: ItemRail }) {
-  const Icone = item.icon;
+function RailNavItem({ item }: { item: RailItem }) {
+  const Icon = item.icon;
 
   if (!item.to) {
     return (
@@ -89,7 +89,7 @@ function ItemDoRail({ item }: { item: ItemRail }) {
         aria-disabled="true"
         title={`${item.label} — em breve`}
       >
-        <Icone size={19} aria-hidden="true" />
+        <Icon size={19} aria-hidden="true" />
         <span className={styles.srOnly}>{item.label} (em breve)</span>
       </button>
     );
@@ -102,7 +102,7 @@ function ItemDoRail({ item }: { item: ItemRail }) {
       className={({ isActive }) => (isActive ? `${styles.railBtn} ${styles.railBtnAtivo}` : styles.railBtn)}
       title={item.label}
     >
-      <Icone size={19} aria-hidden="true" />
+      <Icon size={19} aria-hidden="true" />
       <span className={styles.srOnly}>{item.label}</span>
     </NavLink>
   );
