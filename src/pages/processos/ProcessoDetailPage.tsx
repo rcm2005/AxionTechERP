@@ -28,112 +28,112 @@ import type { Prazo } from '@/types';
 import styles from './ProcessoDetailPage.module.scss';
 
 /**
- * Tela do processo.
+ * Case details page.
  *
- * Prazos e agenda pendem do processo (`processo_id`), então são carregados e
- * exibidos aqui como seções empilhadas. Optou-se por NÃO usar `processoTabs`
- * (de `routes/paths.ts`): daquelas sete abas, quatro (andamentos, documentos,
- * tarefas, financeiro do processo) não têm endpoint no backend hoje, e abas
- * vazias comunicam "quebrado" em vez de "em breve". Quando esses recursos
- * existirem, as seções daqui viram abas com a rota `processoTab` já pronta.
+ * Deadlines and schedule depend on the case (`processo_id`), so they are loaded and
+ * displayed here as stacked sections. We opted NOT to use `processoTabs`
+ * (from `routes/paths.ts`): out of those seven tabs, four (procedural steps, documents,
+ * tasks, case financials) currently have no backend endpoint, and empty tabs
+ * communicate "broken" rather than "coming soon". Once those features
+ * exist, the sections here can become tabs using the already-prepared `processoTab` route.
  */
 export function ProcessoDetailPage() {
-  const { processoId } = useParams<{ processoId: string }>();
+  const { processoId: caseId } = useParams<{ processoId: string }>();
   const navigate = useNavigate();
   const toast = useToast();
 
   const {
-    data: processo,
-    loading: loadingProcesso,
-    error: erroProcesso,
-    reload: reloadProcesso,
-  } = useProcesso(processoId);
-  const { data: cliente } = useCliente(processo?.cliente_id);
+    data: caseItem,
+    loading: loadingCase,
+    error: caseError,
+    reload: reloadCase,
+  } = useProcesso(caseId);
+  const { data: client } = useCliente(caseItem?.cliente_id);
   const {
-    data: prazos,
-    loading: loadingPrazos,
-    error: erroPrazos,
-    reload: reloadPrazos,
-  } = usePrazos(processoId ? { processo_id: processoId } : {});
+    data: deadlines,
+    loading: loadingDeadlines,
+    error: deadlinesError,
+    reload: reloadDeadlines,
+  } = usePrazos(caseId ? { processo_id: caseId } : {});
   const {
-    data: eventos,
-    loading: loadingEventos,
-    error: erroEventos,
-    reload: reloadEventos,
-  } = useAgenda(processoId ? { processo_id: processoId } : {});
-  const { data: usuarios } = useUsuarios();
+    data: events,
+    loading: loadingEvents,
+    error: eventsError,
+    reload: reloadEvents,
+  } = useAgenda(caseId ? { processo_id: caseId } : {});
+  const { data: users } = useUsuarios();
 
-  const [novoPrazoOpen, setNovoPrazoOpen] = useState(false);
-  const [novoEventoOpen, setNovoEventoOpen] = useState(false);
-  const [salvandoPrazoId, setSalvandoPrazoId] = useState<string>();
+  const [newDeadlineOpen, setNewDeadlineOpen] = useState(false);
+  const [newEventOpen, setNewEventOpen] = useState(false);
+  const [savingDeadlineId, setSavingDeadlineId] = useState<string>();
 
-  useDocumentTitle(processo ? `Processo ${processo.numero_cnj}` : 'Processo');
+  useDocumentTitle(caseItem ? `Processo ${caseItem.numero_cnj}` : 'Processo');
 
-  const nomeResponsavel = useMemo(() => {
-    const mapa = new Map((usuarios ?? []).map((u) => [u.id, u.nome]));
-    return (id: string) => mapa.get(id) ?? '—';
-  }, [usuarios]);
+  const responsibleName = useMemo(() => {
+    const userMap = new Map((users ?? []).map((user) => [user.id, user.nome]));
+    return (id: string) => userMap.get(id) ?? '—';
+  }, [users]);
 
-  const prazosPendentes = useMemo(
-    () => (prazos ?? []).filter((p) => p.status === 'pendente'),
-    [prazos],
+  const pendingDeadlines = useMemo(
+    () => (deadlines ?? []).filter((deadline) => deadline.status === 'pendente'),
+    [deadlines],
   );
-  const prazosUrgentes = useMemo(
+  const urgentDeadlines = useMemo(
     () =>
-      prazosPendentes.filter((p) => {
-        const { urgencia } = classificarPrazo(p);
+      pendingDeadlines.filter((deadline) => {
+        const { urgencia } = classificarPrazo(deadline);
         return urgencia === 'urgente' || urgencia === 'vencido';
       }),
-    [prazosPendentes],
+    [pendingDeadlines],
   );
 
-  async function handleMarcarCumprido(prazo: Prazo) {
-    setSalvandoPrazoId(prazo.id);
+  async function handleMarcarCumprido(deadline: Prazo) {
+    setSavingDeadlineId(deadline.id);
     try {
-      await alterarStatusPrazo(prazo.id, 'cumprido');
+      await alterarStatusPrazo(deadline.id, 'cumprido');
       toast.show('Prazo marcado como cumprido.');
-      reloadPrazos();
+      reloadDeadlines();
     } catch {
       toast.show('Não foi possível atualizar o prazo.');
     } finally {
-      setSalvandoPrazoId(undefined);
+      setSavingDeadlineId(undefined);
     }
   }
 
-  const prazosColumns = useMemo(
+  const deadlinesColumns = useMemo(
     () =>
       criarPrazosColumns({
         onMarcarCumprido: handleMarcarCumprido,
-        salvandoId: salvandoPrazoId,
+        salvandoId: savingDeadlineId,
       }),
-    // handleMarcarCumprido é recriada a cada render; as colunas só precisam
-    // acompanhar o id em salvamento.
+    // handleMarcarCumprido is recreated on each render; columns only need
+    // to track the id being saved.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [salvandoPrazoId],
+    [savingDeadlineId],
   );
 
-  if (loadingProcesso) return <Skeleton height="400px" />;
-  if (erroProcesso) {
+  if (loadingCase) return <Skeleton height="400px" />;
+  if (caseError) {
     return (
       <Alert
         tone="danger"
         title="Erro ao carregar dados"
         description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
         action={
-          <Button variant="ghost" onClick={reloadProcesso}>
+          <Button variant="ghost" onClick={reloadCase}>
             Tentar novamente
           </Button>
         }
       />
     );
   }
-  if (!processo) return <EmptyState title="Processo não encontrado." />;
+  if (!caseItem) return <EmptyState title="Processo não encontrado." />;
 
   return (
     <section>
       <PageHead
-        title={processo.numero_cnj}
-        subtitle={`${processo.tribunal} • ${processo.vara}`}
+        title={caseItem.numero_cnj}
+        subtitle={`${caseItem.tribunal} • ${caseItem.vara}`}
         actions={
           <Button variant="ghost" onClick={() => navigate(paths.processos)}>
             ← Voltar aos processos
@@ -144,44 +144,44 @@ export function ProcessoDetailPage() {
       <div className={styles.headerGrid}>
         <Card>
           <div className={styles.infoGrid}>
-            <Info label="Cliente">{cliente?.razaoSocialOuNome ?? '—'}</Info>
+            <Info label="Cliente">{client?.razaoSocialOuNome ?? '—'}</Info>
             <Info label="Status">
-              <Pill tone={toneDoStatusProcesso(processo.status)}>{processo.status}</Pill>
+              <Pill tone={toneDoStatusProcesso(caseItem.status)}>{caseItem.status}</Pill>
             </Info>
             <Info label="Fase">
-              <Pill tone="blue">{processo.fase}</Pill>
+              <Pill tone="blue">{caseItem.fase}</Pill>
             </Info>
-            <Info label="Tribunal">{processo.tribunal}</Info>
-            <Info label="Vara">{processo.vara}</Info>
-            <Info label="Valor da causa">{formatBRLDecimal(processo.valor_causa)}</Info>
+            <Info label="Tribunal">{caseItem.tribunal}</Info>
+            <Info label="Vara">{caseItem.vara}</Info>
+            <Info label="Valor da causa">{formatBRLDecimal(caseItem.valor_causa)}</Info>
           </div>
         </Card>
 
         <div className={styles.kpis}>
-          <KpiCard label="Prazos pendentes" value={String(prazosPendentes.length)} />
+          <KpiCard label="Prazos pendentes" value={String(pendingDeadlines.length)} />
           <KpiCard
             label="Prazos fatais críticos"
-            value={String(prazosUrgentes.length)}
-            sub={prazosUrgentes.length > 0 ? 'Vencidos ou vencendo em até 3 dias' : 'Nenhum prazo crítico'}
-            subTone={prazosUrgentes.length > 0 ? 'red' : 'green'}
+            value={String(urgentDeadlines.length)}
+            sub={urgentDeadlines.length > 0 ? 'Vencidos ou vencendo em até 3 dias' : 'Nenhum prazo crítico'}
+            subTone={urgentDeadlines.length > 0 ? 'red' : 'green'}
           />
-          <KpiCard label="Compromissos na agenda" value={String((eventos ?? []).length)} />
+          <KpiCard label="Compromissos na agenda" value={String((events ?? []).length)} />
         </div>
       </div>
 
       <Card className={styles.secao}>
         <CardHead title="Partes do processo" />
         <CardBody>
-          {processo.partes.length === 0 ? (
+          {caseItem.partes.length === 0 ? (
             <EmptyState title="Nenhuma parte cadastrada neste processo." />
           ) : (
             <ul className={styles.partes}>
-              {processo.partes.map((parte, i) => (
-                <li key={`${parte.nome}-${i}`}>
-                  <strong>{parte.nome}</strong>
+              {caseItem.partes.map((party, index) => (
+                <li key={`${party.nome}-${index}`}>
+                  <strong>{party.nome}</strong>
                   <span>
-                    {parte.papel}
-                    {parte.cpf_cnpj ? ` • ${parte.cpf_cnpj}` : ''}
+                    {party.papel}
+                    {party.cpf_cnpj ? ` • ${party.cpf_cnpj}` : ''}
                   </span>
                 </li>
               ))}
@@ -194,19 +194,19 @@ export function ProcessoDetailPage() {
         <CardHead
           title="Prazos"
           action={
-            <Button variant="primary" onClick={() => setNovoPrazoOpen(true)}>
+            <Button variant="primary" onClick={() => setNewDeadlineOpen(true)}>
               + Novo prazo
             </Button>
           }
         />
-        {erroPrazos ? (
+        {deadlinesError ? (
           <CardBody>
             <Alert
               tone="danger"
               title="Erro ao carregar dados"
               description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
               action={
-                <Button variant="ghost" onClick={reloadPrazos}>
+                <Button variant="ghost" onClick={reloadDeadlines}>
                   Tentar novamente
                 </Button>
               }
@@ -214,10 +214,10 @@ export function ProcessoDetailPage() {
           </CardBody>
         ) : (
           <DataTable
-            columns={prazosColumns}
-            rows={prazos ?? []}
-            getRowId={(p) => p.id}
-            loading={loadingPrazos}
+            columns={deadlinesColumns}
+            rows={deadlines ?? []}
+            getRowId={(deadline) => deadline.id}
+            loading={loadingDeadlines}
             emptyMessage="Nenhum prazo cadastrado para este processo."
           />
         )}
@@ -227,28 +227,28 @@ export function ProcessoDetailPage() {
         <CardHead
           title="Audiências e compromissos"
           action={
-            <Button variant="primary" onClick={() => setNovoEventoOpen(true)}>
+            <Button variant="primary" onClick={() => setNewEventOpen(true)}>
               + Novo compromisso
             </Button>
           }
         />
         <CardBody>
-          {erroEventos ? (
+          {eventsError ? (
             <Alert
               tone="danger"
               title="Erro ao carregar dados"
               description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
               action={
-                <Button variant="ghost" onClick={reloadEventos}>
+                <Button variant="ghost" onClick={reloadEvents}>
                   Tentar novamente
                 </Button>
               }
             />
           ) : (
             <AgendaLista
-              eventos={eventos ?? []}
-              loading={loadingEventos}
-              nomeResponsavel={nomeResponsavel}
+              eventos={events ?? []}
+              loading={loadingEvents}
+              nomeResponsavel={responsibleName}
               emptyMessage="Nenhum compromisso agendado para este processo."
             />
           )}
@@ -256,16 +256,16 @@ export function ProcessoDetailPage() {
       </Card>
 
       <NovoPrazoModal
-        open={novoPrazoOpen}
-        onClose={() => setNovoPrazoOpen(false)}
-        processoIdFixo={processoId}
-        onCreated={reloadPrazos}
+        open={newDeadlineOpen}
+        onClose={() => setNewDeadlineOpen(false)}
+        processoIdFixo={caseId}
+        onCreated={reloadDeadlines}
       />
       <NovoEventoAgendaModal
-        open={novoEventoOpen}
-        onClose={() => setNovoEventoOpen(false)}
-        processoIdFixo={processoId}
-        onCreated={reloadEventos}
+        open={newEventOpen}
+        onClose={() => setNewEventOpen(false)}
+        processoIdFixo={caseId}
+        onCreated={reloadEvents}
       />
     </section>
   );
