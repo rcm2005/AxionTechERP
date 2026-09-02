@@ -20,6 +20,11 @@ seguindo boas práticas de programação. Rafael (dono do projeto) definiu o esc
   - **NUNCA renomeie o nome exportado de componentes de página/modal** (ex: `ClientesPage`,
     `NovoClienteModal`) nem o nome de arquivo — são referenciados por `src/routes/router.tsx`
     (fora do escopo deste dispatch) e ficam pra um checkpoint separado.
+  - **Exceção que É segura**: um `interface`/`type` declarado LOCALMENTE dentro de um arquivo de
+    service (não importado de `@/types`) que representa um valor **computado no cliente** (ex.
+    um resumo/agregado calculado a partir de dado já buscado, nunca serializado direto como corpo
+    de request/response) — esse SIM pode ser renomeado por inteiro, nome e campos. O spec de cada
+    domínio aponta explicitamente quando isso se aplica; na dúvida, não renomeie.
 - **O que RENOMEAR (fica em inglês)**: nomes de função exportada de service (ex:
   `listarClientes` → `listClients`), variáveis locais, parâmetros de função, comentários,
   docstrings, nomes de função/helper não-exportada, nomes de classe de erro local (não vinda de
@@ -45,6 +50,13 @@ seguindo boas práticas de programação. Rafael (dono do projeto) definiu o esc
 | atualizar | update |
 | excluir / deletar | delete |
 | alterar | change |
+
+## Não deixe alias de compatibilidade
+
+Ao renomear uma função/export, **não** deixe o nome antigo por perto como alias (ex:
+`export const nomeAntigo = nomeNovo;`) "por segurança" — isso é lixo morto, ninguém mais importa
+pelo nome antigo já que você atualizou todos os call-sites no mesmo dispatch. Renomeie de verdade,
+sem deixar rastro do nome velho no arquivo.
 
 ## Regra de verificação
 
