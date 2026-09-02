@@ -7,12 +7,12 @@
   border-left: 3px solid transparent;
 
   // O peso visual acompanha a urgência: só quem exige ação hoje fica marcado.
-  &[data-urgencia='vencido'],
-  &[data-urgencia='urgente'] {
+  &[data-urgency='vencido'],
+  &[data-urgency='urgente'] {
     border-left-color: var(--color-danger);
   }
 
-  &[data-urgencia='proximo'] {
+  &[data-urgency='proximo'] {
     border-left-color: var(--color-warning);
   }
 }

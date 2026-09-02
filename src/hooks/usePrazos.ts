@@ -1,11 +1,11 @@
-import { buscarPrazo, listarPrazos } from '@/services/prazos.service';
+import { getDeadline, listDeadlines } from '@/services/prazos.service';
 import type { PrazoFiltros } from '@/types';
 import { useAsync } from './useAsync';
 
-export function usePrazos(filtros: PrazoFiltros = {}) {
-  return useAsync(() => listarPrazos(filtros), [JSON.stringify(filtros)]);
+export function usePrazos(filters: PrazoFiltros = {}) {
+  return useAsync(() => listDeadlines(filters), [JSON.stringify(filters)]);
 }
 
 export function usePrazo(id: string | undefined) {
-  return useAsync(() => (id ? buscarPrazo(id) : Promise.resolve(undefined)), [id]);
+  return useAsync(() => (id ? getDeadline(id) : Promise.resolve(undefined)), [id]);
 }

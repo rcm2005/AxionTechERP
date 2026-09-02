@@ -3,97 +3,97 @@ import { prazosMock } from '@/mocks/juridico.mock';
 import { USE_MOCKS, delay } from './mockAdapter';
 import { http } from './http';
 
-/** Ver nota sobre persistência em `processos.service.ts`. */
+/** See note on persistence in `processos.service.ts`. */
 const store: Prazo[] = [...prazosMock];
 
-function aplicarFiltros(prazos: Prazo[], filtros: PrazoFiltros): Prazo[] {
-  return prazos.filter((p) => {
-    if (filtros.processo_id && p.processo_id !== filtros.processo_id) return false;
-    if (filtros.status && filtros.status !== 'todos' && p.status !== filtros.status) return false;
+function applyFilters(deadlines: Prazo[], filters: PrazoFiltros): Prazo[] {
+  return deadlines.filter((d) => {
+    if (filters.processo_id && d.processo_id !== filters.processo_id) return false;
+    if (filters.status && filters.status !== 'todos' && d.status !== filters.status) return false;
     return true;
   });
 }
 
-function paramsDeFiltro(filtros: PrazoFiltros) {
-  const { processo_id, status } = filtros;
+function filterParams(filters: PrazoFiltros) {
+  const { processo_id, status } = filters;
   return {
     ...(processo_id ? { processo_id } : {}),
     ...(status && status !== 'todos' ? { status } : {}),
   };
 }
 
-/** Mais urgente primeiro — é a ordem em que o advogado precisa agir. */
-function ordenarPorPrazoFatal(prazos: Prazo[]): Prazo[] {
-  return [...prazos].sort((a, b) => a.prazo_fatal.localeCompare(b.prazo_fatal));
+/** Most urgent first — the order in which the lawyer needs to act. */
+function sortByFatalDeadline(deadlines: Prazo[]): Prazo[] {
+  return [...deadlines].sort((a, b) => a.prazo_fatal.localeCompare(b.prazo_fatal));
 }
 
-export async function listarPrazos(filtros: PrazoFiltros = {}): Promise<Prazo[]> {
+export async function listDeadlines(filters: PrazoFiltros = {}): Promise<Prazo[]> {
   if (USE_MOCKS) {
     await delay();
-    return ordenarPorPrazoFatal(aplicarFiltros(store, filtros));
+    return sortByFatalDeadline(applyFilters(store, filters));
   }
-  const { data } = await http.get<Prazo[]>('/prazos', { params: paramsDeFiltro(filtros) });
-  return ordenarPorPrazoFatal(data);
+  const { data } = await http.get<Prazo[]>('/prazos', { params: filterParams(filters) });
+  return sortByFatalDeadline(data);
 }
 
-export async function buscarPrazo(id: string): Promise<Prazo | undefined> {
+export async function getDeadline(id: string): Promise<Prazo | undefined> {
   if (USE_MOCKS) {
     await delay();
-    return store.find((p) => p.id === id);
+    return store.find((d) => d.id === id);
   }
   const { data } = await http.get<Prazo>(`/prazos/${id}`);
   return data;
 }
 
-export async function criarPrazo(dados: PrazoInput): Promise<Prazo> {
+export async function createDeadline(data: PrazoInput): Promise<Prazo> {
   if (USE_MOCKS) {
     await delay(300);
-    const novo: Prazo = { ...dados, id: `prazo-${Date.now()}`, created_at: new Date().toISOString() };
-    store.push(novo);
-    return novo;
+    const newDeadline: Prazo = { ...data, id: `prazo-${Date.now()}`, created_at: new Date().toISOString() };
+    store.push(newDeadline);
+    return newDeadline;
   }
-  const { data } = await http.post<Prazo>('/prazos', dados);
-  return data;
+  const response = await http.post<Prazo>('/prazos', data);
+  return response.data;
 }
 
-export async function atualizarPrazo(id: string, dados: PrazoInput): Promise<Prazo> {
+export async function updateDeadline(id: string, data: PrazoInput): Promise<Prazo> {
   if (USE_MOCKS) {
     await delay(300);
-    const i = store.findIndex((p) => p.id === id);
-    if (i < 0) throw new Error('Prazo não encontrado.');
-    store[i] = { ...store[i], ...dados, updated_at: new Date().toISOString() };
-    return store[i];
+    const index = store.findIndex((d) => d.id === id);
+    if (index < 0) throw new Error('Prazo não encontrado.');
+    store[index] = { ...store[index], ...data, updated_at: new Date().toISOString() };
+    return store[index];
   }
-  const { data } = await http.put<Prazo>(`/prazos/${id}`, dados);
-  return data;
+  const response = await http.put<Prazo>(`/prazos/${id}`, data);
+  return response.data;
 }
 
 /**
- * Atalho da lista ("marcar como cumprido").
+ * List shortcut ("mark as completed").
  *
- * O endpoint é PUT (substituição), então relemos o registro antes de escrever
- * em vez de mandar só `{ status }` — mandar parcial num PUT apagaria os demais
- * campos do prazo.
+ * The endpoint is PUT (replacement), so we re-read the record before writing
+ * instead of sending only `{ status }` — sending a partial payload on a PUT
+ * would erase the other deadline fields.
  */
-export async function alterarStatusPrazo(id: string, status: PrazoStatus): Promise<Prazo> {
-  const atual = await buscarPrazo(id);
-  if (!atual) throw new Error('Prazo não encontrado.');
-  return atualizarPrazo(id, {
-    processo_id: atual.processo_id,
-    descricao: atual.descricao,
-    data_intimacao: atual.data_intimacao ?? null,
-    prazo_fatal: atual.prazo_fatal,
-    dias_uteis: atual.dias_uteis ?? null,
-    origem: atual.origem,
+export async function changeDeadlineStatus(id: string, status: PrazoStatus): Promise<Prazo> {
+  const current = await getDeadline(id);
+  if (!current) throw new Error('Prazo não encontrado.');
+  return updateDeadline(id, {
+    processo_id: current.processo_id,
+    descricao: current.descricao,
+    data_intimacao: current.data_intimacao ?? null,
+    prazo_fatal: current.prazo_fatal,
+    dias_uteis: current.dias_uteis ?? null,
+    origem: current.origem,
     status,
   });
 }
 
-export async function excluirPrazo(id: string): Promise<void> {
+export async function deleteDeadline(id: string): Promise<void> {
   if (USE_MOCKS) {
     await delay(300);
-    const i = store.findIndex((p) => p.id === id);
-    if (i >= 0) store.splice(i, 1);
+    const index = store.findIndex((d) => d.id === id);
+    if (index >= 0) store.splice(index, 1);
     return;
   }
   await http.delete(`/prazos/${id}`);
