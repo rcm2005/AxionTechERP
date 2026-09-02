@@ -1,4 +1,4 @@
-import { useState, useMemo, type FormEvent } from 'react';
+import { useState, useMemo, useEffect, type FormEvent } from 'react';
 import { useLocation } from 'react-router';
 import { Building2, Bell, Search, ChevronDown, LogOut } from 'lucide-react';
 import { NAV_ITEMS } from '@/config/app';
@@ -8,11 +8,15 @@ import { Avatar } from '@/components/ui/Avatar/Avatar';
 import { Button } from '@/components/ui/Button/Button';
 import { db } from '@/mocks';
 import { formatBRL, formatDate } from '@/utils/format';
+import { USE_MOCKS } from '@/services/mockAdapter';
+import { listarMeusEscritorios, type EscritorioDaConta } from '@/services/auth.service';
+import { listarLancamentos } from '@/services/financeiro.service';
+import { useAsync } from '@/hooks/useAsync';
 import styles from './Topbar.module.scss';
 
 export function Topbar() {
   const location = useLocation();
-  const { usuario, empresaAtivaId, setEmpresaAtivaId, logout } = useAuth();
+  const { usuario, empresaAtivaId, setEmpresaAtivaId, logout, tenantBranding, trocarEscritorio } = useAuth();
   const toast = useToast();
   const [busca, setBusca] = useState('');
   const [menuAberto, setMenuAberto] = useState(false);
@@ -24,8 +28,12 @@ export function Topbar() {
       : location.pathname.startsWith(item.path),
   );
 
-  // Lista de empresas acessíveis ao usuário
+  const temPortfolioMultiplo = (usuario?.portfolioTenantIds?.length ?? 0) >= 2;
+  const podeTrocarEmpresa = USE_MOCKS || temPortfolioMultiplo;
+
+  // Lista de empresas acessíveis ao usuário (modo mock)
   const empresasAcessiveis = useMemo(() => {
+    if (!USE_MOCKS) return [];
     if (!usuario) return [];
     const ids = Array.from(
       new Set([
@@ -40,8 +48,9 @@ export function Topbar() {
     return filtradas.length > 0 ? filtradas : db.tenants;
   }, [usuario]);
 
-  // Empresa ativa atual
+  // Empresa ativa atual (modo mock)
   const empresaAtiva = useMemo(() => {
+    if (!USE_MOCKS) return null;
     return (
       empresasAcessiveis.find((t) => t.id === empresaAtivaId) ??
       empresasAcessiveis[0] ??
@@ -49,9 +58,74 @@ export function Topbar() {
     );
   }, [empresasAcessiveis, empresaAtivaId]);
 
+  // Lista de escritórios reais para usuários com 2+ tenants em portfolioTenantIds (modo real)
+  const [escritorios, setEscritorios] = useState<EscritorioDaConta[]>([]);
+
+  useEffect(() => {
+    if (USE_MOCKS || !usuario || !temPortfolioMultiplo) return;
+
+    let ativo = true;
+    listarMeusEscritorios()
+      .then((lista) => {
+        if (ativo) {
+          setEscritorios(lista);
+        }
+      })
+      .catch(() => {
+        if (ativo) {
+          setEscritorios([]);
+        }
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [usuario, temPortfolioMultiplo]);
+
+  // Nome da empresa ativa (modo real / mock) com fallbacks
+  const nomeEmpresaAtiva = useMemo(() => {
+    if (USE_MOCKS) {
+      return empresaAtiva?.nomeFantasia || empresaAtiva?.razaoSocial || '';
+    }
+    if (temPortfolioMultiplo) {
+      const ativa = escritorios.find((e) => e.id === empresaAtivaId) ?? escritorios[0];
+      return (
+        ativa?.nomeExibicao ||
+        tenantBranding?.nomeExibicao ||
+        usuario?.escritorioContabilNome ||
+        'Empresa Ativa'
+      );
+    }
+    return (
+      tenantBranding?.nomeExibicao ||
+      usuario?.escritorioContabilNome ||
+      'Empresa Ativa'
+    );
+  }, [
+    empresaAtiva,
+    temPortfolioMultiplo,
+    escritorios,
+    empresaAtivaId,
+    tenantBranding,
+    usuario,
+  ]);
+
+  // Notificações reais: chamada silenciosa a listarLancamentos() quando !USE_MOCKS
+  const { data: lancamentosReais } = useAsync(
+    async () => {
+      if (USE_MOCKS) return [];
+      try {
+        return await listarLancamentos();
+      } catch {
+        return [];
+      }
+    },
+    [empresaAtivaId],
+  );
+
   // Notificações: títulos em atraso ou alertas da empresa ativa
   const notificacoes = useMemo(() => {
-    const lancamentos = db.lancamentos ?? [];
+    const lancamentos = USE_MOCKS ? (db.lancamentos ?? []) : (lancamentosReais ?? []);
     return lancamentos
       .filter(
         (l) =>
@@ -64,7 +138,7 @@ export function Topbar() {
         meta: `${formatBRL(l.valorCentavos)} • Vencimento ${formatDate(l.vencimento)}`,
         prioridade: 'urgente' as const,
       }));
-  }, [empresaAtivaId]);
+  }, [empresaAtivaId, lancamentosReais]);
 
   function handleSearch(event: FormEvent) {
     event.preventDefault();
@@ -76,7 +150,7 @@ export function Topbar() {
   return (
     <header className={styles.root}>
       <div className={styles.crumb}>
-        {empresaAtiva?.nomeFantasia || 'Axion ERP'} /{' '}
+        {(USE_MOCKS ? empresaAtiva?.nomeFantasia : nomeEmpresaAtiva) || 'Axion ERP'} /{' '}
         <strong>{paginaAtual?.label ?? 'Dashboard'}</strong>
       </div>
 
@@ -92,34 +166,79 @@ export function Topbar() {
         </form>
 
         {/* Tenant Switcher */}
-        <div className={styles.tenantSwitcher} title="Alternar Empresa Ativa">
+        <div
+          className={styles.tenantSwitcher}
+          title={podeTrocarEmpresa ? 'Alternar Empresa Ativa' : undefined}
+        >
           <Building2 size={16} className={styles.tenantIcon} />
           <div className={styles.tenantSelectWrap}>
-            <label htmlFor="tenant-select" className={styles.tenantLabel}>
-              Empresa
-            </label>
-            <select
-              id="tenant-select"
-              className={styles.tenantSelect}
-              value={empresaAtivaId || (empresasAcessiveis[0]?.id ?? '')}
-              onChange={(e) => {
-                const novoId = e.target.value;
-                setEmpresaAtivaId(novoId);
-                const selecionada = empresasAcessiveis.find((t) => t.id === novoId);
-                if (selecionada) {
-                  toast.show(`Empresa ativa: ${selecionada.nomeFantasia || selecionada.razaoSocial}`);
-                }
-              }}
-              aria-label="Selecionar Empresa / Tenant Ativo"
-            >
-              {empresasAcessiveis.map((empresa) => (
-                <option key={empresa.id} value={empresa.id}>
-                  {empresa.nomeFantasia || empresa.razaoSocial}
-                </option>
-              ))}
-            </select>
+            {podeTrocarEmpresa ? (
+              <>
+                <label htmlFor="tenant-select" className={styles.tenantLabel}>
+                  Empresa
+                </label>
+                <select
+                  id="tenant-select"
+                  className={styles.tenantSelect}
+                  value={
+                    USE_MOCKS
+                      ? empresaAtivaId || (empresasAcessiveis[0]?.id ?? '')
+                      : empresaAtivaId || (escritorios[0]?.id ?? '')
+                  }
+                  onChange={(e) => {
+                    const novoId = e.target.value;
+                    if (USE_MOCKS) {
+                      setEmpresaAtivaId(novoId);
+                      const selecionada = empresasAcessiveis.find((t) => t.id === novoId);
+                      if (selecionada) {
+                        toast.show(`Empresa ativa: ${selecionada.nomeFantasia || selecionada.razaoSocial}`);
+                      }
+                    } else {
+                      void (async () => {
+                        try {
+                          await trocarEscritorio(novoId);
+                          const selecionada = escritorios.find((t) => t.id === novoId);
+                          if (selecionada) {
+                            toast.show(`Empresa ativa: ${selecionada.nomeExibicao}`);
+                          }
+                        } catch {
+                          toast.show('Não foi possível trocar de empresa.');
+                        }
+                      })();
+                    }
+                  }}
+                  aria-label="Selecionar Empresa / Tenant Ativo"
+                >
+                  {USE_MOCKS ? (
+                    empresasAcessiveis.map((empresa) => (
+                      <option key={empresa.id} value={empresa.id}>
+                        {empresa.nomeFantasia || empresa.razaoSocial}
+                      </option>
+                    ))
+                  ) : escritorios.length > 0 ? (
+                    escritorios.map((empresa) => (
+                      <option key={empresa.id} value={empresa.id}>
+                        {empresa.nomeExibicao}
+                      </option>
+                    ))
+                  ) : (
+                    <option value={empresaAtivaId || ''}>{nomeEmpresaAtiva}</option>
+                  )}
+                </select>
+              </>
+            ) : (
+              <>
+                <span className={styles.tenantLabel}>Empresa</span>
+                <span
+                  className={styles.tenantSelect}
+                  style={{ cursor: 'default', paddingRight: 0 }}
+                >
+                  {nomeEmpresaAtiva}
+                </span>
+              </>
+            )}
           </div>
-          <ChevronDown size={14} className={styles.tenantChevron} />
+          {podeTrocarEmpresa && <ChevronDown size={14} className={styles.tenantChevron} />}
         </div>
 
         {/* Sino de notificações */}
@@ -184,10 +303,14 @@ export function Topbar() {
               <div className={styles.menuHeader}>
                 <div className={styles.menuName}>{usuario?.nomeExibicao || usuario?.nome}</div>
                 <div className={styles.menuEmail}>{usuario?.email}</div>
-                {empresaAtiva && (
+                {(USE_MOCKS ? Boolean(empresaAtiva) : Boolean(nomeEmpresaAtiva)) && (
                   <div className={styles.menuTenant}>
                     <Building2 size={12} />
-                    <span>{empresaAtiva.nomeFantasia || empresaAtiva.razaoSocial}</span>
+                    <span>
+                      {USE_MOCKS
+                        ? empresaAtiva?.nomeFantasia || empresaAtiva?.razaoSocial
+                        : nomeEmpresaAtiva}
+                    </span>
                   </div>
                 )}
               </div>
