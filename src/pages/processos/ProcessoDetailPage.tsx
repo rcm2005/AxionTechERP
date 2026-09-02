@@ -70,7 +70,7 @@ export function ProcessoDetailPage() {
   useDocumentTitle(caseItem ? `Processo ${caseItem.numero_cnj}` : 'Processo');
 
   const responsibleName = useMemo(() => {
-    const userMap = new Map((users ?? []).map((user) => [user.id, user.nome]));
+    const userMap = new Map((users ?? []).map((user) => [user.id, user.name]));
     return (id: string) => userMap.get(id) ?? '—';
   }, [users]);
 

@@ -1,5 +1,5 @@
 import { getScheduleEvent, listScheduleEvents } from '@/services/agenda.service';
-import { listarUsuarios } from '@/services/usuarios.service';
+import { listUsers } from '@/services/usuarios.service';
 import type { AgendaFiltros } from '@/types';
 import { useAsync } from './useAsync';
 
@@ -13,5 +13,5 @@ export function useAgendaEvento(id: string | undefined) {
 
 /** Used to populate the assignee select in schedule forms. */
 export function useUsuarios() {
-  return useAsync(() => listarUsuarios(), []);
+  return useAsync(() => listUsers(), []);
 }

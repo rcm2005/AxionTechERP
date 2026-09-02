@@ -48,7 +48,7 @@ export function AgendaPage() {
   });
 
   const nomeResponsavel = useMemo(() => {
-    const mapa = new Map((usuarios ?? []).map((u) => [u.id, u.nome]));
+    const mapa = new Map((usuarios ?? []).map((u) => [u.id, u.name]));
     return (id: string) => mapa.get(id) ?? '—';
   }, [usuarios]);
 
@@ -60,7 +60,7 @@ export function AgendaPage() {
   const responsavelOptions = useMemo(
     () => [
       { value: 'todos', label: 'Todos os responsáveis' },
-      ...(usuarios ?? []).map((u) => ({ value: u.id, label: u.nome })),
+      ...(usuarios ?? []).map((u) => ({ value: u.id, label: u.name })),
     ],
     [usuarios],
   );

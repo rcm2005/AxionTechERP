@@ -112,7 +112,7 @@ export function NovoEventoAgendaModal({ open, onClose, processoIdFixo, onCreated
           <option value="">Selecione o responsável…</option>
           {(usuarios ?? []).map((u) => (
             <option key={u.id} value={u.id}>
-              {u.nome}
+              {u.name}
             </option>
           ))}
         </TextSelect>
