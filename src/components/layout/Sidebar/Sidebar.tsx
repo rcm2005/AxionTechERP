@@ -21,31 +21,65 @@ import { Avatar } from '@/components/ui/Avatar/Avatar';
 import styles from './Sidebar.module.scss';
 
 interface SidebarNavItem {
+  id: string;
   path: string;
   label: string;
   icon: typeof LayoutDashboard;
 }
 
-const SIDEBAR_ITEMS: SidebarNavItem[] = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/copilot', label: 'Copilot', icon: Bot },
-  { path: '/processos', label: 'Processos', icon: Scale },
-  { path: '/prazos', label: 'Prazos', icon: AlarmClock },
-  { path: '/agenda', label: 'Agenda', icon: CalendarDays },
-  { path: '/clientes', label: 'Clientes', icon: Users },
-  { path: '/contratos', label: 'Contratos', icon: FileSignature },
-  { path: '/financeiro', label: 'Financeiro', icon: DollarSign },
-  { path: '/fiscal', label: 'Fiscal', icon: FileText },
-  { path: '/configuracoes', label: 'Configurações', icon: Settings },
+const ITENS_CANONICOS: Record<string, { path: string; icon: typeof LayoutDashboard }> = {
+  dashboard: { path: '/dashboard', icon: LayoutDashboard },
+  copilot: { path: '/copilot', icon: Bot },
+  processos: { path: '/processos', icon: Scale },
+  prazos: { path: '/prazos', icon: AlarmClock },
+  agenda: { path: '/agenda', icon: CalendarDays },
+  clientes: { path: '/clientes', icon: Users },
+  contratos: { path: '/contratos', icon: FileSignature },
+  financeiro: { path: '/financeiro', icon: DollarSign },
+  fiscal: { path: '/fiscal', icon: FileText },
+  configuracoes: { path: '/configuracoes', icon: Settings },
+};
+
+const DEFAULT_SIDEBAR_ITEMS: SidebarNavItem[] = [
+  { id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'copilot', path: '/copilot', label: 'Copilot', icon: Bot },
+  { id: 'processos', path: '/processos', label: 'Processos', icon: Scale },
+  { id: 'prazos', path: '/prazos', label: 'Prazos', icon: AlarmClock },
+  { id: 'agenda', path: '/agenda', label: 'Agenda', icon: CalendarDays },
+  { id: 'clientes', path: '/clientes', label: 'Clientes', icon: Users },
+  { id: 'contratos', path: '/contratos', label: 'Contratos', icon: FileSignature },
+  { id: 'financeiro', path: '/financeiro', label: 'Financeiro', icon: DollarSign },
+  { id: 'fiscal', path: '/fiscal', label: 'Fiscal', icon: FileText },
+  { id: 'configuracoes', path: '/configuracoes', label: 'Configurações', icon: Settings },
 ];
 
 export function Sidebar() {
-  const { usuario, empresaAtivaId, tenantBranding } = useAuth();
+  const { usuario, empresaAtivaId, tenantBranding, tenantNavegacao } = useAuth();
 
   const empresaAtiva = useMemo(() => {
     if (!empresaAtivaId) return null;
     return db.tenants.find((t) => t.id === empresaAtivaId);
   }, [empresaAtivaId]);
+
+  const itens = useMemo<SidebarNavItem[]>(() => {
+    if (!tenantNavegacao) {
+      return DEFAULT_SIDEBAR_ITEMS;
+    }
+
+    const resultado: SidebarNavItem[] = [];
+    for (const item of tenantNavegacao) {
+      if (!item.visivel) continue;
+      const canonico = ITENS_CANONICOS[item.id];
+      if (!canonico) continue;
+      resultado.push({
+        id: item.id,
+        path: canonico.path,
+        label: item.label,
+        icon: canonico.icon,
+      });
+    }
+    return resultado;
+  }, [tenantNavegacao]);
 
   const nomeEmpresa =
     tenantBranding?.nomeExibicao ||
@@ -67,11 +101,11 @@ export function Sidebar() {
       </div>
 
       <nav className={styles.nav} aria-label="Navegação principal">
-        {SIDEBAR_ITEMS.map((item) => {
+        {itens.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
-              key={item.path}
+              key={item.id}
               to={item.path}
               className={({ isActive }) =>
                 clsx(styles.navButton, isActive && styles.active)

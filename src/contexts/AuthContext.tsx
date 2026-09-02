@@ -8,7 +8,12 @@ import {
   type DadosOnboarding,
   type Sessao,
 } from '@/services/auth.service';
-import { getTenantBranding, type TenantBranding } from '@/services/tenant.service';
+import {
+  getTenantConfig,
+  type TenantBranding,
+  type NavItem,
+  type TenantConfig,
+} from '@/services/tenant.service';
 
 function aplicarBranding(branding: TenantBranding | null) {
   const root = document.documentElement;
@@ -50,6 +55,7 @@ interface AuthContextValue {
   setEmpresaAtivaId: (id: string) => void;
   isAuthenticated: boolean;
   tenantBranding: TenantBranding | null;
+  tenantNavegacao: NavItem[] | null;
   login: (email: string, senha: string) => Promise<void>;
   criarEscritorio: (dados: DadosOnboarding) => Promise<void>;
   /** Troca o tenant ativo por outro em que este e-mail já é admin (sem senha). */
@@ -66,16 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (initialSession?.empresaAtivaId) return initialSession.empresaAtivaId;
     return resolveDefaultEmpresaId(initialSession?.usuario ?? null);
   });
-  const [tenantBranding, setTenantBranding] = useState<TenantBranding | null>(null);
+  const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null);
 
   // Ao montar com uma sessão já guardada (refresh de página autenticado),
-  // busca o branding do tenant de novo — não fica persistido no storage.
+  // busca o config do tenant de novo — não fica persistido no storage.
   useEffect(() => {
     if (!initialSession?.usuario) return;
     let cancelado = false;
-    getTenantBranding()
-      .then((branding) => {
-        if (!cancelado) setTenantBranding(branding);
+    getTenantConfig()
+      .then((config) => {
+        if (!cancelado) setTenantConfig(config);
       })
       .catch(() => {
         // sessão pode ter expirado; deixa o ProtectedRoute/interceptor lidar com isso
@@ -87,8 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    aplicarBranding(tenantBranding);
-  }, [tenantBranding]);
+    aplicarBranding(tenantConfig?.branding ?? null);
+  }, [tenantConfig]);
 
   const setEmpresaAtivaId = useCallback((id: string) => {
     setEmpresaAtivaIdState(id);
@@ -109,9 +115,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(sessao.usuario);
     setEmpresaAtivaIdState(defaultEmpresaId);
     try {
-      setTenantBranding(await getTenantBranding());
+      setTenantConfig(await getTenantConfig());
     } catch {
-      setTenantBranding(null);
+      setTenantConfig(null);
     }
   }, []);
 
@@ -142,8 +148,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('lawerp.session');
     setUsuario(null);
     setEmpresaAtivaIdState('');
-    setTenantBranding(null);
+    setTenantConfig(null);
   }, []);
+
+  const tenantBranding = tenantConfig?.branding ?? null;
+  const tenantNavegacao = tenantConfig?.navegacao.itens ?? null;
 
   return (
     <AuthContext.Provider
@@ -153,6 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setEmpresaAtivaId,
         isAuthenticated: usuario !== null,
         tenantBranding,
+        tenantNavegacao,
         login,
         criarEscritorio,
         trocarEscritorio,
