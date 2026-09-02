@@ -78,6 +78,8 @@ export function NovoClienteModal({ open, onClose }: Props) {
       toast.show('Parceiro comercial cadastrado com sucesso!');
       handleClose();
       navigate(paths.cliente(novo.id));
+    } catch {
+      toast.show('Não foi possível cadastrar o cliente.');
     } finally {
       setSaving(false);
     }

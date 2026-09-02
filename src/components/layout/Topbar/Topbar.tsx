@@ -195,7 +195,13 @@ export function Topbar() {
                 variant="ghost"
                 onClick={() => {
                   setMenuAberto(false);
-                  void logout();
+                  void (async () => {
+                    try {
+                      await logout();
+                    } catch {
+                      // cleanup local de sessão já é garantido dentro do próprio logout() (ver AuthContext)
+                    }
+                  })();
                 }}
                 className={styles.logoutBtn}
               >
