@@ -5,8 +5,9 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useToast } from '@/contexts/ToastContext';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Button } from '@/components/ui/Button/Button';
+import { Alert } from '@/components/ui/Alert/Alert';
 import { KpiCard } from '@/components/ui/KpiCard/KpiCard';
-import { Card, CardHead } from '@/components/ui/Card/Card';
+import { Card, CardBody, CardHead } from '@/components/ui/Card/Card';
 import { DataTable } from '@/components/ui/DataTable/DataTable';
 import type { Column } from '@/components/ui/DataTable/DataTable';
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
@@ -32,7 +33,7 @@ const breakdownColumns: Column<BreakdownRow>[] = [
 export function FinanceiroPage() {
   useDocumentTitle('Financeiro');
   const toast = useToast();
-  const { data: lancamentos, loading } = useLancamentos();
+  const { data: lancamentos, loading, error, reload } = useLancamentos();
 
   const [periodo, setPeriodo] = useState<'mes' | 'trimestre' | 'todos'>('mes');
   const [novaCobrancaOpen, setNovaCobrancaOpen] = useState(false);
@@ -49,13 +50,18 @@ export function FinanceiroPage() {
     });
   }, [lancamentos, periodo]);
 
-  const resumo = useMemo(() => calcularResumoFinanceiro(lancamentosFiltrados), [lancamentosFiltrados]);
+  const resumo = useMemo(() => {
+    if (!lancamentos || error) return null;
+    return calcularResumoFinanceiro(lancamentosFiltrados);
+  }, [lancamentos, lancamentosFiltrados, error]);
+
   const contasAReceber = useMemo(
     () => (lancamentos ?? []).filter((l) => l.tipo === 'receita' && l.status !== 'cancelado'),
     [lancamentos],
   );
 
   const dadosGrafico = useMemo(() => {
+    if (!lancamentos || error) return [];
     const categorias = new Map<string, number>();
     (lancamentosFiltrados ?? []).forEach((l) => {
       const key = l.categoria;
@@ -73,9 +79,10 @@ export function FinanceiroPage() {
           ? 'var(--color-danger)'
           : 'var(--tone-orange-fg)',
       }));
-  }, [lancamentosFiltrados]);
+  }, [lancamentos, lancamentosFiltrados, error]);
 
   const breakdown = useMemo(() => {
+    if (!lancamentos || error) return [];
     const map = new Map<string, { receita: number; despesa: number }>();
     (lancamentosFiltrados ?? []).forEach((l) => {
       const cur = map.get(l.categoria) ?? { receita: 0, despesa: 0 };
@@ -90,7 +97,7 @@ export function FinanceiroPage() {
       despesa: vals.despesa,
       saldo: vals.receita - vals.despesa,
     }));
-  }, [lancamentosFiltrados]);
+  }, [lancamentos, lancamentosFiltrados, error]);
 
 
   return (
@@ -125,67 +132,97 @@ export function FinanceiroPage() {
         </div>
       </div>
 
-      <div className={styles.kpis}>
-        {loading ? (
-          Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} height="90px" />)
-        ) : (
-          <>
-            <KpiCard label="Receita do mês" value={formatBRL(resumo.receitaCentavos)} />
-            <KpiCard
-              label="Despesas"
-              value={formatBRL(resumo.despesaCentavos)}
-              sub={
-                resumo.receitaCentavos > 0
-                  ? `${((resumo.despesaCentavos / resumo.receitaCentavos) * 100).toFixed(0)}% da receita`
-                  : undefined
-              }
-            />
-            <KpiCard
-              label="A receber"
-              value={formatBRL(resumo.aReceberCentavos)}
-              sub={`${resumo.qtdTitulosAReceber} títulos`}
-            />
-            <KpiCard
-              label="Em atraso"
-              value={formatBRL(resumo.emAtrasoCentavos)}
-              subTone="red"
-              sub={`${resumo.qtdClientesEmAtraso} cliente(s)`}
-            />
-            <KpiCard
-              label="Lucro estimado"
-              value={formatBRL(resumo.lucroCentavos)}
-              subTone="green"
-              sub={
-                resumo.receitaCentavos > 0
-                  ? `${((resumo.lucroCentavos / resumo.receitaCentavos) * 100).toFixed(0)}% margem`
-                  : undefined
-              }
-            />
-          </>
-        )}
-      </div>
+      {error ? (
+        <div style={{ marginBottom: 16 }}>
+          <Alert
+            tone="danger"
+            title="Erro ao carregar dados"
+            description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+            action={
+              <Button variant="ghost" onClick={reload}>
+                Tentar novamente
+              </Button>
+            }
+          />
+        </div>
+      ) : (
+        <div className={styles.kpis}>
+          {loading || !resumo ? (
+            Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} height="90px" />)
+          ) : (
+            <>
+              <KpiCard label="Receita do mês" value={formatBRL(resumo.receitaCentavos)} />
+              <KpiCard
+                label="Despesas"
+                value={formatBRL(resumo.despesaCentavos)}
+                sub={
+                  resumo.receitaCentavos > 0
+                    ? `${((resumo.despesaCentavos / resumo.receitaCentavos) * 100).toFixed(0)}% da receita`
+                    : undefined
+                }
+              />
+              <KpiCard
+                label="A receber"
+                value={formatBRL(resumo.aReceberCentavos)}
+                sub={`${resumo.qtdTitulosAReceber} títulos`}
+              />
+              <KpiCard
+                label="Em atraso"
+                value={formatBRL(resumo.emAtrasoCentavos)}
+                subTone="red"
+                sub={`${resumo.qtdClientesEmAtraso} cliente(s)`}
+              />
+              <KpiCard
+                label="Lucro estimado"
+                value={formatBRL(resumo.lucroCentavos)}
+                subTone="green"
+                sub={
+                  resumo.receitaCentavos > 0
+                    ? `${((resumo.lucroCentavos / resumo.receitaCentavos) * 100).toFixed(0)}% margem`
+                    : undefined
+                }
+              />
+            </>
+          )}
+        </div>
+      )}
 
       <div className={styles.grid}>
         <Card>
           <CardHead title="Contas a receber" action={<Button variant="ghost">Ver tudo</Button>} />
-          <DataTable
-            columns={contasReceberColumns}
-            rows={contasAReceber}
-            getRowId={(l) => l.id}
-            loading={loading}
-            emptyMessage="Nenhuma conta a receber cadastrada."
-          />
+          {error ? (
+            <CardBody>
+              <Alert
+                tone="danger"
+                title="Erro ao carregar dados"
+                description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+                action={
+                  <Button variant="ghost" onClick={reload}>
+                    Tentar novamente
+                  </Button>
+                }
+              />
+            </CardBody>
+          ) : (
+            <DataTable
+              columns={contasReceberColumns}
+              rows={contasAReceber}
+              getRowId={(l) => l.id}
+              loading={loading}
+              emptyMessage="Nenhuma conta a receber cadastrada."
+            />
+          )}
         </Card>
 
         {loading ? (
           <Skeleton height="320px" />
-        ) : (
+        ) : resumo ? (
           <FluxoCaixaCard resumo={resumo} />
-        )}
+        ) : null}
       </div>
 
       {/* Gráfico por categoria */}
-      {!loading && dadosGrafico.length > 0 && (
+      {!loading && !error && dadosGrafico.length > 0 && (
         <Card>
           <CardHead title={`Distribuição por categoria — ${periodo === 'mes' ? 'mês atual' : periodo === 'trimestre' ? 'últimos 3 meses' : 'todos'}`} />
           <div style={{ padding: 'var(--space-5)' }}>
@@ -199,7 +236,7 @@ export function FinanceiroPage() {
       )}
 
       {/* Breakdown tabela */}
-      {!loading && breakdown.length > 0 && (
+      {!loading && !error && breakdown.length > 0 && (
         <Card>
           <CardHead title="Breakdown por categoria" />
           <DataTable

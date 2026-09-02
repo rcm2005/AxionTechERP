@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button/Button';
 import { Toolbar } from '@/components/ui/Toolbar/Toolbar';
 import { SelectField } from '@/components/ui/SelectField/SelectField';
 import { Card, CardBody } from '@/components/ui/Card/Card';
+import { Alert } from '@/components/ui/Alert/Alert';
 import { AgendaLista } from '@/components/agenda/AgendaLista';
 import { NovoEventoAgendaModal } from '@/components/modais/NovoEventoAgendaModal';
 import type { AgendaEventoTipo } from '@/types';
@@ -38,6 +39,7 @@ export function AgendaPage() {
   const {
     data: eventos,
     loading,
+    error,
     reload,
   } = useAgenda({
     tipo,
@@ -95,13 +97,26 @@ export function AgendaPage() {
 
       <Card>
         <CardBody>
-          <AgendaLista
-            eventos={eventos ?? []}
-            loading={loading}
-            nomeResponsavel={nomeResponsavel}
-            rotuloProcesso={rotuloProcesso}
-            emptyMessage="Nenhum compromisso encontrado para os filtros selecionados."
-          />
+          {error ? (
+            <Alert
+              tone="danger"
+              title="Erro ao carregar dados"
+              description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+              action={
+                <Button variant="ghost" onClick={reload}>
+                  Tentar novamente
+                </Button>
+              }
+            />
+          ) : (
+            <AgendaLista
+              eventos={eventos ?? []}
+              loading={loading}
+              nomeResponsavel={nomeResponsavel}
+              rotuloProcesso={rotuloProcesso}
+              emptyMessage="Nenhum compromisso encontrado para os filtros selecionados."
+            />
+          )}
         </CardBody>
       </Card>
 

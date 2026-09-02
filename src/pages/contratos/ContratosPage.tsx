@@ -9,6 +9,7 @@ import { Toolbar } from '@/components/ui/Toolbar/Toolbar';
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { SelectField } from '@/components/ui/SelectField/SelectField';
 import { Card } from '@/components/ui/Card/Card';
+import { Alert } from '@/components/ui/Alert/Alert';
 import { DataTable, type Column } from '@/components/ui/DataTable/DataTable';
 import { Pill } from '@/components/ui/Pill/Pill';
 import { NovoContratoModal } from '@/components/modais/NovoContratoModal';
@@ -46,6 +47,7 @@ export function ContratosPage() {
   const {
     data: contratos,
     loading,
+    error,
     reload,
   } = useContratos({
     busca: buscaDebounced,
@@ -121,13 +123,26 @@ export function ContratosPage() {
       </Toolbar>
 
       <Card>
-        <DataTable
-          columns={columns}
-          rows={contratos ?? []}
-          getRowId={(c) => c.id}
-          loading={loading}
-          emptyMessage="Nenhum contrato encontrado para os filtros selecionados."
-        />
+        {error ? (
+          <Alert
+            tone="danger"
+            title="Erro ao carregar dados"
+            description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
+            action={
+              <Button variant="ghost" onClick={reload}>
+                Tentar novamente
+              </Button>
+            }
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            rows={contratos ?? []}
+            getRowId={(c) => c.id}
+            loading={loading}
+            emptyMessage="Nenhum contrato encontrado para os filtros selecionados."
+          />
+        )}
       </Card>
 
       <NovoContratoModal open={novoOpen} onClose={() => setNovoOpen(false)} onCreated={reload} />
