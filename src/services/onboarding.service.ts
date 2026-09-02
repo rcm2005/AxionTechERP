@@ -52,3 +52,25 @@ export async function revisarConfirmacao(
     return null;
   }
 }
+
+export interface RequisitoCobertura {
+  id: string;
+  descricao: string;
+}
+
+export interface ResultadoCobertura {
+  cobertos: RequisitoCobertura[];
+  descobertos: RequisitoCobertura[];
+}
+
+export async function diagnosticoVarejo(
+  respostas: Record<string, unknown>
+): Promise<ResultadoCobertura | null> {
+  if (USE_MOCKS) return null;
+  try {
+    const { data } = await http.post<ResultadoCobertura>('/onboarding/diagnostico-varejo', { respostas });
+    return data;
+  } catch {
+    return null;
+  }
+}

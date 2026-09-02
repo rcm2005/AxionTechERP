@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowUp } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import * as onboardingService from '@/services/onboarding.service';
 import styles from './BuilderChatPage.module.scss';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -371,11 +372,22 @@ export function BuilderChatVarejoPage() {
     avancar(perguntaAtualIndex, novasRespostas);
   }
 
-  function confirmarReflexao() {
+  async function confirmarReflexao() {
     dizer('usuario', 'Confirmar');
     setFase('fim');
-    const msgLacunas = gerarMensagemLacunas(respostas);
-    dizer('assistente', msgLacunas);
+    const resultado = await onboardingService.diagnosticoVarejo(respostas);
+    if (resultado) {
+      const linhasItens = resultado.descobertos.map((d) => `• ${d.descricao}`).join('\n');
+      const textoCobertos =
+        resultado.cobertos.length > 0
+          ? resultado.cobertos.map((c) => c.descricao.charAt(0).toLowerCase() + c.descricao.slice(1)).join(', e ')
+          : 'cadastro de produto com preço/estoque, e venda com item, cliente e forma de pagamento — inclusive fiado';
+      const msg = `Com base no diagnóstico da sua operação, aqui está o contrato de honestidade sobre o que o sistema AINDA NÃO faz hoje:\n\n${linhasItens}\n\nO que eu já registro de verdade hoje: ${textoCobertos}. O resto virou prioridade real, não promessa vazia.`;
+      dizer('assistente', msg);
+    } else {
+      const msgLacunas = gerarMensagemLacunas(respostas);
+      dizer('assistente', msgLacunas);
+    }
   }
 
   function recomecar() {
@@ -497,7 +509,7 @@ export function BuilderChatVarejoPage() {
                 </div>
               </div>
               <div className={styles.respostasRapidas}>
-                <button type="button" className={styles.btnPrimario} onClick={confirmarReflexao}>
+                <button type="button" className={styles.btnPrimario} onClick={() => void confirmarReflexao()}>
                   Confirmar
                 </button>
                 <button type="button" className={styles.btnSecundario} onClick={recomecar}>
