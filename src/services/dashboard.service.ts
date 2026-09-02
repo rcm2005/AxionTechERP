@@ -4,19 +4,19 @@ import { listClients } from './clientes.service';
 import { calcularResumoFinanceiro, listarLancamentos } from './financeiro.service';
 import { delay } from './mockAdapter';
 
-export interface DashboardResumo {
+export interface DashboardSummary {
   kpis: KpiResumo[];
-  alertas: Alerta[];
+  alerts: Alerta[];
 }
 
-export async function buscarResumoDashboard(): Promise<DashboardResumo> {
+export async function getDashboardSummary(): Promise<DashboardSummary> {
   await delay();
-  const lancamentos = await listarLancamentos();
-  const clientes = await listClients();
+  const entries = await listarLancamentos();
+  const clients = await listClients();
 
-  const resumoFinanceiro = calcularResumoFinanceiro(lancamentos);
-  const clientesAtivos = clientes.filter((p) => p.relacao === 'cliente' || p.relacao === 'ambos');
-  const clientesInadimplentes = clientes.filter(
+  const financialSummary = calcularResumoFinanceiro(entries);
+  const activeClients = clients.filter((p) => p.relacao === 'cliente' || p.relacao === 'ambos');
+  const delinquentClients = clients.filter(
     (p) => p.situacaoCredito === 'inadimplente' || p.valorEmAtrasoCentavos > 0,
   );
 
@@ -24,46 +24,46 @@ export async function buscarResumoDashboard(): Promise<DashboardResumo> {
     {
       id: 'receita-faturada',
       label: 'Receita Total (Recebida)',
-      valor: formatBRL(resumoFinanceiro.receitaCentavos),
-      sub: `Lucro op.: ${formatBRL(resumoFinanceiro.lucroCentavos)}`,
-      subTone: resumoFinanceiro.lucroCentavos >= 0 ? 'green' : 'red',
+      valor: formatBRL(financialSummary.receitaCentavos),
+      sub: `Lucro op.: ${formatBRL(financialSummary.lucroCentavos)}`,
+      subTone: financialSummary.lucroCentavos >= 0 ? 'green' : 'red',
       tipo: 'financeiro',
     },
     {
       id: 'a-receber',
       label: 'Contas a Receber',
-      valor: formatBRL(resumoFinanceiro.aReceberCentavos),
-      sub: `${resumoFinanceiro.qtdTitulosAReceber} títulos pendentes`,
+      valor: formatBRL(financialSummary.aReceberCentavos),
+      sub: `${financialSummary.qtdTitulosAReceber} títulos pendentes`,
       subTone: 'orange',
       tipo: 'financeiro',
     },
     {
       id: 'em-atraso',
       label: 'Valores em Atraso',
-      valor: formatBRL(resumoFinanceiro.emAtrasoCentavos),
-      sub: `${clientesInadimplentes.length} cliente(s) em atraso`,
-      subTone: resumoFinanceiro.emAtrasoCentavos > 0 ? 'red' : 'green',
+      valor: formatBRL(financialSummary.emAtrasoCentavos),
+      sub: `${delinquentClients.length} cliente(s) em atraso`,
+      subTone: financialSummary.emAtrasoCentavos > 0 ? 'red' : 'green',
       tipo: 'financeiro',
     },
     {
       id: 'carteira-clientes',
       label: 'Clientes & Parceiros',
-      valor: String(clientesAtivos.length),
-      sub: `${clientes.length} cadastros totais`,
+      valor: String(activeClients.length),
+      sub: `${clients.length} cadastros totais`,
       tipo: 'vendas',
     },
   ];
 
-  const alertas: Alerta[] = [];
-  if (resumoFinanceiro.emAtrasoCentavos > 0) {
-    alertas.push({
+  const alerts: Alerta[] = [];
+  if (financialSummary.emAtrasoCentavos > 0) {
+    alerts.push({
       id: 'alerta-inadimplencia',
-      titulo: `${clientesInadimplentes.length} cliente(s) com títulos vencidos`,
-      descricao: `Montante total em atraso: ${formatBRL(resumoFinanceiro.emAtrasoCentavos)}.`,
+      titulo: `${delinquentClients.length} cliente(s) com títulos vencidos`,
+      descricao: `Montante total em atraso: ${formatBRL(financialSummary.emAtrasoCentavos)}.`,
       tone: 'danger',
       modulo: 'financeiro',
     });
   }
 
-  return { kpis, alertas };
+  return { kpis, alerts };
 }
