@@ -246,7 +246,7 @@ export function ProcessoDetailPage() {
             />
           ) : (
             <AgendaLista
-              eventos={events ?? []}
+              events={events ?? []}
               loading={loadingEvents}
               nomeResponsavel={responsibleName}
               emptyMessage="Nenhum compromisso agendado para este processo."
