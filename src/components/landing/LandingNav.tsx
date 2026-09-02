@@ -12,25 +12,25 @@ const SECTIONS = [
 
 export function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
-  const [menuAberto, setMenuAberto] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Só lê scrollY (nunca layout), então não força reflow a cada evento.
+    // Only reads scrollY (never layout), so it doesn't force reflow on every event.
     const onScroll = () => setScrolled(window.scrollY > 16);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Trava o scroll do fundo enquanto o menu mobile está aberto.
+  // Locks background scroll while the mobile menu is open.
   useEffect(() => {
-    if (!menuAberto) return;
-    const anterior = document.body.style.overflow;
+    if (!menuOpen) return;
+    const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = anterior;
+      document.body.style.overflow = previous;
     };
-  }, [menuAberto]);
+  }, [menuOpen]);
 
   return (
     <header className={clsx(styles.header, scrolled && styles.scrolled)}>
@@ -62,29 +62,29 @@ export function LandingNav() {
         <button
           type="button"
           className={styles.burger}
-          aria-expanded={menuAberto}
+          aria-expanded={menuOpen}
           aria-controls="landing-menu-mobile"
-          aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'}
-          onClick={() => setMenuAberto((v) => !v)}
+          aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+          onClick={() => setMenuOpen((v) => !v)}
         >
-          <span className={clsx(styles.burgerBar, menuAberto && styles.burgerBarTop)} />
-          <span className={clsx(styles.burgerBar, menuAberto && styles.burgerBarBottom)} />
+          <span className={clsx(styles.burgerBar, menuOpen && styles.burgerBarTop)} />
+          <span className={clsx(styles.burgerBar, menuOpen && styles.burgerBarBottom)} />
         </button>
       </div>
 
-      {menuAberto && (
+      {menuOpen && (
         <div id="landing-menu-mobile" className={styles.mobileMenu}>
           {SECTIONS.map((item) => (
             <a
               key={item.href}
               href={item.href}
               className={styles.mobileLink}
-              onClick={() => setMenuAberto(false)}
+              onClick={() => setMenuOpen(false)}
             >
               {item.label}
             </a>
           ))}
-          <a href="#acesso" className={styles.mobileCta} onClick={() => setMenuAberto(false)}>
+          <a href="#acesso" className={styles.mobileCta} onClick={() => setMenuOpen(false)}>
             Acesso antecipado
           </a>
           <Link to={paths.login} className={styles.mobileLink}>

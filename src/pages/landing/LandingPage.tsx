@@ -10,116 +10,116 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { paths } from '@/routes/paths';
 import styles from './LandingPage.module.scss';
 
-const CAMINHOS = [
+const PATHS = [
   {
-    rotulo: 'Caminho 1',
-    titulo: 'ERP genérico de prateleira',
-    texto:
+    label: 'Caminho 1',
+    title: 'ERP genérico de prateleira',
+    text:
       'Serve a todo mundo e a ninguém. Você adapta o escritório ao software, contrata consultoria para configurar campos e passa a chamar de "processo" um campo que se chama "ordem de serviço".',
-    tom: 'problema' as const,
+    tone: 'problema' as const,
   },
   {
-    rotulo: 'Caminho 2',
-    titulo: 'Software sob medida gerado por IA',
-    texto:
+    label: 'Caminho 2',
+    title: 'Software sob medida gerado por IA',
+    text:
       'Rápido de demonstrar, caro de manter. Cada cliente vira uma base de código diferente, sem ninguém que a conheça, e o primeiro bug fiscal sério não tem a quem recorrer.',
-    tom: 'problema' as const,
+    tone: 'problema' as const,
   },
   {
-    rotulo: 'O nosso',
-    titulo: 'Template vertical configurado por entrevista',
-    texto:
+    label: 'O nosso',
+    title: 'Template vertical configurado por entrevista',
+    text:
       'Um ERP profundo, escrito e testado por gente, para um setor específico. A IA não escreve o sistema — ela entende o seu escritório e liga as peças certas do sistema que já existe.',
-    tom: 'axion' as const,
+    tone: 'axion' as const,
   },
 ];
 
-const PASSOS = [
+const STEPS = [
   {
-    numero: '01',
-    titulo: 'A entrevista',
-    texto:
+    number: '01',
+    title: 'A entrevista',
+    text:
       'Trinta a quarenta minutos de conversa em português, sem jargão de TI. Como vocês cobram, quem aprova o quê, quais prazos não podem passar, o que hoje mora numa planilha. Você não precisa saber o que é um ERP para responder.',
   },
   {
-    numero: '02',
-    titulo: 'A configuração',
-    texto:
+    number: '02',
+    title: 'A configuração',
+    text:
       'Suas respostas viram parâmetros de um template que já existe: módulos ligados, papéis e permissões, tipos de contrato, regras de honorário, alertas de prazo. É configuração revisável — dá para ler, conferir e mudar depois.',
   },
   {
-    numero: '03',
-    titulo: 'A operação',
-    texto:
+    number: '03',
+    title: 'A operação',
+    text:
       'Você entra em um sistema que já fala a sua língua no primeiro dia. Quando a rotina mudar, muda-se a configuração — não se reescreve o software, e a atualização do produto continua chegando para você.',
   },
 ];
 
-const MODULOS = [
+const MODULES = [
   {
-    Icone: Gavel,
-    titulo: 'Processos e andamentos',
-    texto:
+    Icon: Gavel,
+    title: 'Processos e andamentos',
+    text:
       'Cadastro por número, vara e cliente, com histórico de andamentos, partes envolvidas e documentos anexados ao processo — não a uma pasta solta no drive.',
   },
   {
-    Icone: CalendarClock,
-    titulo: 'Prazos e audiências',
-    texto:
+    Icon: CalendarClock,
+    title: 'Prazos e audiências',
+    text:
       'Agenda com prazo fatal separado de prazo interno, alertas escalonados e visão por responsável. O que vence esta semana aparece antes de você procurar.',
   },
   {
-    Icone: Users,
-    titulo: 'Clientes e contratos',
-    texto:
+    Icon: Users,
+    title: 'Clientes e contratos',
+    text:
       'Pessoa física e jurídica, contratos recorrentes ou por causa, e a ligação entre o cliente, os processos dele e o que ainda está em aberto.',
   },
   {
-    Icone: ReceiptText,
-    titulo: 'Financeiro com êxito',
-    texto:
+    Icon: ReceiptText,
+    title: 'Financeiro com êxito',
+    text:
       'Contas a pagar e a receber, honorários fixos e o cálculo de honorário de êxito amarrado ao desfecho do processo — a parte que quase nenhum ERP genérico modela.',
   },
 ];
 
-const VERTICAIS = [
+const VERTICALS = [
   {
-    nome: 'Advocacia',
-    estado: 'No ar',
-    ativo: true,
-    texto: 'Primeira vertical, em acesso antecipado com um número limitado de escritórios.',
+    name: 'Advocacia',
+    status: 'No ar',
+    active: true,
+    text: 'Primeira vertical, em acesso antecipado com um número limitado de escritórios.',
   },
   {
-    nome: 'Varejo',
-    estado: 'Em construção',
-    ativo: false,
-    texto: 'Estoque, SKUs, compras e frente de caixa — módulos já em desenvolvimento no produto.',
+    name: 'Varejo',
+    status: 'Em construção',
+    active: false,
+    text: 'Estoque, SKUs, compras e frente de caixa — módulos já em desenvolvimento no produto.',
   },
   {
-    nome: 'Agronegócio',
-    estado: 'Planejado',
-    ativo: false,
-    texto: 'Safra, insumos e custo por talhão. Ainda em pesquisa: nada prometido com data.',
+    name: 'Agronegócio',
+    status: 'Planejado',
+    active: false,
+    text: 'Safra, insumos e custo por talhão. Ainda em pesquisa: nada prometido com data.',
   },
 ];
 
 export function LandingPage() {
   useDocumentTitle('ERP configurado por entrevista');
 
-  // Scroll suave apenas nesta página: `scroll-behavior` só surte efeito no
-  // elemento que rola (html), e o CSS da landing é empacotado junto com o do
-  // app — então ligamos e desligamos aqui em vez de declarar globalmente.
+  // Smooth scroll only on this page: `scroll-behavior` only takes effect on the
+  // scrolling element (html), and the landing CSS is bundled together with the
+  // app's — so we enable and disable it here instead of declaring globally.
   useEffect(() => {
     const prefersReducedMotion =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
-    const raiz = document.documentElement;
-    const anterior = raiz.style.scrollBehavior;
-    raiz.style.scrollBehavior = 'smooth';
+    const root = document.documentElement;
+    const previous = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'smooth';
     return () => {
-      raiz.style.scrollBehavior = anterior;
+      root.style.scrollBehavior = previous;
     };
   }, []);
 
@@ -182,7 +182,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* Posicionamento */}
+        {/* Positioning */}
         <section className={styles.section} id="produto">
           <div className={styles.container}>
             <Reveal>
@@ -193,22 +193,22 @@ export function LandingPage() {
             </Reveal>
 
             <div className={styles.caminhos}>
-              {CAMINHOS.map((c, i) => (
+              {PATHS.map((path, i) => (
                 <Reveal
-                  key={c.titulo}
+                  key={path.title}
                   delay={i * 90}
-                  className={c.tom === 'axion' ? styles.caminhoAxion : styles.caminho}
+                  className={path.tone === 'axion' ? styles.caminhoAxion : styles.caminho}
                 >
-                  <p className={styles.caminhoRotulo}>{c.rotulo}</p>
-                  <h3 className={styles.h3}>{c.titulo}</h3>
-                  <p className={styles.body}>{c.texto}</p>
+                  <p className={styles.caminhoRotulo}>{path.label}</p>
+                  <h3 className={styles.h3}>{path.title}</h3>
+                  <p className={styles.body}>{path.text}</p>
                 </Reveal>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Como funciona */}
+        {/* How it works */}
         <section className={styles.sectionAlt} id="como-funciona">
           <div className={styles.container}>
             <Reveal>
@@ -217,12 +217,12 @@ export function LandingPage() {
             </Reveal>
 
             <ol className={styles.passos}>
-              {PASSOS.map((p, i) => (
-                <Reveal as="li" key={p.numero} delay={i * 90} className={styles.passo}>
-                  <span className={styles.passoNumero}>{p.numero}</span>
+              {STEPS.map((step, i) => (
+                <Reveal as="li" key={step.number} delay={i * 90} className={styles.passo}>
+                  <span className={styles.passoNumero}>{step.number}</span>
                   <div>
-                    <h3 className={styles.h3}>{p.titulo}</h3>
-                    <p className={styles.body}>{p.texto}</p>
+                    <h3 className={styles.h3}>{step.title}</h3>
+                    <p className={styles.body}>{step.text}</p>
                   </div>
                 </Reveal>
               ))}
@@ -230,7 +230,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* Vertical jurídica */}
+        {/* Legal vertical */}
         <section className={styles.section}>
           <div className={styles.container}>
             <Reveal>
@@ -246,18 +246,18 @@ export function LandingPage() {
             </Reveal>
 
             <div className={styles.modulos}>
-              {MODULOS.map(({ Icone, titulo, texto }, i) => (
-                <Reveal key={titulo} delay={i * 80} className={styles.modulo}>
-                  <Icone className={styles.moduloIcone} size={20} strokeWidth={1.6} aria-hidden="true" />
-                  <h3 className={styles.h3}>{titulo}</h3>
-                  <p className={styles.body}>{texto}</p>
+              {MODULES.map(({ Icon, title, text }, i) => (
+                <Reveal key={title} delay={i * 80} className={styles.modulo}>
+                  <Icon className={styles.moduloIcone} size={20} strokeWidth={1.6} aria-hidden="true" />
+                  <h3 className={styles.h3}>{title}</h3>
+                  <p className={styles.body}>{text}</p>
                 </Reveal>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Verticais / roadmap */}
+        {/* Verticals / roadmap */}
         <section className={styles.sectionAlt} id="verticais">
           <div className={styles.container}>
             <Reveal>
@@ -270,17 +270,17 @@ export function LandingPage() {
             </Reveal>
 
             <div className={styles.verticais}>
-              {VERTICAIS.map((v, i) => (
+              {VERTICALS.map((vertical, i) => (
                 <Reveal
-                  key={v.nome}
+                  key={vertical.name}
                   delay={i * 80}
-                  className={v.ativo ? styles.verticalAtiva : styles.vertical}
+                  className={vertical.active ? styles.verticalAtiva : styles.vertical}
                 >
                   <div className={styles.verticalTopo}>
-                    <h3 className={styles.h3}>{v.nome}</h3>
-                    <span className={v.ativo ? styles.selo : styles.seloDim}>{v.estado}</span>
+                    <h3 className={styles.h3}>{vertical.name}</h3>
+                    <span className={vertical.active ? styles.selo : styles.seloDim}>{vertical.status}</span>
                   </div>
-                  <p className={styles.body}>{v.texto}</p>
+                  <p className={styles.body}>{vertical.text}</p>
                 </Reveal>
               ))}
             </div>

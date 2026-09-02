@@ -2,61 +2,61 @@ import { useState, type FormEvent } from 'react';
 import { SUPPORT_EMAIL } from '@/config/app';
 import styles from './EarlyAccessForm.module.scss';
 
-const VERTICAIS = [
+const SEGMENTS = [
   { value: 'advocacia', label: 'Escritório de advocacia' },
   { value: 'varejo', label: 'Varejo' },
   { value: 'agro', label: 'Agronegócio' },
   { value: 'outro', label: 'Outro segmento' },
 ] as const;
 
-// Checagem deliberadamente frouxa: só evita erro de digitação óbvio. A validação
-// que importa acontece quando existir backend — ver "Limitações" no README.
+// Deliberately loose check: only prevents obvious typos. The validation
+// that matters happens once a backend exists — see "Limitations" in the README.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Formulário de acesso antecipado.
+ * Early access form.
  *
- * ATENÇÃO: ainda não existe endpoint. O envio abre o cliente de e-mail do
- * usuário com a mensagem pré-preenchida (mailto:), em vez de fingir um POST que
- * some com os dados. Trocar por um POST real assim que houver rota no backend.
+ * WARNING: endpoint does not exist yet. Submitting opens the user's email client
+ * with a pre-filled message (mailto:), instead of faking a POST that swallows
+ * the data. Replace with a real POST as soon as there is a backend route.
  */
 export function EarlyAccessForm() {
-  const [nome, setNome] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [vertical, setVertical] = useState<string>(VERTICAIS[0].value);
-  const [erro, setErro] = useState<string | null>(null);
-  const [enviado, setEnviado] = useState(false);
+  const [vertical, setVertical] = useState<string>(SEGMENTS[0].value);
+  const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
-    if (nome.trim().length < 2) {
-      setErro('Diga como podemos te chamar.');
+    if (name.trim().length < 2) {
+      setError('Diga como podemos te chamar.');
       return;
     }
     if (!EMAIL_RE.test(email.trim())) {
-      setErro('Confira o e-mail — parece incompleto.');
+      setError('Confira o e-mail — parece incompleto.');
       return;
     }
 
-    const label = VERTICAIS.find((v) => v.value === vertical)?.label ?? vertical;
-    const assunto = `Acesso antecipado — ${label}`;
-    const corpo = [
-      `Nome: ${nome.trim()}`,
+    const label = SEGMENTS.find((v) => v.value === vertical)?.label ?? vertical;
+    const subject = `Acesso antecipado — ${label}`;
+    const body = [
+      `Nome: ${name.trim()}`,
       `E-mail: ${email.trim()}`,
       `Segmento: ${label}`,
       '',
       'Conte em uma linha como o time trabalha hoje:',
     ].join('\n');
 
-    setErro(null);
-    setEnviado(true);
+    setError(null);
+    setSubmitted(true);
     window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
-      assunto,
-    )}&body=${encodeURIComponent(corpo)}`;
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
   }
 
-  if (enviado) {
+  if (submitted) {
     return (
       <div className={styles.sucesso} role="status">
         <p className={styles.sucessoTitulo}>Abrimos seu e-mail com a mensagem pronta.</p>
@@ -78,8 +78,8 @@ export function EarlyAccessForm() {
           <span className={styles.label}>Nome</span>
           <input
             className={styles.input}
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             autoComplete="name"
             placeholder="Como podemos te chamar"
           />
@@ -105,7 +105,7 @@ export function EarlyAccessForm() {
           value={vertical}
           onChange={(e) => setVertical(e.target.value)}
         >
-          {VERTICAIS.map((v) => (
+          {SEGMENTS.map((v) => (
             <option key={v.value} value={v.value}>
               {v.label}
             </option>
@@ -113,9 +113,9 @@ export function EarlyAccessForm() {
         </select>
       </label>
 
-      {erro && (
+      {error && (
         <p className={styles.erro} role="alert">
-          {erro}
+          {error}
         </p>
       )}
 

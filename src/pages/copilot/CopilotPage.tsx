@@ -68,7 +68,7 @@ const MOCK_RESPONSES: MockResponse[] = [
     keywords: ['ajuda', 'help', 'suporte', 'support', 'dúvida', 'duvida', 'como'],
     response: 'Claro, estou aqui para ajudar! 🤖 Pode me perguntar sobre:\n\n• Planos e preços\n• Área financeira\n• Configurações de perfil\n• Funcionalidades da plataforma\n\nO que você precisa?',
   },
-  // ── Demo: geração de ERP sob demanda ─────────────────────
+  // ── Demo: on-demand ERP generation ─────────────────────
   {
     keywords: [
       'erp jurídico', 'erp juridico', 'sistema jurídico', 'sistema juridico',
@@ -135,11 +135,11 @@ export function CopilotPage() {
 
     const match = getMockResponse(content);
 
-    // Tempo inicial de pensamento antes de qualquer coisa aparecer
+    // Initial thinking time before anything appears
     await simulateDelay(700 + Math.random() * 500);
 
-    // Se houver etapas de construção (ex: geração de ERP), mostra cada uma
-    // como uma mensagem curta antes da resposta final.
+    // If there are build steps (e.g. ERP generation), show each one
+    // as a short message before the final response.
     if (match.steps?.length) {
       for (const step of match.steps) {
         setMessages((prev) => [...prev, { role: 'assistant', content: step }]);

@@ -20,24 +20,24 @@ import { paths } from '@/routes/paths';
 import { db } from '@/mocks';
 import styles from './PlaceholderPage.module.scss';
 
-interface ModuloConfig {
-  titulo: string;
-  subtitulo: string;
+interface ModuleConfig {
+  title: string;
+  subtitle: string;
   icon: LucideIcon;
-  descricao: string;
-  funcionalidades: string[];
+  description: string;
+  features: string[];
   tag: string;
 }
 
-const MODULOS_CONFIG: Record<string, ModuloConfig> = {
+const MODULES_CONFIG: Record<string, ModuleConfig> = {
   vendas: {
-    titulo: 'Vendas & Comercial',
-    subtitulo: 'Gestão completa do funil de vendas, pedidos e comissionamento.',
+    title: 'Vendas & Comercial',
+    subtitle: 'Gestão completa do funil de vendas, pedidos e comissionamento.',
     icon: ShoppingCart,
     tag: 'Módulo Comercial',
-    descricao:
+    description:
       'Emissão de pedidos de venda, propostas comerciais, orçamentos, cálculo de comissões por vendedor e integração com faturamento.',
-    funcionalidades: [
+    features: [
       'Emissão de Pedidos de Venda e Orçamentos',
       'Tabelas de Preços Personalizadas por Canal e Cliente',
       'Controle de Comissões e Metas da Equipe Comercial',
@@ -45,13 +45,13 @@ const MODULOS_CONFIG: Record<string, ModuloConfig> = {
     ],
   },
   compras: {
-    titulo: 'Compras & Suprimentos',
-    subtitulo: 'Controle de cotações, ordens de compra e gestão de fornecedores.',
+    title: 'Compras & Suprimentos',
+    subtitle: 'Controle de cotações, ordens de compra e gestão de fornecedores.',
     icon: ShoppingBag,
     tag: 'Módulo Suprimentos',
-    descricao:
+    description:
       'Gestão centralizada de compras corporativas, cotação com múltiplos fornecedores parceiros e recebimento fiscal com importação de XML de NF-e.',
-    funcionalidades: [
+    features: [
       'Ordens de Compra e Pedidos de Suprimentos',
       'Cotação Comparativa de Preços e Prazos com Fornecedores',
       'Importação Automática de XML de NF-e de Entrada',
@@ -59,13 +59,13 @@ const MODULOS_CONFIG: Record<string, ModuloConfig> = {
     ],
   },
   estoque: {
-    titulo: 'Controle de Estoque',
-    subtitulo: 'Movimentações físicas, múltiplos almoxarifados, lotes e inventário.',
+    title: 'Controle de Estoque',
+    subtitle: 'Movimentações físicas, múltiplos almoxarifados, lotes e inventário.',
     icon: Package,
     tag: 'Módulo Almoxarifado',
-    descricao:
+    description:
       'Rastreabilidade total de produtos, matérias-primas e insumos em estoque, com suporte a múltiplos depósitos, lotes, validade e ponto de pedido.',
-    funcionalidades: [
+    features: [
       'Saldos Físicos e Financeiros por Depósito/Almoxarifado',
       'Rastreabilidade por Lote, Série e Validade',
       'Inventário Periódico e Ajustes com Trilha de Auditoria',
@@ -73,13 +73,13 @@ const MODULOS_CONFIG: Record<string, ModuloConfig> = {
     ],
   },
   fiscal: {
-    titulo: 'Fiscal & Tributário',
-    subtitulo: 'Emissão de documentos fiscais, escrituração e SPED.',
+    title: 'Fiscal & Tributário',
+    subtitle: 'Emissão de documentos fiscais, escrituração e SPED.',
     icon: FileText,
     tag: 'Módulo Tributário',
-    descricao:
+    description:
       'Motor tributário com suporte a Simples Nacional, Lucro Presumido e Lucro Real, emissão de NF-e/NFC-e, MDF-e, cálculo automático de impostos (ICMS, IPI, PIS/COFINS, ISS) e geração de SPED.',
-    funcionalidades: [
+    features: [
       'Emissão e Autorização de NF-e / NFC-e / NFS-e',
       'Motor de Regras Tributárias e Matriz de CFOP/CST',
       'Geração de Arquivos SPED Fiscal e Contribuições',
@@ -87,13 +87,13 @@ const MODULOS_CONFIG: Record<string, ModuloConfig> = {
     ],
   },
   configuracoes: {
-    titulo: 'Configurações do Tenant',
-    subtitulo: 'Parâmetros corporativos, controle de acesso e integrações.',
+    title: 'Configurações do Tenant',
+    subtitle: 'Parâmetros corporativos, controle de acesso e integrações.',
     icon: Settings,
     tag: 'Administração SaaS',
-    descricao:
+    description:
       'Parametrização global da empresa ativa, gestão de usuários corporativos, perfis de permissão RBAC, certificados digitais A1 e webhooks de integração.',
-    funcionalidades: [
+    features: [
       'Dados Cadastrais, Logotipo e Parâmetros da Empresa',
       'Gestão de Usuários, Convites e Perfis de Acesso',
       'Instalação de Certificados Digitais A1 (e-CNPJ)',
@@ -103,41 +103,41 @@ const MODULOS_CONFIG: Record<string, ModuloConfig> = {
 };
 
 interface PlaceholderPageProps {
-  moduloOverride?: string;
+  moduleOverride?: string;
 }
 
-export function PlaceholderPage({ moduloOverride }: PlaceholderPageProps) {
+export function PlaceholderPage({ moduleOverride }: PlaceholderPageProps) {
   const location = useLocation();
   const { empresaAtivaId } = useAuth();
 
-  const moduloKey =
-    moduloOverride ||
+  const moduleKey =
+    moduleOverride ||
     location.pathname.replace('/', '').split('/')[0] ||
     'vendas';
 
-  const config = MODULOS_CONFIG[moduloKey] || {
-    titulo: 'Módulo Corporativo',
-    subtitulo: 'Funcionalidade em desenvolvimento no Roadmap Enterprise.',
+  const config = MODULES_CONFIG[moduleKey] || {
+    title: 'Módulo Corporativo',
+    subtitle: 'Funcionalidade em desenvolvimento no Roadmap Enterprise.',
     icon: Sparkles,
     tag: 'Roadmap SaaS',
-    descricao: 'Este módulo está sendo estruturado para o ecossistema corporativo multi-tenant.',
-    funcionalidades: [
+    description: 'Este módulo está sendo estruturado para o ecossistema corporativo multi-tenant.',
+    features: [
       'Integração nativa com os demais módulos do ERP',
       'Segregação segura por Tenant e Unidade de Negócio',
       'Trilha de auditoria e conformidade LGPD',
     ],
   };
 
-  useDocumentTitle(config.titulo);
+  useDocumentTitle(config.title);
 
   const IconComponent = config.icon;
-  const empresaAtiva = db.tenants.find((t) => t.id === empresaAtivaId);
+  const activeTenant = db.tenants.find((t) => t.id === empresaAtivaId);
 
   return (
     <section className={styles.root}>
       <PageHead
-        title={config.titulo}
-        subtitle={config.subtitulo}
+        title={config.title}
+        subtitle={config.subtitle}
         actions={
           <Button variant="default" to={paths.dashboard}>
             <LayoutDashboard size={16} />
@@ -157,14 +157,14 @@ export function PlaceholderPage({ moduloOverride }: PlaceholderPageProps) {
             <IconComponent size={36} />
           </div>
 
-          <h2 className={styles.cardTitle}>{config.titulo}</h2>
-          <p className={styles.cardDesc}>{config.descricao}</p>
+          <h2 className={styles.cardTitle}>{config.title}</h2>
+          <p className={styles.cardDesc}>{config.description}</p>
 
-          {empresaAtiva && (
+          {activeTenant && (
             <div className={styles.tenantInfo}>
               <Building2 size={16} className={styles.tenantIcon} />
               <span>
-                Empresa Ativa: <strong>{empresaAtiva.nomeFantasia || empresaAtiva.razaoSocial}</strong> ({empresaAtiva.cnpj})
+                Empresa Ativa: <strong>{activeTenant.nomeFantasia || activeTenant.razaoSocial}</strong> ({activeTenant.cnpj})
               </span>
             </div>
           )}
@@ -172,7 +172,7 @@ export function PlaceholderPage({ moduloOverride }: PlaceholderPageProps) {
           <div className={styles.featuresSection}>
             <h3 className={styles.featuresTitle}>Recursos em Estruturação:</h3>
             <ul className={styles.featuresList}>
-              {config.funcionalidades.map((feat, i) => (
+              {config.features.map((feat, i) => (
                 <li key={i} className={styles.featureItem}>
                   <ShieldCheck size={16} className={styles.checkIcon} />
                   <span>{feat}</span>
