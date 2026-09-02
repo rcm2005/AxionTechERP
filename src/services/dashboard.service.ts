@@ -1,6 +1,6 @@
 import type { Alerta, KpiResumo } from '@/types';
 import { formatBRL } from '@/utils/format';
-import { listarClientes } from './clientes.service';
+import { listClients } from './clientes.service';
 import { calcularResumoFinanceiro, listarLancamentos } from './financeiro.service';
 import { delay } from './mockAdapter';
 
@@ -12,7 +12,7 @@ export interface DashboardResumo {
 export async function buscarResumoDashboard(): Promise<DashboardResumo> {
   await delay();
   const lancamentos = await listarLancamentos();
-  const clientes = await listarClientes();
+  const clientes = await listClients();
 
   const resumoFinanceiro = calcularResumoFinanceiro(lancamentos);
   const clientesAtivos = clientes.filter((p) => p.relacao === 'cliente' || p.relacao === 'ambos');

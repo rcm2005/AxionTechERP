@@ -20,10 +20,10 @@ import { criarPrazosColumns } from '@/components/prazos/prazosColumns';
 import { toneDoStatusProcesso } from '@/components/processos/processosColumns';
 import { NovoPrazoModal } from '@/components/modais/NovoPrazoModal';
 import { NovoEventoAgendaModal } from '@/components/modais/NovoEventoAgendaModal';
-import { alterarStatusPrazo } from '@/services/prazos.service';
+import { changeDeadlineStatus } from '@/services/prazos.service';
 import { paths } from '@/routes/paths';
 import { formatBRLDecimal } from '@/utils/format';
-import { classificarPrazo } from '@/utils/prazos';
+import { classifyDeadline } from '@/utils/prazos';
 import type { Prazo } from '@/types';
 import styles from './ProcessoDetailPage.module.scss';
 
@@ -81,8 +81,8 @@ export function ProcessoDetailPage() {
   const urgentDeadlines = useMemo(
     () =>
       pendingDeadlines.filter((deadline) => {
-        const { urgencia } = classificarPrazo(deadline);
-        return urgencia === 'urgente' || urgencia === 'vencido';
+        const { urgencyLevel } = classifyDeadline(deadline);
+        return urgencyLevel === 'urgente' || urgencyLevel === 'vencido';
       }),
     [pendingDeadlines],
   );
@@ -90,7 +90,7 @@ export function ProcessoDetailPage() {
   async function handleMarcarCumprido(deadline: Prazo) {
     setSavingDeadlineId(deadline.id);
     try {
-      await alterarStatusPrazo(deadline.id, 'cumprido');
+      await changeDeadlineStatus(deadline.id, 'cumprido');
       toast.show('Prazo marcado como cumprido.');
       reloadDeadlines();
     } catch {
