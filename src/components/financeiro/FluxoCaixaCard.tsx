@@ -1,4 +1,4 @@
-import type { ResumoFinanceiro } from '@/services/financeiro.service';
+import type { FinancialSummary } from '@/services/financeiro.service';
 import { REFERENCE_DATE } from '@/config/app';
 import { Card, CardBody, CardHead } from '@/components/ui/Card/Card';
 import { Alert } from '@/components/ui/Alert/Alert';
@@ -7,40 +7,40 @@ import { formatBRL, formatMonthYear } from '@/utils/format';
 import styles from './FluxoCaixaCard.module.scss';
 
 interface FluxoCaixaCardProps {
-  resumo: ResumoFinanceiro;
+  summary: FinancialSummary;
 }
 
-export function FluxoCaixaCard({ resumo }: FluxoCaixaCardProps) {
-  const totalMovimentado = resumo.receitaCentavos + resumo.despesaCentavos;
-  const percentReceita = totalMovimentado > 0 ? (resumo.receitaCentavos / totalMovimentado) * 100 : 0;
-  const percentDespesa = totalMovimentado > 0 ? (resumo.despesaCentavos / totalMovimentado) * 100 : 0;
-  const mesLabel = formatMonthYear(REFERENCE_DATE);
+export function FluxoCaixaCard({ summary }: FluxoCaixaCardProps) {
+  const totalMoved = summary.revenueCentavos + summary.expenseCentavos;
+  const percentRevenue = totalMoved > 0 ? (summary.revenueCentavos / totalMoved) * 100 : 0;
+  const percentExpense = totalMoved > 0 ? (summary.expenseCentavos / totalMoved) * 100 : 0;
+  const monthLabel = formatMonthYear(REFERENCE_DATE);
 
   return (
     <Card>
-      <CardHead title="Fluxo de caixa" action={<span className={styles.mes}>{mesLabel}</span>} />
+      <CardHead title="Fluxo de caixa" action={<span className={styles.mes}>{monthLabel}</span>} />
       <CardBody>
         <div className={styles.rowLabel}>Receitas realizadas</div>
         <div className={styles.rowValue}>
-          <strong>{formatBRL(resumo.receitaCentavos)}</strong>
-          <strong className={styles.positive}>{percentReceita.toFixed(0)}%</strong>
+          <strong>{formatBRL(summary.revenueCentavos)}</strong>
+          <strong className={styles.positive}>{percentRevenue.toFixed(0)}%</strong>
         </div>
-        <ProgressBar percent={percentReceita} />
+        <ProgressBar percent={percentRevenue} />
 
         <div className={styles.spacer} />
 
         <div className={styles.rowLabel}>Despesas</div>
         <div className={styles.rowValue}>
-          <strong>{formatBRL(resumo.despesaCentavos)}</strong>
-          <strong>{percentDespesa.toFixed(0)}%</strong>
+          <strong>{formatBRL(summary.expenseCentavos)}</strong>
+          <strong>{percentExpense.toFixed(0)}%</strong>
         </div>
-        <ProgressBar percent={percentDespesa} />
+        <ProgressBar percent={percentExpense} />
 
         <div className={styles.spacer} />
 
         <Alert
           title="Projeção do mês"
-          description={`Lucro estimado de ${formatBRL(resumo.lucroCentavos)} até o fim do mês.`}
+          description={`Lucro estimado de ${formatBRL(summary.profitCentavos)} até o fim do mês.`}
         />
       </CardBody>
     </Card>

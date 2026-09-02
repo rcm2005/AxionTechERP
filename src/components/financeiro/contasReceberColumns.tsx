@@ -5,45 +5,45 @@ import { db } from '@/mocks';
 import { formatBRL, formatDayMonth } from '@/utils/format';
 import { lancamentoStatusMeta } from '@/utils/statusMaps';
 
-function nomePessoa(l: Lancamento): string {
-  if (l.pessoaNome) return l.pessoaNome;
-  if (!l.pessoaId) return '—';
-  const p = db.pessoas.find((item) => item.id === l.pessoaId);
-  return p ? (p.nomeFantasia || p.razaoSocialOuNome) : '—';
+function getPersonName(entry: Lancamento): string {
+  if (entry.pessoaNome) return entry.pessoaNome;
+  if (!entry.pessoaId) return '—';
+  const person = db.pessoas.find((item) => item.id === entry.pessoaId);
+  return person ? (person.nomeFantasia || person.razaoSocialOuNome) : '—';
 }
 
 export const contasReceberColumns: Column<Lancamento>[] = [
   {
     key: 'cliente',
     header: 'Cliente / Pagador',
-    render: (l) => nomePessoa(l),
+    render: (entry) => getPersonName(entry),
   },
   {
     key: 'docFiscal',
     header: 'Doc. / NF',
-    render: (l) => l.numeroDocumentoFiscal ?? '—',
+    render: (entry) => entry.numeroDocumentoFiscal ?? '—',
   },
   {
     key: 'descricao',
     header: 'Descrição',
-    render: (l) => l.descricao,
+    render: (entry) => entry.descricao,
   },
   {
     key: 'vencimento',
     header: 'Vencimento',
-    render: (l) => formatDayMonth(l.vencimento),
+    render: (entry) => formatDayMonth(entry.vencimento),
   },
   {
     key: 'valor',
     header: 'Valor',
     align: 'right',
-    render: (l) => formatBRL(l.valorCentavos),
+    render: (entry) => formatBRL(entry.valorCentavos),
   },
   {
     key: 'status',
     header: 'Status',
-    render: (l) => {
-      const meta = lancamentoStatusMeta[l.status];
+    render: (entry) => {
+      const meta = lancamentoStatusMeta[entry.status];
       return <Pill tone={meta.tone}>{meta.label}</Pill>;
     },
   },
