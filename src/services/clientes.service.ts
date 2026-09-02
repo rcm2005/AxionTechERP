@@ -3,54 +3,55 @@ import { db, saveDB } from '@/mocks';
 import { USE_MOCKS, delay } from './mockAdapter';
 import { http } from './http';
 
-export function filtrarClientes(pessoas: Pessoa[], filtros: PessoaFiltros): Pessoa[] {
-  const busca = filtros.busca?.trim().toLowerCase();
+export function filterClients(clients: Pessoa[], filters: PessoaFiltros): Pessoa[] {
+  const search = filters.busca?.trim().toLowerCase();
 
-  return pessoas.filter((c) => {
-    if (busca) {
-      const alvo = `${c.razaoSocialOuNome} ${c.nomeFantasia ?? ''} ${c.documento} ${c.email}`.toLowerCase();
-      if (!alvo.includes(busca)) return false;
+  return clients.filter((client) => {
+    if (search) {
+      const target = `${client.razaoSocialOuNome} ${client.nomeFantasia ?? ''} ${client.documento} ${client.email}`.toLowerCase();
+      if (!target.includes(search)) return false;
     }
-    if (filtros.status && filtros.status !== 'todos' && c.status !== filtros.status) return false;
-    if (filtros.relacao && filtros.relacao !== 'todos' && c.relacao !== filtros.relacao) return false;
-    if (filtros.tipoPessoa && filtros.tipoPessoa !== 'todos' && c.tipoPessoa !== filtros.tipoPessoa) return false;
-    if (filtros.situacaoCredito && filtros.situacaoCredito !== 'todos' && c.situacaoCredito !== filtros.situacaoCredito) return false;
+    if (filters.status && filters.status !== 'todos' && client.status !== filters.status) return false;
+    if (filters.relacao && filters.relacao !== 'todos' && client.relacao !== filters.relacao) return false;
+    if (filters.tipoPessoa && filters.tipoPessoa !== 'todos' && client.tipoPessoa !== filters.tipoPessoa) return false;
+    if (filters.situacaoCredito && filters.situacaoCredito !== 'todos' && client.situacaoCredito !== filters.situacaoCredito) return false;
     return true;
   });
 }
 
-export async function listarClientes(filtros: PessoaFiltros = {}): Promise<Pessoa[]> {
+export async function listClients(filters: PessoaFiltros = {}): Promise<Pessoa[]> {
   if (USE_MOCKS) {
     await delay();
-    return filtrarClientes(db.pessoas, filtros);
+    return filterClients(db.pessoas, filters);
   }
-  const { data } = await http.get<Pessoa[]>('/clientes', { params: filtros });
+  const { data } = await http.get<Pessoa[]>('/clientes', { params: filters });
   return data;
 }
 
-export async function buscarCliente(id: string): Promise<Pessoa | undefined> {
+export async function getClient(id: string): Promise<Pessoa | undefined> {
   if (USE_MOCKS) {
     await delay();
-    return db.pessoas.find((c) => c.id === id);
+    return db.pessoas.find((client) => client.id === id);
   }
   const { data } = await http.get<Pessoa>(`/clientes/${id}`);
   return data;
 }
 
-export async function criarCliente(
-  dados: Omit<Pessoa, 'id' | 'criadoEm'>,
+export async function createClient(
+  clientData: Omit<Pessoa, 'id' | 'criadoEm'>,
 ): Promise<Pessoa> {
   if (USE_MOCKS) {
     await delay(300);
-    const novo: Pessoa = {
-      ...dados,
+    const created: Pessoa = {
+      ...clientData,
       id: `pes-${Date.now()}`,
       criadoEm: new Date().toISOString(),
     };
-    db.pessoas.push(novo);
+    db.pessoas.push(created);
     saveDB();
-    return novo;
+    return created;
   }
-  const { data } = await http.post<Pessoa>('/clientes', dados);
+  const { data } = await http.post<Pessoa>('/clientes', clientData);
   return data;
 }
+

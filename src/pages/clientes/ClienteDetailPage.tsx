@@ -20,27 +20,27 @@ import type { Column } from '@/components/ui/DataTable/DataTable';
 import type { Lancamento } from '@/types';
 import styles from './ClienteDetailPage.module.scss';
 
-const lancamentosColumns: Column<Lancamento>[] = [
-  { key: 'descricao', header: 'Descrição / Doc Fiscal', render: (l) => (
+const entriesColumns: Column<Lancamento>[] = [
+  { key: 'descricao', header: 'Descrição / Doc Fiscal', render: (entry) => (
     <div>
-      <div>{l.descricao}</div>
-      {l.numeroDocumentoFiscal && <small style={{ color: 'var(--color-muted)' }}>Doc: {l.numeroDocumentoFiscal}</small>}
+      <div>{entry.descricao}</div>
+      {entry.numeroDocumentoFiscal && <small style={{ color: 'var(--color-muted)' }}>Doc: {entry.numeroDocumentoFiscal}</small>}
     </div>
   ) },
   {
     key: 'tipo',
     header: 'Tipo',
     width: '90px',
-    render: (l) => <Pill tone={l.tipo === 'receita' ? 'green' : 'red'}>{l.tipo === 'receita' ? 'Receita' : 'Despesa'}</Pill>,
+    render: (entry) => <Pill tone={entry.tipo === 'receita' ? 'green' : 'red'}>{entry.tipo === 'receita' ? 'Receita' : 'Despesa'}</Pill>,
   },
-  { key: 'valor', header: 'Valor', width: '120px', align: 'right', render: (l) => formatBRL(l.valorCentavos) },
-  { key: 'vencimento', header: 'Vencimento', width: '110px', render: (l) => formatDate(l.vencimento) },
+  { key: 'valor', header: 'Valor', width: '120px', align: 'right', render: (entry) => formatBRL(entry.valorCentavos) },
+  { key: 'vencimento', header: 'Vencimento', width: '110px', render: (entry) => formatDate(entry.vencimento) },
   {
     key: 'status',
     header: 'Status',
     width: '100px',
-    render: (l) => {
-      const meta = lancamentoStatusMeta[l.status] ?? { label: l.status, tone: 'neutral' };
+    render: (entry) => {
+      const meta = lancamentoStatusMeta[entry.status] ?? { label: entry.status, tone: 'neutral' };
       return <Pill tone={meta.tone}>{meta.label}</Pill>;
     },
   },
@@ -50,68 +50,68 @@ const TABS = ['financeiro', 'cadastro'] as const;
 type TabKey = (typeof TABS)[number];
 
 export function ClienteDetailPage() {
-  const { clienteId } = useParams<{ clienteId: string }>();
+  const { clienteId: clientId } = useParams<{ clienteId: string }>();
   const navigate = useNavigate();
   const {
-    data: cliente,
-    loading: loadingCliente,
-    error: erroCliente,
-    reload: recarregarCliente,
-  } = useCliente(clienteId);
+    data: client,
+    loading: loadingClient,
+    error: clientError,
+    reload: reloadClient,
+  } = useCliente(clientId);
   const {
-    data: todosLancamentos,
-    loading: loadingLancamentos,
-    error: erroLancamentos,
-    reload: recarregarLancamentos,
+    data: allEntries,
+    loading: loadingEntries,
+    error: entriesError,
+    reload: reloadEntries,
   } = useAsync(() => listarLancamentos(), []);
   const [tab, setTab] = useState<TabKey>('financeiro');
 
-  useDocumentTitle(cliente?.razaoSocialOuNome ?? 'Parceiro Comercial');
+  useDocumentTitle(client?.razaoSocialOuNome ?? 'Parceiro Comercial');
 
-  const lancamentos = useMemo(
-    () => (todosLancamentos ?? []).filter((l) => l.pessoaId === clienteId),
-    [todosLancamentos, clienteId],
-  );
-
-  const totalReceitas = useMemo(
-    () => lancamentos.filter((l) => l.tipo === 'receita' && l.status === 'pago').reduce((s, l) => s + l.valorCentavos, 0),
-    [lancamentos],
-  );
-  const totalPendente = useMemo(
-    () => lancamentos.filter((l) => l.tipo === 'receita' && (l.status === 'pendente' || l.status === 'atrasado')).reduce((s, l) => s + l.valorCentavos, 0),
-    [lancamentos],
-  );
-  const totalAtraso = useMemo(
-    () => lancamentos.filter((l) => l.tipo === 'receita' && l.status === 'atrasado').reduce((s, l) => s + l.valorCentavos, 0),
-    [lancamentos],
+  const entries = useMemo(
+    () => (allEntries ?? []).filter((entry) => entry.pessoaId === clientId),
+    [allEntries, clientId],
   );
 
-  if (loadingCliente) return <Skeleton height="400px" />;
-  if (erroCliente) {
+  const totalRevenue = useMemo(
+    () => entries.filter((entry) => entry.tipo === 'receita' && entry.status === 'pago').reduce((acc, entry) => acc + entry.valorCentavos, 0),
+    [entries],
+  );
+  const totalPending = useMemo(
+    () => entries.filter((entry) => entry.tipo === 'receita' && (entry.status === 'pendente' || entry.status === 'atrasado')).reduce((acc, entry) => acc + entry.valorCentavos, 0),
+    [entries],
+  );
+  const totalOverdue = useMemo(
+    () => entries.filter((entry) => entry.tipo === 'receita' && entry.status === 'atrasado').reduce((acc, entry) => acc + entry.valorCentavos, 0),
+    [entries],
+  );
+
+  if (loadingClient) return <Skeleton height="400px" />;
+  if (clientError) {
     return (
       <Alert
         tone="danger"
         title="Erro ao carregar dados"
         description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
         action={
-          <Button variant="ghost" onClick={recarregarCliente}>
+          <Button variant="ghost" onClick={reloadClient}>
             Tentar novamente
           </Button>
         }
       />
     );
   }
-  if (!cliente) return <EmptyState title="Parceiro comercial não encontrado." />;
+  if (!client) return <EmptyState title="Parceiro comercial não encontrado." />;
 
-  const statusMeta = pessoaStatusMeta[cliente.status] ?? { label: cliente.status, tone: 'neutral' };
-  const creditoMeta = situacaoCreditoMeta[cliente.situacaoCredito] ?? { label: cliente.situacaoCredito, tone: 'neutral' };
-  const relacaoMeta = tipoRelacaoMeta[cliente.relacao] ?? { label: cliente.relacao, tone: 'neutral' };
+  const statusMeta = pessoaStatusMeta[client.status] ?? { label: client.status, tone: 'neutral' };
+  const creditMeta = situacaoCreditoMeta[client.situacaoCredito] ?? { label: client.situacaoCredito, tone: 'neutral' };
+  const relationMeta = tipoRelacaoMeta[client.relacao] ?? { label: client.relacao, tone: 'neutral' };
 
   return (
     <section>
       <PageHead
-        title={cliente.razaoSocialOuNome}
-        subtitle={`${cliente.nomeFantasia ? `${cliente.nomeFantasia} • ` : ''}${cliente.tipoPessoa} • ${cliente.documento}`}
+        title={client.razaoSocialOuNome}
+        subtitle={`${client.nomeFantasia ? `${client.nomeFantasia} • ` : ''}${client.tipoPessoa} • ${client.documento}`}
         actions={
           <Button variant="ghost" onClick={() => navigate(paths.clientes)}>
             ← Voltar aos Parceiros
@@ -129,23 +129,23 @@ export function ClienteDetailPage() {
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Relação Comercial</span>
-              <Pill tone={relacaoMeta.tone}>{relacaoMeta.label}</Pill>
+              <Pill tone={relationMeta.tone}>{relationMeta.label}</Pill>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Situação de Crédito</span>
-              <Pill tone={creditoMeta.tone}>{creditoMeta.label}</Pill>
+              <Pill tone={creditMeta.tone}>{creditMeta.label}</Pill>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Segmento</span>
-              <span className={styles.infoValue}>{cliente.segmento ?? '—'}</span>
+              <span className={styles.infoValue}>{client.segmento ?? '—'}</span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Telefone</span>
-              <span className={styles.infoValue}>{cliente.telefone}</span>
+              <span className={styles.infoValue}>{client.telefone}</span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>E-mail</span>
-              <span className={styles.infoValue}>{cliente.email}</span>
+              <span className={styles.infoValue}>{client.email}</span>
             </div>
           </div>
         </Card>
@@ -153,27 +153,27 @@ export function ClienteDetailPage() {
         <div className={styles.kpis}>
           <KpiCard
             label="Limite de Crédito"
-            value={cliente.limiteCreditoCentavos ? formatBRL(cliente.limiteCreditoCentavos) : 'Ilimitado'}
+            value={client.limiteCreditoCentavos ? formatBRL(client.limiteCreditoCentavos) : 'Ilimitado'}
           />
-          {erroLancamentos ? (
+          {entriesError ? (
             <Alert
               tone="danger"
               title="Erro ao carregar dados"
               description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
               action={
-                <Button variant="ghost" onClick={recarregarLancamentos}>
+                <Button variant="ghost" onClick={reloadEntries}>
                   Tentar novamente
                 </Button>
               }
             />
           ) : (
             <>
-              <KpiCard label="Receita Realizada" value={formatBRL(totalReceitas)} subTone="green" />
+              <KpiCard label="Receita Realizada" value={formatBRL(totalRevenue)} subTone="green" />
               <KpiCard
                 label="Títulos Pendentes"
-                value={formatBRL(totalPendente)}
-                sub={totalAtraso > 0 ? `${formatBRL(totalAtraso)} em atraso` : 'Em dia'}
-                subTone={totalAtraso > 0 ? 'red' : 'green'}
+                value={formatBRL(totalPending)}
+                sub={totalOverdue > 0 ? `${formatBRL(totalOverdue)} em atraso` : 'Em dia'}
+                subTone={totalOverdue > 0 ? 'red' : 'green'}
               />
             </>
           )}
@@ -197,23 +197,23 @@ export function ClienteDetailPage() {
 
         <div className={styles.tabBody}>
           {tab === 'financeiro' && (
-            erroLancamentos ? (
+            entriesError ? (
               <Alert
                 tone="danger"
                 title="Erro ao carregar dados"
                 description="Não foi possível carregar as informações. Verifique sua conexão e tente novamente."
                 action={
-                  <Button variant="ghost" onClick={recarregarLancamentos}>
+                  <Button variant="ghost" onClick={reloadEntries}>
                     Tentar novamente
                   </Button>
                 }
               />
             ) : (
               <DataTable
-                columns={lancamentosColumns}
-                rows={lancamentos}
-                getRowId={(l) => l.id}
-                loading={loadingLancamentos}
+                columns={entriesColumns}
+                rows={entries}
+                getRowId={(entry) => entry.id}
+                loading={loadingEntries}
                 emptyMessage="Nenhum lançamento financeiro registrado para este parceiro."
               />
             )
@@ -222,30 +222,30 @@ export function ClienteDetailPage() {
           {tab === 'cadastro' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', padding: '16px 0' }}>
               <div>
-                <strong>Inscrição Estadual:</strong> {cliente.inscricaoEstadual ?? (cliente.isentoIE ? 'Isento' : 'Não informada')}
+                <strong>Inscrição Estadual:</strong> {client.inscricaoEstadual ?? (client.isentoIE ? 'Isento' : 'Não informada')}
               </div>
-              {cliente.inscricaoMunicipal && (
+              {client.inscricaoMunicipal && (
                 <div>
-                  <strong>Inscrição Municipal:</strong> {cliente.inscricaoMunicipal}
+                  <strong>Inscrição Municipal:</strong> {client.inscricaoMunicipal}
                 </div>
               )}
-              {cliente.contatoPrincipal && (
+              {client.contatoPrincipal && (
                 <div>
-                  <strong>Contato Principal:</strong> {cliente.contatoPrincipal.nome} ({cliente.contatoPrincipal.cargo ?? 'Contato'})
+                  <strong>Contato Principal:</strong> {client.contatoPrincipal.nome} ({client.contatoPrincipal.cargo ?? 'Contato'})
                 </div>
               )}
               <div>
-                <strong>Endereço:</strong> {cliente.endereco.logradouro}, {cliente.endereco.numero} {cliente.endereco.complemento ?? ''}
+                <strong>Endereço:</strong> {client.endereco.logradouro}, {client.endereco.numero} {client.endereco.complemento ?? ''}
               </div>
               <div>
-                <strong>Bairro / Cidade:</strong> {cliente.endereco.bairro} - {cliente.endereco.cidade}/{cliente.endereco.uf}
+                <strong>Bairro / Cidade:</strong> {client.endereco.bairro} - {client.endereco.cidade}/{client.endereco.uf}
               </div>
               <div>
-                <strong>CEP:</strong> {cliente.endereco.cep}
+                <strong>CEP:</strong> {client.endereco.cep}
               </div>
-              {cliente.observacoes && (
+              {client.observacoes && (
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <strong>Observações:</strong> {cliente.observacoes}
+                  <strong>Observações:</strong> {client.observacoes}
                 </div>
               )}
             </div>
