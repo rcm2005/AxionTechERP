@@ -26,40 +26,40 @@ const STATUS_OPTIONS = [
 export function ProcessosPage() {
   useDocumentTitle('Processos');
   const navigate = useNavigate();
-  const [busca, setBusca] = useState('');
+  const [search, setSearch] = useState('');
   const [status, setStatus] = useState('todos');
-  const [novoOpen, setNovoOpen] = useState(false);
-  const buscaDebounced = useDebounce(busca);
+  const [newModalOpen, setNewModalOpen] = useState(false);
+  const debouncedSearch = useDebounce(search);
 
   const {
-    data: processos,
+    data: cases,
     loading,
-    error: errorProcessos,
-    reload: reloadProcessos,
+    error: casesError,
+    reload: reloadCases,
   } = useProcessos({
-    busca: buscaDebounced,
+    busca: debouncedSearch,
     ...(status !== 'todos' ? { status } : {}),
   });
 
   const {
-    data: clientes,
-    error: errorClientes,
-    reload: reloadClientes,
+    data: clients,
+    error: clientsError,
+    reload: reloadClients,
   } = useClientes();
 
-  const erro = errorProcessos || errorClientes;
+  const hasError = casesError || clientsError;
   const handleReload = () => {
-    reloadProcessos();
-    reloadClientes();
+    reloadCases();
+    reloadClients();
   };
 
-  const nomeCliente = useMemo(() => {
-    const mapa = new Map((clientes ?? []).map((c) => [c.id, c.razaoSocialOuNome]));
-    // Cliente pode não estar na lista carregada (filtro/soft-delete); não some a linha por isso.
-    return (id: string) => mapa.get(id) ?? '—';
-  }, [clientes]);
+  const clientName = useMemo(() => {
+    const clientMap = new Map((clients ?? []).map((client) => [client.id, client.razaoSocialOuNome]));
+    // Client might not be in the loaded list (filter/soft-delete); don't hide the row because of that.
+    return (id: string) => clientMap.get(id) ?? '—';
+  }, [clients]);
 
-  const columns = useMemo(() => criarProcessosColumns(nomeCliente), [nomeCliente]);
+  const columns = useMemo(() => criarProcessosColumns(clientName), [clientName]);
 
   return (
     <section>
@@ -67,7 +67,7 @@ export function ProcessosPage() {
         title="Processos"
         subtitle="Carteira contenciosa do escritório — número CNJ, tribunal, vara, fase e valor da causa."
         actions={
-          <Button variant="primary" onClick={() => setNovoOpen(true)}>
+          <Button variant="primary" onClick={() => setNewModalOpen(true)}>
             + Novo processo
           </Button>
         }
@@ -76,8 +76,8 @@ export function ProcessosPage() {
       <Toolbar>
         <SearchInput
           placeholder="Buscar por número CNJ, tribunal, vara ou fase..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
         <SelectField
           options={STATUS_OPTIONS}
@@ -87,7 +87,7 @@ export function ProcessosPage() {
       </Toolbar>
 
       <Card>
-        {erro ? (
+        {hasError ? (
           <Alert
             tone="danger"
             title="Erro ao carregar dados"
@@ -101,16 +101,16 @@ export function ProcessosPage() {
         ) : (
           <DataTable
             columns={columns}
-            rows={processos ?? []}
-            getRowId={(p) => p.id}
+            rows={cases ?? []}
+            getRowId={(caseItem) => caseItem.id}
             loading={loading}
             emptyMessage="Nenhum processo encontrado para os filtros selecionados."
-            onRowClick={(p) => navigate(paths.processo(p.id))}
+            onRowClick={(caseItem) => navigate(paths.processo(caseItem.id))}
           />
         )}
       </Card>
 
-      <NovoProcessoModal open={novoOpen} onClose={() => setNovoOpen(false)} onCreated={reloadProcessos} />
+      <NovoProcessoModal open={newModalOpen} onClose={() => setNewModalOpen(false)} onCreated={reloadCases} />
     </section>
   );
 }

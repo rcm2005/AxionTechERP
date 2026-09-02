@@ -4,7 +4,7 @@ import { formatBRLDecimal } from '@/utils/format';
 import type { Processo } from '@/types';
 import type { Tone } from '@/types';
 
-/** Status é texto livre no backend; mapeamos os valores conhecidos e caímos em neutro. */
+/** Status is free-form text in the backend; we map known values and fall back to neutral. */
 export function toneDoStatusProcesso(status: string): Tone {
   switch (status.toLowerCase()) {
     case 'ativo':
@@ -19,41 +19,41 @@ export function toneDoStatusProcesso(status: string): Tone {
 }
 
 /**
- * Colunas da lista de processos. É uma factory porque o nome do cliente não vem
- * no payload do processo (só `cliente_id`) — quem renderiza injeta o lookup.
+ * Case list columns. Factory function because the client name is not in the case
+ * payload (only `cliente_id`) — the renderer injects the lookup.
  */
-export function criarProcessosColumns(nomeCliente: (id: string) => string): Column<Processo>[] {
+export function criarProcessosColumns(clientName: (id: string) => string): Column<Processo>[] {
   return [
     {
       key: 'numero_cnj',
       header: 'Número CNJ',
       width: '210px',
-      render: (p) => (
+      render: (caseItem) => (
         <div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{p.numero_cnj}</div>
-          <small style={{ color: 'var(--color-muted)' }}>{p.tribunal}</small>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{caseItem.numero_cnj}</div>
+          <small style={{ color: 'var(--color-muted)' }}>{caseItem.tribunal}</small>
         </div>
       ),
     },
     {
       key: 'cliente',
       header: 'Cliente',
-      render: (p) => nomeCliente(p.cliente_id),
+      render: (caseItem) => clientName(caseItem.cliente_id),
     },
-    { key: 'vara', header: 'Vara', render: (p) => p.vara },
-    { key: 'fase', header: 'Fase', width: '110px', render: (p) => <Pill tone="blue">{p.fase}</Pill> },
+    { key: 'vara', header: 'Vara', render: (caseItem) => caseItem.vara },
+    { key: 'fase', header: 'Fase', width: '110px', render: (caseItem) => <Pill tone="blue">{caseItem.fase}</Pill> },
     {
       key: 'valor_causa',
       header: 'Valor da causa',
       width: '140px',
       align: 'right',
-      render: (p) => formatBRLDecimal(p.valor_causa),
+      render: (caseItem) => formatBRLDecimal(caseItem.valor_causa),
     },
     {
       key: 'status',
       header: 'Status',
       width: '110px',
-      render: (p) => <Pill tone={toneDoStatusProcesso(p.status)}>{p.status}</Pill>,
+      render: (caseItem) => <Pill tone={toneDoStatusProcesso(caseItem.status)}>{caseItem.status}</Pill>,
     },
   ];
 }
