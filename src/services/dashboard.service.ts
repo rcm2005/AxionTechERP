@@ -1,7 +1,7 @@
 import type { Alerta, KpiResumo } from '@/types';
 import { formatBRL } from '@/utils/format';
 import { listClients } from './clientes.service';
-import { calcularResumoFinanceiro, listarLancamentos } from './financeiro.service';
+import { calculateFinancialSummary, listEntries } from './financeiro.service';
 import { delay } from './mockAdapter';
 
 export interface DashboardSummary {
@@ -11,10 +11,10 @@ export interface DashboardSummary {
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   await delay();
-  const entries = await listarLancamentos();
+  const entries = await listEntries();
   const clients = await listClients();
 
-  const financialSummary = calcularResumoFinanceiro(entries);
+  const financialSummary = calculateFinancialSummary(entries);
   const activeClients = clients.filter((p) => p.relacao === 'cliente' || p.relacao === 'ambos');
   const delinquentClients = clients.filter(
     (p) => p.situacaoCredito === 'inadimplente' || p.valorEmAtrasoCentavos > 0,
@@ -24,25 +24,25 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     {
       id: 'receita-faturada',
       label: 'Receita Total (Recebida)',
-      valor: formatBRL(financialSummary.receitaCentavos),
-      sub: `Lucro op.: ${formatBRL(financialSummary.lucroCentavos)}`,
-      subTone: financialSummary.lucroCentavos >= 0 ? 'green' : 'red',
+      valor: formatBRL(financialSummary.revenueCentavos),
+      sub: `Lucro op.: ${formatBRL(financialSummary.profitCentavos)}`,
+      subTone: financialSummary.profitCentavos >= 0 ? 'green' : 'red',
       tipo: 'financeiro',
     },
     {
       id: 'a-receber',
       label: 'Contas a Receber',
-      valor: formatBRL(financialSummary.aReceberCentavos),
-      sub: `${financialSummary.qtdTitulosAReceber} títulos pendentes`,
+      valor: formatBRL(financialSummary.receivableCentavos),
+      sub: `${financialSummary.receivableCount} títulos pendentes`,
       subTone: 'orange',
       tipo: 'financeiro',
     },
     {
       id: 'em-atraso',
       label: 'Valores em Atraso',
-      valor: formatBRL(financialSummary.emAtrasoCentavos),
+      valor: formatBRL(financialSummary.overdueCentavos),
       sub: `${delinquentClients.length} cliente(s) em atraso`,
-      subTone: financialSummary.emAtrasoCentavos > 0 ? 'red' : 'green',
+      subTone: financialSummary.overdueCentavos > 0 ? 'red' : 'green',
       tipo: 'financeiro',
     },
     {
@@ -55,11 +55,11 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   ];
 
   const alerts: Alerta[] = [];
-  if (financialSummary.emAtrasoCentavos > 0) {
+  if (financialSummary.overdueCentavos > 0) {
     alerts.push({
       id: 'alerta-inadimplencia',
       titulo: `${delinquentClients.length} cliente(s) com títulos vencidos`,
-      descricao: `Montante total em atraso: ${formatBRL(financialSummary.emAtrasoCentavos)}.`,
+      descricao: `Montante total em atraso: ${formatBRL(financialSummary.overdueCentavos)}.`,
       tone: 'danger',
       modulo: 'financeiro',
     });

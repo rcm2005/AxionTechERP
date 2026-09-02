@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { useCliente } from '@/hooks/useClientes';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAsync } from '@/hooks/useAsync';
-import { listarLancamentos } from '@/services/financeiro.service';
+import { listEntries } from '@/services/financeiro.service';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Card } from '@/components/ui/Card/Card';
 import { Pill } from '@/components/ui/Pill/Pill';
@@ -63,7 +63,7 @@ export function ClienteDetailPage() {
     loading: loadingEntries,
     error: entriesError,
     reload: reloadEntries,
-  } = useAsync(() => listarLancamentos(), []);
+  } = useAsync(() => listEntries(), []);
   const [tab, setTab] = useState<TabKey>('financeiro');
 
   useDocumentTitle(client?.razaoSocialOuNome ?? 'Parceiro Comercial');

@@ -10,7 +10,7 @@ import { db } from '@/mocks';
 import { formatBRL, formatDate } from '@/utils/format';
 import { USE_MOCKS } from '@/services/mockAdapter';
 import { listarMeusEscritorios, type EscritorioDaConta } from '@/services/auth.service';
-import { listarLancamentos } from '@/services/financeiro.service';
+import { listEntries } from '@/services/financeiro.service';
 import { useAsync } from '@/hooks/useAsync';
 import styles from './Topbar.module.scss';
 
@@ -110,12 +110,12 @@ export function Topbar() {
     usuario,
   ]);
 
-  // Notificações reais: chamada silenciosa a listarLancamentos() quando !USE_MOCKS
+  // Notificações reais: chamada silenciosa a listEntries() quando !USE_MOCKS
   const { data: lancamentosReais } = useAsync(
     async () => {
       if (USE_MOCKS) return [];
       try {
-        return await listarLancamentos();
+        return await listEntries();
       } catch {
         return [];
       }
