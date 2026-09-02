@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal, ModalField, ModalFooter } from '@/components/ui/Modal/Modal';
 import { TextInput, TextSelect } from '@/components/ui/TextField/TextField';
 import { useToast } from '@/contexts/ToastContext';
-import { criarLancamento } from '@/services/financeiro.service';
+import { createEntry } from '@/services/financeiro.service';
 import { db } from '@/mocks';
 import type { TipoLancamento, StatusLancamento } from '@/types';
 
@@ -62,8 +62,8 @@ export function NovaCobrancaModal({ open, onClose }: Props) {
     if (!ok) return;
     setSaving(true);
     try {
-      const selectedPessoa = db.pessoas.find((p) => p.id === pessoaId);
-      await criarLancamento({
+      const selectedPerson = db.pessoas.find((person) => person.id === pessoaId);
+      await createEntry({
         tenantId: db.tenants[0]?.id ?? 'tenant-ind-plast',
         tipo,
         descricao: descricao.trim(),
@@ -73,7 +73,7 @@ export function NovaCobrancaModal({ open, onClose }: Props) {
         vencimento,
         status,
         pessoaId: pessoaId || undefined,
-        pessoaNome: selectedPessoa ? (selectedPessoa.nomeFantasia || selectedPessoa.razaoSocialOuNome) : undefined,
+        pessoaNome: selectedPerson ? (selectedPerson.nomeFantasia || selectedPerson.razaoSocialOuNome) : undefined,
         numeroDocumentoFiscal: docFiscal.trim() || undefined,
         criadoEm: new Date().toISOString(),
       });
@@ -87,10 +87,10 @@ export function NovaCobrancaModal({ open, onClose }: Props) {
     }
   }
 
-  const pessoasFiltradas = db.pessoas.filter((p) =>
+  const filteredPersons = db.pessoas.filter((person) =>
     tipo === 'receita'
-      ? p.relacao === 'cliente' || p.relacao === 'ambos'
-      : p.relacao === 'fornecedor' || p.relacao === 'ambos' || p.relacao === 'transportadora',
+      ? person.relacao === 'cliente' || person.relacao === 'ambos'
+      : person.relacao === 'fornecedor' || person.relacao === 'ambos' || person.relacao === 'transportadora',
   );
 
   return (
@@ -153,9 +153,9 @@ export function NovaCobrancaModal({ open, onClose }: Props) {
       <ModalField label={tipo === 'receita' ? 'Cliente / Pagador' : 'Fornecedor / Beneficiário'}>
         <TextSelect value={pessoaId} onChange={(e) => setPessoaId(e.target.value)}>
           <option value="">— Nenhum parceiro vinculado —</option>
-          {pessoasFiltradas.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.razaoSocialOuNome} ({p.documento})
+          {filteredPersons.map((person) => (
+            <option key={person.id} value={person.id}>
+              {person.razaoSocialOuNome} ({person.documento})
             </option>
           ))}
         </TextSelect>
