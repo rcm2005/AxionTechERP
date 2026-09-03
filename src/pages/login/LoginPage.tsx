@@ -136,9 +136,10 @@ export function LoginPage() {
               {submitting ? 'Entrando...' : 'Entrar'}
             </button>
 
-            <a href="#" className={styles.forgot}>
-              Esqueci minha senha.
-            </a>
+            <p className={styles.forgot}>
+              Esqueceu a senha? Fale com o administrador do seu escritório ou escreva para{' '}
+              <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+            </p>
           </form>
 
           <div className={styles.support}>

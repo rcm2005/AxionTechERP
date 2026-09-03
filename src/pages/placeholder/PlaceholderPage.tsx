@@ -17,6 +17,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Button } from '@/components/ui/Button/Button';
 import { paths } from '@/routes/paths';
+import { USE_MOCKS } from '@/services/mockAdapter';
 import { db } from '@/mocks';
 import styles from './PlaceholderPage.module.scss';
 
@@ -131,7 +132,7 @@ export function PlaceholderPage({ moduleOverride }: PlaceholderPageProps) {
   useDocumentTitle(config.title);
 
   const IconComponent = config.icon;
-  const activeTenant = db.tenants.find((t) => t.id === empresaAtivaId);
+  const activeTenant = USE_MOCKS ? db.tenants.find((t) => t.id === empresaAtivaId) : null;
 
   return (
     <section className={styles.root}>

@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Modal, ModalField, ModalFooter } from '@/components/ui/Modal/Modal';
 import { TextInput, TextSelect } from '@/components/ui/TextField/TextField';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { createClient } from '@/services/clientes.service';
-import { db } from '@/mocks';
 import { paths } from '@/routes/paths';
 import type { TipoPessoa, SituacaoCredito } from '@/types';
 
@@ -14,6 +14,7 @@ interface Props {
 }
 
 export function NovoClienteModal({ open, onClose }: Props) {
+  const { empresaAtivaId } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const [razaoSocialOuNome, setRazaoSocialOuNome] = useState('');
@@ -46,7 +47,7 @@ export function NovoClienteModal({ open, onClose }: Props) {
     setSaving(true);
     try {
       const created = await createClient({
-        tenantId: db.tenants[0]?.id ?? 'tenant-ind-plast',
+        tenantId: empresaAtivaId,
         tipoPessoa,
         razaoSocialOuNome: razaoSocialOuNome.trim(),
         documento: documento.trim(),

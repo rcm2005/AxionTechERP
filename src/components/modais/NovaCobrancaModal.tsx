@@ -1,19 +1,30 @@
 import { useState } from 'react';
 import { Modal, ModalField, ModalFooter } from '@/components/ui/Modal/Modal';
 import { TextInput, TextSelect } from '@/components/ui/TextField/TextField';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useAsync } from '@/hooks/useAsync';
+import { listClients } from '@/services/clientes.service';
 import { createEntry } from '@/services/financeiro.service';
+import { USE_MOCKS } from '@/services/mockAdapter';
 import { db } from '@/mocks';
 import type { TipoLancamento, StatusLancamento } from '@/types';
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  initialTipo?: TipoLancamento;
 }
 
-export function NovaCobrancaModal({ open, onClose }: Props) {
+export function NovaCobrancaModal({ open, onClose, initialTipo }: Props) {
+  const { empresaAtivaId } = useAuth();
   const toast = useToast();
-  const [tipo, setTipo] = useState<TipoLancamento>('receita');
+  // `initialTipo` only needs to take effect as this component's *initial* state — the caller
+  // (FinanceiroPage.tsx) remounts this component on open by keying it off `initialTipo`, so a
+  // plain useState initializer is enough; no effect/ref needed to keep it in sync while open.
+  const [tipo, setTipo] = useState<TipoLancamento>(initialTipo ?? 'receita');
+  const clientsState = useAsync(() => listClients(), []);
+
   const [pessoaId, setPessoaId] = useState('');
   const [descricao, setDescricao] = useState('');
   const [categoria, setCategoria] = useState('');
@@ -64,7 +75,7 @@ export function NovaCobrancaModal({ open, onClose }: Props) {
     try {
       const selectedPerson = db.pessoas.find((person) => person.id === pessoaId);
       await createEntry({
-        tenantId: db.tenants[0]?.id ?? 'tenant-ind-plast',
+        tenantId: empresaAtivaId,
         tipo,
         descricao: descricao.trim(),
         categoria: categoria.trim(),
@@ -87,11 +98,13 @@ export function NovaCobrancaModal({ open, onClose }: Props) {
     }
   }
 
-  const filteredPersons = db.pessoas.filter((person) =>
-    tipo === 'receita'
-      ? person.relacao === 'cliente' || person.relacao === 'ambos'
-      : person.relacao === 'fornecedor' || person.relacao === 'ambos' || person.relacao === 'transportadora',
-  );
+  const filteredPersons = USE_MOCKS
+    ? db.pessoas.filter((person) =>
+        tipo === 'receita'
+          ? person.relacao === 'cliente' || person.relacao === 'ambos'
+          : person.relacao === 'fornecedor' || person.relacao === 'ambos' || person.relacao === 'transportadora',
+      )
+    : (clientsState.data ?? []);
 
   return (
     <Modal

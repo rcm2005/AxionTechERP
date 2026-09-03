@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, type FormEvent } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Building2, Bell, Search, ChevronDown, LogOut } from 'lucide-react';
 import { NAV_ITEMS } from '@/config/app';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,13 +12,28 @@ import { USE_MOCKS } from '@/services/mockAdapter';
 import { listarMeusEscritorios, type EscritorioDaConta } from '@/services/auth.service';
 import { listEntries } from '@/services/financeiro.service';
 import { useAsync } from '@/hooks/useAsync';
+import { listClients } from '@/services/clientes.service';
+import { listCases } from '@/services/processos.service';
+import { listDeadlines } from '@/services/prazos.service';
+import { paths } from '@/routes/paths';
 import styles from './Topbar.module.scss';
+
+interface SearchResult {
+  id: string;
+  type: 'cliente' | 'processo' | 'prazo';
+  label: string;
+  sublabel: string;
+  path: string;
+}
 
 export function Topbar() {
   const location = useLocation();
   const { usuario, empresaAtivaId, setEmpresaAtivaId, logout, tenantBranding, trocarEscritorio } = useAuth();
   const toast = useToast();
   const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
 
@@ -140,11 +155,73 @@ export function Topbar() {
       }));
   }, [empresaAtivaId, realEntries]);
 
-  function handleSearch(event: FormEvent) {
+  async function handleSearch(event: FormEvent) {
     event.preventDefault();
-    if (search.trim()) {
-      toast.show(`Pesquisa por "${search.trim()}" no ERP`);
+    const term = search.trim().toLowerCase();
+    if (!term) {
+      setSearchResults(null);
+      return;
     }
+    setSearching(true);
+    try {
+      const [clients, cases, deadlines] = await Promise.all([
+        listClients().catch(() => []),
+        listCases().catch(() => []),
+        listDeadlines().catch(() => []),
+      ]);
+
+      const clientMatches: SearchResult[] = clients
+        .filter((c) =>
+          c.razaoSocialOuNome.toLowerCase().includes(term) ||
+          (c.nomeFantasia ?? '').toLowerCase().includes(term) ||
+          c.documento.toLowerCase().includes(term) ||
+          c.email.toLowerCase().includes(term),
+        )
+        .slice(0, 5)
+        .map((c) => ({
+          id: c.id,
+          type: 'cliente' as const,
+          label: c.nomeFantasia || c.razaoSocialOuNome,
+          sublabel: c.documento,
+          path: paths.cliente(c.id),
+        }));
+
+      const caseMatches: SearchResult[] = cases
+        .filter((p) =>
+          p.numero_cnj.toLowerCase().includes(term) ||
+          p.tribunal.toLowerCase().includes(term) ||
+          (p.partes ?? []).some((parte) => parte.nome.toLowerCase().includes(term)),
+        )
+        .slice(0, 5)
+        .map((p) => ({
+          id: p.id,
+          type: 'processo' as const,
+          label: p.numero_cnj,
+          sublabel: p.tribunal,
+          path: paths.processo(p.id),
+        }));
+
+      const deadlineMatches: SearchResult[] = deadlines
+        .filter((d) => d.descricao.toLowerCase().includes(term))
+        .slice(0, 5)
+        .map((d) => ({
+          id: d.id,
+          type: 'prazo' as const,
+          label: d.descricao,
+          sublabel: `Prazo fatal: ${d.prazo_fatal}`,
+          path: paths.processoTab(d.processo_id, 'prazos'),
+        }));
+
+      setSearchResults([...clientMatches, ...caseMatches, ...deadlineMatches].slice(0, 10));
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  function handleSelectResult(result: SearchResult) {
+    setSearchResults(null);
+    setSearch('');
+    navigate(result.path);
   }
 
   return (
@@ -161,8 +238,38 @@ export function Topbar() {
             className={styles.search}
             placeholder="Pesquisar no ERP..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              if (!e.target.value.trim()) {
+                setSearchResults(null);
+              }
+            }}
           />
+
+          {searchResults !== null && (
+            <div className={styles.searchDropdown}>
+              {searching ? (
+                <div className={styles.searchDropdownEmpty}>Buscando...</div>
+              ) : searchResults.length === 0 ? (
+                <div className={styles.searchDropdownEmpty}>Nenhum resultado encontrado.</div>
+              ) : (
+                <ul className={styles.searchDropdownList}>
+                  {searchResults.map((result) => (
+                    <li key={`${result.type}-${result.id}`}>
+                      <button
+                        type="button"
+                        className={styles.searchDropdownItem}
+                        onClick={() => handleSelectResult(result)}
+                      >
+                        <span className={styles.searchDropdownLabel}>{result.label}</span>
+                        <span className={styles.searchDropdownSub}>{result.sublabel}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </form>
 
         {/* Tenant Switcher */}
