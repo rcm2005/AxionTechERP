@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, ModalField, ModalFooter } from '@/components/ui/Modal/Modal';
 import { TextInput, TextSelect } from '@/components/ui/TextField/TextField';
 import { useToast } from '@/contexts/ToastContext';
@@ -6,15 +6,23 @@ import { useProcessos } from '@/hooks/useProcessos';
 import { createDeadline } from '@/services/prazos.service';
 import type { Prazo, PrazoStatus } from '@/types';
 
+export interface NovoPrazoInitialValues {
+  processoId?: string;
+  description?: string;
+  noticeDate?: string | null;
+  fatalDeadline?: string | null;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
   /** When opened from a case, the binding is already fixed. */
   processoIdFixo?: string;
   onCreated?: (deadline: Prazo) => void;
+  initialValues?: NovoPrazoInitialValues;
 }
 
-export function NovoPrazoModal({ open, onClose, processoIdFixo, onCreated }: Props) {
+export function NovoPrazoModal({ open, onClose, processoIdFixo, onCreated, initialValues }: Props) {
   const toast = useToast();
   const { data: cases } = useProcessos();
 
@@ -26,6 +34,21 @@ export function NovoPrazoModal({ open, onClose, processoIdFixo, onCreated }: Pro
   const [status, setStatus] = useState<PrazoStatus>('pendente');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  // Re-seed every time the modal opens (it stays mounted between opens — the component instance
+  // is shared across multiple analyses in the Copilot flow, so a plain useState default only
+  // applies on first mount and would not pick up a new `initialValues` on a later open).
+  useEffect(() => {
+    if (!open) return;
+    setProcessoId(initialValues?.processoId ?? processoIdFixo ?? '');
+    setDescription(initialValues?.description ?? '');
+    setNoticeDate(initialValues?.noticeDate ?? '');
+    setFatalDeadline(initialValues?.fatalDeadline ?? '');
+    setBusinessDays('');
+    setStatus('pendente');
+    setErrors({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function reset() {
     setProcessoId(processoIdFixo ?? '');

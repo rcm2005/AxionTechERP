@@ -1,266 +1,161 @@
-import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router';
-import clsx from 'clsx';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useMemo, useState } from 'react';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
+import { Card, CardBody } from '@/components/ui/Card/Card';
+import { Alert } from '@/components/ui/Alert/Alert';
+import { Button } from '@/components/ui/Button/Button';
+import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
+import { TextArea } from '@/components/ui/TextField/TextField';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { AnalisePrazoCard } from '@/components/copilot/AnalisePrazoCard';
+import { NovoPrazoModal, type NovoPrazoInitialValues } from '@/components/modais/NovoPrazoModal';
+import { analisarIntimacao, ROTULO_TIPO_ATO, type ResultadoAnaliseIntimacao } from '@/services/copilot.service';
+import { listCases } from '@/services/processos.service';
+import type { Processo } from '@/types';
 import styles from './CopilotPage.module.scss';
 
-interface PreviewLink {
-  url: string;
-  label: string;
-}
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  preview?: PreviewLink;
-}
-
-interface LocationState {
-  firstMessage?: string;
-}
-
-// ── Mock responses ────────────────────────────────────────
-
-interface MockResponse {
-  keywords: string[];
-  response: string;
-  /** Optional sequence of short "building" status lines shown before the final response */
-  steps?: string[];
-  /** Optional generated-app preview shown under the final response bubble */
-  preview?: PreviewLink;
-}
-
-const MOCK_RESPONSES: MockResponse[] = [
-  {
-    keywords: ['oi', 'olá', 'ola', 'hey', 'hello', 'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'tudo bom'],
-    response: 'Olá! Tudo ótimo por aqui, obrigado por perguntar! 😊 Como posso te ajudar hoje?',
-  },
-  {
-    keywords: ['plano', 'planos', 'preço', 'preco', 'valor', 'assinar', 'assinatura', 'upgrade', 'premium'],
-    response: 'Temos três planos disponíveis:\n\n• **Starter** — Gratuito, ideal para começar\n• **Pro** — R$ 49/mês, recursos avançados\n• **Enterprise** — Sob consulta, para grandes times\n\nQuer saber mais detalhes sobre algum deles?',
-  },
-  {
-    keywords: ['finance', 'financeiro', 'financeira', 'fatura', 'pagamento', 'cobrança', 'cobranca', 'boleto', 'pix'],
-    response: 'Na área financeira você consegue visualizar suas faturas, histórico de pagamentos e gerenciar seu método de pagamento. Posso te ajudar com algo específico sobre sua conta?',
-  },
-  {
-    keywords: ['perfil', 'profile', 'conta', 'dados', 'nome', 'email', 'senha', 'foto'],
-    response: 'Você pode editar seu perfil acessando o menu lateral e clicando em "Profile". Lá é possível alterar nome, e-mail, foto e senha. Precisa de ajuda com algum campo específico?',
-  },
-  {
-    keywords: ['erro', 'bug', 'problema', 'falha', 'não funciona', 'nao funciona', 'quebrado'],
-    response: 'Entendo que está enfrentando um problema. Para te ajudar melhor, pode descrever com mais detalhes o que está acontecendo? Se possível, informe em qual página o erro ocorre.',
-  },
-  {
-    keywords: ['obrigado', 'obrigada', 'valeu', 'thanks', 'thank you', 'brigado'],
-    response: 'Fico feliz em ajudar! 😊 Se tiver mais alguma dúvida, é só chamar.',
-  },
-  {
-    keywords: ['tchau', 'bye', 'até logo', 'ate logo', 'até mais', 'ate mais', 'flw', 'falou'],
-    response: 'Até logo! Foi um prazer conversar. Qualquer dúvida, estarei por aqui. 👋',
-  },
-  {
-    keywords: ['axion', 'empresa', 'sobre', 'quem', 'o que é', 'o que e'],
-    response: 'A Axion Tech é uma plataforma de gestão inteligente que utiliza IA para simplificar processos do seu negócio. Oferecemos ferramentas de automação, análise financeira e suporte 24/7. Como posso te ajudar?',
-  },
-  {
-    keywords: ['ajuda', 'help', 'suporte', 'support', 'dúvida', 'duvida', 'como'],
-    response: 'Claro, estou aqui para ajudar! 🤖 Pode me perguntar sobre:\n\n• Planos e preços\n• Área financeira\n• Configurações de perfil\n• Funcionalidades da plataforma\n\nO que você precisa?',
-  },
-  // ── Demo: on-demand ERP generation ─────────────────────
-  {
-    keywords: [
-      'erp jurídico', 'erp juridico', 'sistema jurídico', 'sistema juridico',
-      'erp para escritório', 'erp para escritorio', 'escritório de advocacia',
-      'escritorio de advocacia', 'gestão jurídica', 'gestao juridica',
-      'sistema para advogado', 'sistema para advogados', 'erp advocacia',
-      'law erp', 'erp para advogados', 'software jurídico', 'software juridico',
-    ],
-    steps: [
-      'Entendido! Vamos montar um ERP jurídico personalizado para o seu escritório. 📋',
-      'Configurando módulos: Clientes, Processos, Agenda & Prazos e Financeiro...',
-      'Gerando a tela de login com a identidade visual do escritório...',
-      'Montando o dashboard com KPIs, calendário e fluxo de caixa...',
-    ],
-    response:
-      'Pronto! Seu ERP jurídico foi gerado 🎉\n\nEle já inclui tela de login, dashboard, cadastro de clientes, gestão de processos, agenda de prazos/audiências e módulo financeiro. Veja o preview abaixo — você pode navegar entre as telas.',
-    preview: {
-      url: '/demos/law-erp/login.html',
-      label: 'Abrir Law ERP em tela cheia',
-    },
-  },
-];
-
-const DEFAULT_RESPONSE: MockResponse = {
-  keywords: [],
-  response:
-    'Entendi! Estou processando sua solicitação. No momento estou em modo de demonstração, mas em breve terei acesso completo para te ajudar ainda melhor. Tem mais alguma coisa que posso esclarecer?',
-};
-
-const getMockResponse = (userMessage: string): MockResponse => {
-  const lower = userMessage.toLowerCase();
-  const match = MOCK_RESPONSES.find(({ keywords }) =>
-    keywords.some((kw) => lower.includes(kw))
-  );
-  return match ?? DEFAULT_RESPONSE;
-};
-
-const simulateDelay = (ms: number) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
 export function CopilotPage() {
-  useDocumentTitle('ERP Copilot');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  useDocumentTitle('Copiloto de Prazos');
+
+  const [texto, setTexto] = useState('');
   const [loading, setLoading] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const location = useLocation();
-  const initialized = useRef(false);
+  const [resultado, setResultado] = useState<ResultadoAnaliseIntimacao | null>(null);
+  const [erroRede, setErroRede] = useState(false);
+  const [processoCorrespondente, setProcessoCorrespondente] = useState<Processo | null>(null);
+  const [verificandoProcesso, setVerificandoProcesso] = useState(false);
+  const [modalAberto, setModalAberto] = useState(false);
 
-  const sendMessage = async (text?: string) => {
-    const content = (text ?? input).trim();
-    if (!content || loading) return;
+  async function handleAnalisar() {
+    if (!texto.trim() || loading) return;
 
-    setInput('');
-
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
-
-    const userMsg: Message = { role: 'user', content };
-    setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
+    setErroRede(false);
+    setResultado(null);
+    setProcessoCorrespondente(null);
 
-    const match = getMockResponse(content);
+    try {
+      const data = await analisarIntimacao(texto.trim());
+      setResultado(data);
 
-    // Initial thinking time before anything appears
-    await simulateDelay(700 + Math.random() * 500);
-
-    // If there are build steps (e.g. ERP generation), show each one
-    // as a short message before the final response.
-    if (match.steps?.length) {
-      for (const step of match.steps) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: step }]);
-        await simulateDelay(650 + Math.random() * 450);
+      if (data.ok && data.numero_cnj) {
+        setVerificandoProcesso(true);
+        try {
+          const cases = await listCases();
+          const match = cases.find((c) => c.numero_cnj === data.numero_cnj);
+          setProcessoCorrespondente(match ?? null);
+        } catch {
+          setProcessoCorrespondente(null);
+        } finally {
+          setVerificandoProcesso(false);
+        }
       }
+    } catch {
+      setErroRede(true);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    setMessages((prev) => [
-      ...prev,
-      { role: 'assistant', content: match.response, preview: match.preview },
-    ]);
-    setLoading(false);
-  };
+  function handleDescartar() {
+    setTexto('');
+    setResultado(null);
+    setProcessoCorrespondente(null);
+    setErroRede(false);
+  }
 
-  useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
+  const initialValuesParaModal = useMemo((): NovoPrazoInitialValues | undefined => {
+    if (!resultado || !resultado.ok) return undefined;
+    return {
+      processoId: processoCorrespondente?.id,
+      description: ROTULO_TIPO_ATO[resultado.tipo_ato],
+      noticeDate: resultado.data_intimacao?.slice(0, 10) ?? null,
+      fatalDeadline: resultado.prazo_fatal?.slice(0, 10) ?? null,
+    };
+  }, [resultado, processoCorrespondente]);
 
-    const state = location.state as LocationState;
-    if (state?.firstMessage) {
-      sendMessage(state.firstMessage);
-    }
-  }, [location.state]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-    e.target.style.height = 'auto';
-    e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
-  };
+  function handleModalCreated() {
+    handleDescartar();
+  }
 
   return (
     <div className={styles.container}>
-      <PageHead title="ERP Copilot" subtitle="Assistente IA" />
+      <PageHead
+        title="Copiloto de Prazos"
+        subtitle="Cole o texto de uma intimação para identificar o prazo fatal, com a contagem explicada."
+      />
 
-      <div className={styles.chatContainer}>
-        <div className={styles.messages}>
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={clsx(
-                styles.message,
-                msg.role === 'user' ? styles.messageUser : styles.messageAssistant
-              )}
+      <Card>
+        <CardBody className={styles.formBody}>
+          <TextArea
+            rows={10}
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            placeholder="Cole aqui o texto da intimação recebida (diário oficial, PJe, e-mail do cartório...)."
+          />
+          <div className={styles.formActions}>
+            <Button
+              variant="primary"
+              onClick={handleAnalisar}
+              disabled={!texto.trim() || loading}
             >
-              <div className={styles.bubble}>{msg.content}</div>
-
-              {msg.preview && (
-                <div className={styles.preview}>
-                  <div className={styles.previewFrame}>
-                    <iframe
-                      src={msg.preview.url}
-                      title="Preview do sistema gerado"
-                      loading="lazy"
-                    />
-                  </div>
-                  <a
-                    className={styles.previewLink}
-                    href={msg.preview.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {msg.preview.label} ↗
-                  </a>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {loading && (
-            <div className={clsx(styles.message, styles.messageAssistant)}>
-              <div className={clsx(styles.bubble, styles.bubbleTyping)}>
-                <span />
-                <span />
-                <span />
-              </div>
-            </div>
-          )}
-
-          <div ref={bottomRef} />
-        </div>
-
-        <div className={styles.inputWrapper}>
-          <div className={styles.inputContainer}>
-            <textarea
-              ref={textareaRef}
-              className={styles.input}
-              placeholder="Ask anything..."
-              value={input}
-              rows={1}
-              onChange={handleTextareaChange}
-              onKeyDown={handleKeyDown}
-            />
-
-            <button
-              type="button"
-              className={styles.button}
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || loading}
-            >
-              Send
-            </button>
+              {loading ? 'Analisando…' : 'Analisar intimação'}
+            </Button>
           </div>
+        </CardBody>
+      </Card>
 
-          <p className={styles.disclaimer}>
-            Axion pode cometer erros. Verifique informações importantes.
-          </p>
-        </div>
-      </div>
+      {loading ? (
+        <Card>
+          <CardBody className={styles.loadingBody}>
+            <Skeleton width="220px" height="18px" />
+            <div className={styles.loadingGrid}>
+              <Skeleton height="36px" />
+              <Skeleton height="36px" />
+              <Skeleton height="36px" />
+              <Skeleton height="36px" />
+            </div>
+            <Skeleton height="64px" />
+            <Skeleton height="44px" />
+          </CardBody>
+        </Card>
+      ) : erroRede ? (
+        <Alert
+          tone="danger"
+          title="Não foi possível analisar agora"
+          description="Falha ao conectar com o serviço de análise. Tente novamente."
+          action={
+            <Button variant="default" onClick={handleAnalisar}>
+              Tentar novamente
+            </Button>
+          }
+        />
+      ) : resultado?.ok === false && resultado.motivo === 'texto_vazio' ? (
+        <Alert
+          tone="warning"
+          title="Texto vazio"
+          description="Cole o texto da intimação antes de analisar."
+        />
+      ) : resultado?.ok === false && resultado.motivo === 'input_suspeito' ? (
+        <Alert
+          tone="warning"
+          title="Não foi possível identificar uma intimação válida"
+          description="O texto colado não parece ser uma intimação processual. Revise o conteúdo e tente novamente."
+        />
+      ) : resultado?.ok === true ? (
+        <AnalisePrazoCard
+          analise={resultado}
+          processoCorrespondente={processoCorrespondente}
+          verificandoProcesso={verificandoProcesso}
+          onRevisarECadastrar={() => setModalAberto(true)}
+          onDescartar={handleDescartar}
+        />
+      ) : null}
+
+      <NovoPrazoModal
+        open={modalAberto}
+        onClose={() => setModalAberto(false)}
+        initialValues={initialValuesParaModal}
+        onCreated={handleModalCreated}
+      />
     </div>
   );
 }
-
-export default CopilotPage;
