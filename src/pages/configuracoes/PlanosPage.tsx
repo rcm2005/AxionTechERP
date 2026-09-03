@@ -1,107 +1,96 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import clsx from 'clsx';
 import {
   Users,
-  HardDrive,
   FolderKanban,
-  Bot,
   ShieldCheck,
   Lock,
   RefreshCw,
-  Zap,
   Check,
-  X,
   ChevronDown,
   ChevronUp,
   CheckCircle2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Button } from '@/components/ui/Button/Button';
-import { ProgressBar } from '@/components/ui/ProgressBar/ProgressBar';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useAsync } from '@/hooks/useAsync';
 import { paths } from '@/routes/paths';
+import { listUsers } from '@/services/usuarios.service';
+import { listCases } from '@/services/processos.service';
+import { getTenantTrial } from '@/services/tenant.service';
 import { PlanCard, type Plan } from './PlanCard';
 import { UpgradeConfirm } from './UpgradeConfirm';
 import styles from './PlanosPage.module.scss';
 
 const PLANS: Plan[] = [
   {
-    id: 'free',
-    name: 'Free',
-    description: 'Para explorar a plataforma sem compromisso e iniciar a organização.',
-    monthlyPrice: 0,
-    annualMonthlyPrice: 0,
-    buttonText: 'Plano Atual',
+    id: 'solo',
+    name: 'Solo',
+    description:
+      'Para o advogado autônomo ou escritório enxuto organizar processos, prazos e financeiro em um só lugar.',
+    monthlyPrice: 119,
+    buttonText: 'Solicitar contratação',
     highlighted: false,
-    current: true,
     features: [
-      'Fluxo de Caixa IA básico',
-      '1 usuário incluso',
-      '3 projetos simultâneos',
-      '500 MB armazenamento',
-      'Gestão de Clientes e Produtos',
-      'Suporte comunitário e base de conhecimento',
+      '1 usuário (advogado responsável)',
+      'Até 150 processos',
+      'Gestão de Processos e Clientes',
+      'Agenda, Prazos e Audiências',
+      'Contratos e Financeiro',
+      'Suporte via e-mail',
     ],
     limits: {
       users: '1',
-      storage: '500 MB',
-      projects: '3',
-      ai: 'Básico (sugestões)',
-      support: 'Comunidade',
+      processos: 'Até 150',
+      support: 'E-mail',
     },
   },
   {
-    id: 'standard-pro',
-    name: 'Standard Pro',
+    id: 'pro',
+    name: 'Pro',
     badge: 'Mais Popular',
-    description: 'Ideal para PMEs em crescimento e escritórios estruturados.',
-    monthlyPrice: 149,
-    annualMonthlyPrice: 124,
-    buttonText: 'Iniciar 14 dias grátis',
+    description:
+      'Para escritórios com equipe que precisam de mais usuários e volume de processos sem limite.',
+    monthlyPrice: 289,
+    buttonText: 'Solicitar contratação',
     highlighted: true,
-    current: false,
     features: [
-      'Fluxo de Caixa IA avançado e preditivo',
-      '5 usuários inclusos',
-      'Projetos ilimitados',
-      '20 GB armazenamento em nuvem',
-      'Emissão de notas fiscais (NF-e/NFS-e)',
-      'Conciliação bancária automática com OFX',
-      'Suporte prioritário via chat e e-mail',
+      'Até 4 usuários',
+      'Processos ilimitados',
+      'Gestão de Processos e Clientes',
+      'Agenda, Prazos e Audiências',
+      'Contratos e Financeiro',
+      'Suporte prioritário via e-mail',
     ],
     limits: {
-      users: '5',
-      storage: '20 GB',
-      projects: 'Ilimitados',
-      ai: 'Avançado com previsões',
-      support: 'Prioritário (chat e e-mail)',
+      users: 'Até 4',
+      processos: 'Ilimitados',
+      support: 'E-mail prioritário',
     },
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    badge: 'Escala Total',
-    description: 'Para grandes operações corporativas com alta demanda de dados.',
-    monthlyPrice: 389,
-    annualMonthlyPrice: 323,
-    buttonText: 'Selecionar Enterprise',
+    badge: 'Sob Medida',
+    description:
+      'Para escritórios maiores com necessidades específicas de usuários e atendimento — fale com nosso time.',
+    monthlyPrice: null,
+    buttonText: 'Falar com o time',
     highlighted: false,
-    current: false,
     features: [
-      'Inteligência Artificial completa e Copilot Custom',
-      'Usuários ilimitados sem custo adicional',
-      'Projetos e arquivos ilimitados',
-      '500 GB armazenamento dedicado',
-      'Múltiplos CNPJs e filiais centralizadas',
-      'Auditoria completa de logs e segurança',
-      'Gerente de contas dedicado + SLA 99.9%',
+      'Usuários sob consulta',
+      'Processos sob consulta',
+      'Gestão de Processos e Clientes',
+      'Agenda, Prazos e Audiências',
+      'Contratos e Financeiro',
+      'Atendimento dedicado para negociar seu contrato',
     ],
     limits: {
-      users: 'Ilimitado',
-      storage: '500 GB',
-      projects: 'Ilimitados',
-      ai: 'Completa + Copilot Custom',
-      support: 'Dedicado 24/7 + SLA',
+      users: 'Sob consulta',
+      processos: 'Sob consulta',
+      support: 'Dedicado',
     },
   },
 ];
@@ -110,38 +99,63 @@ const FAQ_ITEMS = [
   {
     question: 'Como funciona o período de teste de 14 dias grátis?',
     answer:
-      'Ao assinar o plano Standard Pro, você tem 14 dias para testar todos os recursos sem cobrança imediata. Se cancelar antes do fim do período, nada será cobrado.',
+      'Ao criar sua conta você tem 14 dias de acesso completo à plataforma, sem precisar de cartão de crédito. Perto do fim do período (ou depois dele), é só enviar uma solicitação de contratação nesta tela que nosso time entra em contato.',
   },
   {
     question: 'Posso mudar de plano ou cancelar a qualquer momento?',
     answer:
-      'Sim! Não exigimos contratos de fidelidade. Você pode fazer upgrade, downgrade ou cancelamento diretamente no painel a qualquer momento.',
+      'Sim. Hoje a contratação é feita diretamente com nosso time (ainda não temos checkout automático) — é só entrar em contato para ajustar seu plano ou encerrar quando quiser, sem multa.',
   },
   {
-    question: 'Como são emitidas as notas fiscais da assinatura?',
+    question: 'Meus dados ficam isolados de outros escritórios?',
     answer:
-      'A Nota Fiscal de Serviços (NFS-e) é gerada automaticamente após a confirmação do pagamento e enviada diretamente para o e-mail cadastrado da sua empresa.',
+      'Sim. Cada escritório tem os dados isolados a nível de banco de dados (Row-Level Security), com testes automatizados garantindo esse isolamento — nenhum outro cliente acessa seus processos, clientes ou financeiro.',
   },
   {
     question: 'Quais são as formas de pagamento disponíveis?',
     answer:
-      'Aceitamos Cartão de Crédito (em até 12x no plano anual), PIX (com 5% de desconto adicional) e Boleto Bancário à vista.',
+      'Depois que você envia sua solicitação de contratação, nosso time combina com você a forma de pagamento (PIX, boleto ou cartão) diretamente — ainda não temos checkout automático dentro da plataforma.',
   },
   {
-    question: 'O que acontece se eu ultrapassar os limites de armazenamento?',
+    question: 'E se eu precisar de mais usuários ou processos do que meu plano permite?',
     answer:
-      'Você receberá um aviso proativo com antecedência para expandir seu plano ou adquirir pacotes avulsos de armazenamento sem interromper suas operações diárias.',
+      'É só falar com a gente por aqui — ajustamos seu plano atual ou migramos você para o Pro/Enterprise conforme o escritório cresce.',
   },
 ];
+
+/**
+ * Turns a real `trial_ends_at` (or null) into display state. Returns null when there is no trial
+ * data for this tenant (seed/demo tenants, or any tenant that predates trial tracking) — in that
+ * case the caller must render nothing, never a fake or default countdown.
+ */
+function computeTrialStatus(
+  trialEndsAt: string | null | undefined
+): { label: string; expired: boolean } | null {
+  if (!trialEndsAt) return null;
+  const msLeft = new Date(trialEndsAt).getTime() - Date.now();
+  if (msLeft <= 0) {
+    return { label: 'Teste gratuito encerrado', expired: true };
+  }
+  const daysLeft = Math.max(1, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+  return {
+    label: `Teste gratuito — ${daysLeft} dia${daysLeft === 1 ? '' : 's'} restante${daysLeft === 1 ? '' : 's'}`,
+    expired: false,
+  };
+}
 
 export function PlanosPage() {
   useDocumentTitle('Assinatura e Planos');
   const navigate = useNavigate();
 
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
   const [view, setView] = useState<'plans' | 'upgrade' | 'done'>('plans');
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  const trial = useAsync(() => getTenantTrial(), []);
+  const usersState = useAsync(() => listUsers(), []);
+  const casesState = useAsync(() => listCases(), []);
+
+  const trialStatus = computeTrialStatus(trial.data?.trialEndsAt);
 
   const handleSelectPlan = (plan: Plan) => {
     setSelectedPlan(plan);
@@ -155,7 +169,7 @@ export function PlanosPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleUpgradeSuccess = () => {
+  const handleRequestSuccess = () => {
     setView('done');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -164,63 +178,38 @@ export function PlanosPage() {
     setOpenFaqIndex((prev) => (prev === index ? null : index));
   };
 
-  // ── 1. Upgrade / Checkout Screen ──────────────────────────────────────────
+  // ── 1. Request Screen ──────────────────────────────────────────
   if (view === 'upgrade' && selectedPlan) {
     return (
       <section className={styles.pageRoot}>
         <PageHead
-          title="Confirmar Assinatura"
-          subtitle={`Finalize a contratação do plano ${selectedPlan.name}`}
+          title="Solicitar Contratação"
+          subtitle={`Envie seus dados para contratar o plano ${selectedPlan.name}`}
         />
-        <UpgradeConfirm
-          plan={selectedPlan}
-          billingCycle={billingCycle}
-          onBack={handleBackToPlans}
-          onSuccess={handleUpgradeSuccess}
-        />
+        <UpgradeConfirm plan={selectedPlan} onBack={handleBackToPlans} onSuccess={handleRequestSuccess} />
       </section>
     );
   }
 
-  // ── 2. Success Screen ─────────────────────────────────────────────────────
+  // ── 2. Confirmation Screen ─────────────────────────────────────
   if (view === 'done' && selectedPlan) {
     return (
       <section className={styles.pageRoot}>
-        <PageHead
-          title="Assinatura e Planos"
-          subtitle="Gerencie os limites do seu SaaS"
-        />
+        <PageHead title="Assinatura e Planos" subtitle="Gerencie os limites do seu SaaS" />
         <div className={styles.successRoot}>
           <div className={styles.successIconWrapper}>
             <CheckCircle2 size={46} strokeWidth={2.5} />
           </div>
 
-          <h2 className={styles.successTitle}>Upgrade realizado com sucesso!</h2>
+          <h2 className={styles.successTitle}>Solicitação enviada!</h2>
           <p className={styles.successDesc}>
-            Parabéns! Sua empresa agora conta com o plano{' '}
-            <strong>{selectedPlan.name}</strong> (
-            {billingCycle === 'annual' ? 'Ciclo Anual' : 'Ciclo Mensal'}).
-            Todos os recursos avançados já foram ativados.
+            Recebemos seu interesse no plano <strong>{selectedPlan.name}</strong>. Nosso time vai
+            entrar em contato pelo e-mail informado para combinar pagamento e ativação.
           </p>
-
-          <div className={styles.successPlanCard}>
-            <div className={styles.statItem}>
-              <strong>{selectedPlan.limits.users}</strong>
-              <span>Usuários inclusos</span>
-            </div>
-            <div className={styles.statItem}>
-              <strong>{selectedPlan.limits.storage}</strong>
-              <span>Armazenamento</span>
-            </div>
-            <div className={styles.statItem}>
-              <strong>{selectedPlan.limits.projects}</strong>
-              <span>Projetos liberados</span>
-            </div>
-          </div>
 
           <div className={styles.successActions}>
             <Button variant="default" onClick={handleBackToPlans}>
-              Ver Detalhes do Plano
+              Ver planos novamente
             </Button>
             <Button variant="primary" onClick={() => navigate(paths.dashboard)}>
               Ir para o Dashboard
@@ -231,125 +220,73 @@ export function PlanosPage() {
     );
   }
 
-  // ── 3. Main Plans Screen ────────────────────────────────────────────
+  // ── 3. Main Plans Screen ────────────────────────────────────────
   return (
     <section className={styles.pageRoot}>
-      <PageHead
-        title="Assinatura e Planos"
-        subtitle="Gerencie os limites do seu SaaS"
-      />
+      <PageHead title="Assinatura e Planos" subtitle="Gerencie os limites do seu SaaS" />
 
-      {/* Current Account Limits and Usage Banner */}
+      {/* Sua Conta — real data only: real trial countdown (or nothing), real usuário/processo counts */}
       <div className={styles.usageCard}>
         <div className={styles.usageHeader}>
           <div className={styles.usageTitleGroup}>
-            <h3 className={styles.usageTitle}>Consumo da Conta</h3>
-            <span className={styles.planTag}>Plano Atual: Free</span>
+            <h3 className={styles.usageTitle}>Sua Conta</h3>
+            {trialStatus && (
+              <span className={clsx(styles.planTag, trialStatus.expired && styles.planTagExpired)}>
+                {trialStatus.label}
+              </span>
+            )}
           </div>
-          <span className={styles.usageMeta}>
-            Renovação automática: Sem expiração
-          </span>
         </div>
 
         <div className={styles.quotasGrid}>
           <div className={styles.quotaItem}>
-            <div className={styles.quotaHeader}>
-              <span className={styles.quotaLabel}>
-                <Users size={14} /> Usuários
-              </span>
-              <span className={styles.quotaValue}>1 / 1 (100%)</span>
-            </div>
-            <ProgressBar percent={100} />
+            <span className={styles.quotaLabel}>
+              <Users size={14} /> Usuários
+            </span>
+            <span className={styles.quotaBigValue}>
+              {usersState.loading
+                ? '—'
+                : usersState.error
+                  ? 'Não foi possível carregar'
+                  : usersState.data?.length}
+            </span>
           </div>
 
           <div className={styles.quotaItem}>
-            <div className={styles.quotaHeader}>
-              <span className={styles.quotaLabel}>
-                <HardDrive size={14} /> Armazenamento
-              </span>
-              <span className={styles.quotaValue}>142 MB / 500 MB (28%)</span>
-            </div>
-            <ProgressBar percent={28} />
+            <span className={styles.quotaLabel}>
+              <FolderKanban size={14} /> Processos
+            </span>
+            <span className={styles.quotaBigValue}>
+              {casesState.loading
+                ? '—'
+                : casesState.error
+                  ? 'Não foi possível carregar'
+                  : casesState.data?.length}
+            </span>
           </div>
-
-          <div className={styles.quotaItem}>
-            <div className={styles.quotaHeader}>
-              <span className={styles.quotaLabel}>
-                <FolderKanban size={14} /> Projetos
-              </span>
-              <span className={styles.quotaValue}>2 / 3 (66%)</span>
-            </div>
-            <ProgressBar percent={66} />
-          </div>
-
-          <div className={styles.quotaItem}>
-            <div className={styles.quotaHeader}>
-              <span className={styles.quotaLabel}>
-                <Bot size={14} /> Consultas IA
-              </span>
-              <span className={styles.quotaValue}>45 / 100 (45%)</span>
-            </div>
-            <ProgressBar percent={45} />
-          </div>
-        </div>
-      </div>
-
-      {/* Monthly / Annual Toggle */}
-      <div className={styles.toggleWrapper}>
-        <div className={styles.toggleContainer}>
-          <button
-            type="button"
-            className={`${styles.toggleBtn} ${
-              billingCycle === 'monthly' ? styles.toggleBtnActive : ''
-            }`}
-            onClick={() => setBillingCycle('monthly')}
-          >
-            Mensal
-          </button>
-          <button
-            type="button"
-            className={`${styles.toggleBtn} ${
-              billingCycle === 'annual' ? styles.toggleBtnActive : ''
-            }`}
-            onClick={() => setBillingCycle('annual')}
-          >
-            Anual
-            <span className={styles.discountBadge}>-17% OFF</span>
-          </button>
         </div>
       </div>
 
       {/* Plan Cards Grid */}
       <div className={styles.plansGrid}>
         {PLANS.map((plan) => (
-          <PlanCard
-            key={plan.id}
-            plan={plan}
-            billingCycle={billingCycle}
-            onSelect={handleSelectPlan}
-          />
+          <PlanCard key={plan.id} plan={plan} onSelect={handleSelectPlan} />
         ))}
       </div>
 
-      {/* Institutional Benefits and Guarantees */}
+      {/* Institutional Benefits and Guarantees — only claims this product can actually back today */}
       <div className={styles.trustSection}>
         <div className={styles.trustCard}>
           <div className={styles.trustIconBox}>
             <Lock size={18} />
           </div>
           <div className={styles.trustContent}>
-            <h4>Segurança Bancária</h4>
-            <p>Dados criptografados de ponta a ponta com certificados TLS 1.3 e backups diários.</p>
-          </div>
-        </div>
-
-        <div className={styles.trustCard}>
-          <div className={styles.trustIconBox}>
-            <ShieldCheck size={18} />
-          </div>
-          <div className={styles.trustContent}>
-            <h4>100% LGPD & Fiscal</h4>
-            <p>Em total conformidade com normas brasileiras de privacidade e exigências da Receita Federal.</p>
+            <h4>Segurança e isolamento de dados</h4>
+            <p>
+              Cada escritório tem os dados isolados a nível de banco de dados (Row-Level
+              Security), testado — nenhum outro cliente acessa seus processos, clientes ou
+              financeiro. Senhas protegidas com hash.
+            </p>
           </div>
         </div>
 
@@ -358,27 +295,30 @@ export function PlanosPage() {
             <RefreshCw size={18} />
           </div>
           <div className={styles.trustContent}>
-            <h4>Sem Fidelidade</h4>
-            <p>Altere ou cancele seu plano a qualquer momento diretamente pelo painel sem multas.</p>
+            <h4>Sem fidelidade</h4>
+            <p>Fale com a gente para ajustar ou encerrar sua contratação quando quiser, sem multa.</p>
           </div>
         </div>
 
         <div className={styles.trustCard}>
           <div className={styles.trustIconBox}>
-            <Zap size={18} />
+            <ShieldCheck size={18} />
           </div>
           <div className={styles.trustContent}>
-            <h4>Ativação Instantânea</h4>
-            <p>Novos limites de usuários, IA e capacidade são liberados no mesmo segundo da confirmação.</p>
+            <h4>Feito para advocacia brasileira</h4>
+            <p>
+              Processos organizados pelo número CNJ, com prazos, audiências, contratos e
+              financeiro do escritório em um só lugar.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Detailed Comparison Table */}
+      {/* Detailed Comparison Table — only real, shipped modules and the real user/case limits */}
       <div className={styles.comparisonSection}>
         <div className={styles.comparisonHeader}>
           <h2>Comparação Detalhada de Recursos</h2>
-          <p>Confira lado a lado todos os limites e funcionalidades de cada plano do Axion ERP</p>
+          <p>Confira lado a lado os limites de cada plano do Axion ERP</p>
         </div>
 
         <div className={styles.tableWrapper}>
@@ -386,88 +326,35 @@ export function PlanosPage() {
             <thead>
               <tr>
                 <th style={{ width: '34%' }}>Recursos e Capacidade</th>
-                <th style={{ width: '22%' }}>Free</th>
+                <th style={{ width: '22%' }}>Solo</th>
                 <th style={{ width: '22%' }} className={styles.highlightCol}>
-                  Standard Pro
+                  Pro
                 </th>
                 <th style={{ width: '22%' }}>Enterprise</th>
               </tr>
             </thead>
             <tbody>
-              {/* Category 1: Limits */}
               <tr className={styles.categoryHeaderRow}>
-                <td colSpan={4}>Limites e Capacidade</td>
+                <td colSpan={4}>Limites</td>
               </tr>
               <tr>
-                <td>Usuários simultâneos</td>
+                <td>Usuários</td>
                 <td>1 usuário</td>
-                <td className={styles.highlightCol}>5 inclusos (+ R$ 29/extra)</td>
-                <td>Ilimitados</td>
+                <td className={styles.highlightCol}>Até 4 usuários</td>
+                <td>Sob consulta</td>
               </tr>
               <tr>
-                <td>Armazenamento em nuvem</td>
-                <td>500 MB</td>
-                <td className={styles.highlightCol}>20 GB</td>
-                <td>500 GB dedicado</td>
-              </tr>
-              <tr>
-                <td>Projetos e centros de custo</td>
-                <td>Até 3 projetos</td>
+                <td>Processos</td>
+                <td>Até 150</td>
                 <td className={styles.highlightCol}>Ilimitados</td>
-                <td>Ilimitados</td>
-              </tr>
-              <tr>
-                <td>Múltiplos CNPJs / Filiais</td>
-                <td>
-                  <span className={styles.crossIcon}>
-                    <X size={16} />
-                  </span>
-                </td>
-                <td className={styles.highlightCol}>Até 2 CNPJs</td>
-                <td>Ilimitados</td>
+                <td>Sob consulta</td>
               </tr>
 
-              {/* Category 2: Artificial Intelligence */}
               <tr className={styles.categoryHeaderRow}>
-                <td colSpan={4}>Inteligência Artificial & Copilot</td>
+                <td colSpan={4}>Módulos Inclusos</td>
               </tr>
               <tr>
-                <td>Fluxo de Caixa IA</td>
-                <td>Básico (resumo do mês)</td>
-                <td className={styles.highlightCol}>Avançado com projeções a 90 dias</td>
-                <td>Preditivo com cenários múltiplos</td>
-              </tr>
-              <tr>
-                <td>Consultas ao Copilot</td>
-                <td>100 consultas/mês</td>
-                <td className={styles.highlightCol}>Ilimitadas</td>
-                <td>Ilimitadas + Modelo Customizado</td>
-              </tr>
-              <tr>
-                <td>Conciliação Bancária Automática</td>
-                <td>
-                  <span className={styles.crossIcon}>
-                    <X size={16} />
-                  </span>
-                </td>
-                <td className={styles.highlightCol}>
-                  <span className={styles.checkIcon}>
-                    <Check size={16} strokeWidth={3} />
-                  </span>
-                </td>
-                <td>
-                  <span className={styles.checkIcon}>
-                    <Check size={16} strokeWidth={3} />
-                  </span>
-                </td>
-              </tr>
-
-              {/* Category 3: Modules and Fiscal */}
-              <tr className={styles.categoryHeaderRow}>
-                <td colSpan={4}>Módulos e Operações</td>
-              </tr>
-              <tr>
-                <td>Gestão Financeira e Contas a Receber</td>
+                <td>Gestão de Processos e Clientes</td>
                 <td>
                   <span className={styles.checkIcon}>
                     <Check size={16} strokeWidth={3} />
@@ -485,10 +372,10 @@ export function PlanosPage() {
                 </td>
               </tr>
               <tr>
-                <td>Emissão de Notas Fiscais (NF-e/NFS-e)</td>
+                <td>Agenda, Prazos e Audiências</td>
                 <td>
-                  <span className={styles.crossIcon}>
-                    <X size={16} />
+                  <span className={styles.checkIcon}>
+                    <Check size={16} strokeWidth={3} />
                   </span>
                 </td>
                 <td className={styles.highlightCol}>
@@ -503,27 +390,50 @@ export function PlanosPage() {
                 </td>
               </tr>
               <tr>
-                <td>Exportação de relatórios (PDF/Excel)</td>
-                <td>Básico</td>
-                <td className={styles.highlightCol}>Avançado e customizado</td>
-                <td>Completo + API de Dados</td>
+                <td>Contratos</td>
+                <td>
+                  <span className={styles.checkIcon}>
+                    <Check size={16} strokeWidth={3} />
+                  </span>
+                </td>
+                <td className={styles.highlightCol}>
+                  <span className={styles.checkIcon}>
+                    <Check size={16} strokeWidth={3} />
+                  </span>
+                </td>
+                <td>
+                  <span className={styles.checkIcon}>
+                    <Check size={16} strokeWidth={3} />
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td>Financeiro (cobranças e lançamentos)</td>
+                <td>
+                  <span className={styles.checkIcon}>
+                    <Check size={16} strokeWidth={3} />
+                  </span>
+                </td>
+                <td className={styles.highlightCol}>
+                  <span className={styles.checkIcon}>
+                    <Check size={16} strokeWidth={3} />
+                  </span>
+                </td>
+                <td>
+                  <span className={styles.checkIcon}>
+                    <Check size={16} strokeWidth={3} />
+                  </span>
+                </td>
               </tr>
 
-              {/* Category 4: Support */}
               <tr className={styles.categoryHeaderRow}>
-                <td colSpan={4}>Suporte e Atendimento</td>
+                <td colSpan={4}>Suporte</td>
               </tr>
               <tr>
                 <td>Canal de suporte</td>
-                <td>Comunidade & Central</td>
-                <td className={styles.highlightCol}>Chat e E-mail prioritário</td>
-                <td>Gerente dedicado + Telefone 24/7</td>
-              </tr>
-              <tr>
-                <td>SLA de Atendimento</td>
-                <td>Até 48h</td>
-                <td className={styles.highlightCol}>Até 4h úteis</td>
-                <td>Menos de 1h garantido</td>
+                <td>E-mail</td>
+                <td className={styles.highlightCol}>E-mail prioritário</td>
+                <td>Atendimento dedicado</td>
               </tr>
             </tbody>
           </table>
@@ -541,15 +451,8 @@ export function PlanosPage() {
           {FAQ_ITEMS.map((item, idx) => {
             const isOpen = openFaqIndex === idx;
             return (
-              <div
-                key={idx}
-                className={`${styles.faqItem} ${isOpen ? styles.faqOpen : ''}`}
-              >
-                <button
-                  type="button"
-                  className={styles.faqQuestion}
-                  onClick={() => toggleFaq(idx)}
-                >
+              <div key={idx} className={clsx(styles.faqItem, isOpen && styles.faqOpen)}>
+                <button type="button" className={styles.faqQuestion} onClick={() => toggleFaq(idx)}>
                   <span>{item.question}</span>
                   {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
