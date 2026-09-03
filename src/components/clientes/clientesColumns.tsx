@@ -1,7 +1,6 @@
 import type { Column } from '@/components/ui/DataTable/DataTable';
-import { Pill } from '@/components/ui/Pill/Pill';
 import type { Pessoa } from '@/types';
-import { pessoaStatusMeta, situacaoCreditoMeta, tipoRelacaoMeta } from '@/utils/statusMaps';
+import { situacaoCreditoMeta } from '@/utils/statusMaps';
 import styles from './clientesColumns.module.scss';
 
 export const clientesColumns: Column<Pessoa>[] = [
@@ -17,14 +16,6 @@ export const clientesColumns: Column<Pessoa>[] = [
         </div>
       </div>
     ),
-  },
-  {
-    key: 'relacao',
-    header: 'Relação',
-    render: (client) => {
-      const meta = tipoRelacaoMeta[client.relacao] ?? { label: client.relacao, tone: 'neutral' };
-      return <Pill tone={meta.tone}>{meta.label}</Pill>;
-    },
   },
   {
     key: 'tipo',
@@ -48,14 +39,6 @@ export const clientesColumns: Column<Pessoa>[] = [
     render: (client) => {
       const meta = situacaoCreditoMeta[client.situacaoCredito] ?? { label: client.situacaoCredito, tone: 'neutral' };
       return <span className={styles[`tone-${meta.tone}`]}>{meta.label}</span>;
-    },
-  },
-  {
-    key: 'status',
-    header: 'Status',
-    render: (client) => {
-      const meta = pessoaStatusMeta[client.status] ?? { label: client.status, tone: 'neutral' };
-      return <Pill tone={meta.tone}>{meta.label}</Pill>;
     },
   },
 ];

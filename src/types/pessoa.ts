@@ -15,7 +15,7 @@ export interface Pessoa {
    */
   tenantId: ID;
   tipoPessoa: TipoPessoa;
-  relacao: TipoRelacao;
+  relacao?: TipoRelacao;
   razaoSocialOuNome: string;
   nomeFantasia?: string;
   documento: string; // CPF ou CNPJ formatado
@@ -25,12 +25,12 @@ export interface Pessoa {
   email: string;
   telefone: string;
   whatsapp?: string;
-  endereco: Endereco;
+  endereco?: Endereco;
   contatoPrincipal?: Contato;
   situacaoCredito: SituacaoCredito;
   limiteCreditoCentavos?: number;
   valorEmAtrasoCentavos: number;
-  status: PessoaStatus;
+  status?: PessoaStatus;
   segmento?: string;
   observacoes?: string;
   criadoEm: string;

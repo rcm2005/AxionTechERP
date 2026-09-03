@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/Button/Button';
 import { Alert } from '@/components/ui/Alert/Alert';
 import { paths } from '@/routes/paths';
 import { formatBRL, formatDate } from '@/utils/format';
-import { pessoaStatusMeta, situacaoCreditoMeta, tipoRelacaoMeta, lancamentoStatusMeta } from '@/utils/statusMaps';
+import { situacaoCreditoMeta, lancamentoStatusMeta } from '@/utils/statusMaps';
 import type { Column } from '@/components/ui/DataTable/DataTable';
 import type { Lancamento } from '@/types';
 import styles from './ClienteDetailPage.module.scss';
@@ -103,9 +103,7 @@ export function ClienteDetailPage() {
   }
   if (!client) return <EmptyState title="Parceiro comercial não encontrado." />;
 
-  const statusMeta = pessoaStatusMeta[client.status] ?? { label: client.status, tone: 'neutral' };
   const creditMeta = situacaoCreditoMeta[client.situacaoCredito] ?? { label: client.situacaoCredito, tone: 'neutral' };
-  const relationMeta = tipoRelacaoMeta[client.relacao] ?? { label: client.relacao, tone: 'neutral' };
 
   return (
     <section>
@@ -124,20 +122,8 @@ export function ClienteDetailPage() {
         <Card>
           <div className={styles.infoGrid}>
             <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Status Cadastral</span>
-              <Pill tone={statusMeta.tone}>{statusMeta.label}</Pill>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Relação Comercial</span>
-              <Pill tone={relationMeta.tone}>{relationMeta.label}</Pill>
-            </div>
-            <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Situação de Crédito</span>
               <Pill tone={creditMeta.tone}>{creditMeta.label}</Pill>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Segmento</span>
-              <span className={styles.infoValue}>{client.segmento ?? '—'}</span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Telefone</span>
@@ -151,10 +137,6 @@ export function ClienteDetailPage() {
         </Card>
 
         <div className={styles.kpis}>
-          <KpiCard
-            label="Limite de Crédito"
-            value={client.limiteCreditoCentavos ? formatBRL(client.limiteCreditoCentavos) : 'Ilimitado'}
-          />
           {entriesError ? (
             <Alert
               tone="danger"
@@ -220,35 +202,7 @@ export function ClienteDetailPage() {
           )}
 
           {tab === 'cadastro' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', padding: '16px 0' }}>
-              <div>
-                <strong>Inscrição Estadual:</strong> {client.inscricaoEstadual ?? (client.isentoIE ? 'Isento' : 'Não informada')}
-              </div>
-              {client.inscricaoMunicipal && (
-                <div>
-                  <strong>Inscrição Municipal:</strong> {client.inscricaoMunicipal}
-                </div>
-              )}
-              {client.contatoPrincipal && (
-                <div>
-                  <strong>Contato Principal:</strong> {client.contatoPrincipal.nome} ({client.contatoPrincipal.cargo ?? 'Contato'})
-                </div>
-              )}
-              <div>
-                <strong>Endereço:</strong> {client.endereco.logradouro}, {client.endereco.numero} {client.endereco.complemento ?? ''}
-              </div>
-              <div>
-                <strong>Bairro / Cidade:</strong> {client.endereco.bairro} - {client.endereco.cidade}/{client.endereco.uf}
-              </div>
-              <div>
-                <strong>CEP:</strong> {client.endereco.cep}
-              </div>
-              {client.observacoes && (
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <strong>Observações:</strong> {client.observacoes}
-                </div>
-              )}
-            </div>
+            <EmptyState title="Nenhum dado cadastral adicional disponível para este cliente." />
           )}
         </div>
       </Card>
