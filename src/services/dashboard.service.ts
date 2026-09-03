@@ -15,7 +15,9 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   const clients = await listClients();
 
   const financialSummary = calculateFinancialSummary(entries);
-  const activeClients = clients.filter((p) => p.relacao === 'cliente' || p.relacao === 'ambos');
+  const activeClients = clients.filter(
+    (p) => !p.relacao || p.relacao === 'cliente' || p.relacao === 'ambos',
+  );
   const delinquentClients = clients.filter(
     (p) => p.situacaoCredito === 'inadimplente' || p.valorEmAtrasoCentavos > 0,
   );

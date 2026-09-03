@@ -6,7 +6,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { createClient } from '@/services/clientes.service';
 import { db } from '@/mocks';
 import { paths } from '@/routes/paths';
-import type { TipoPessoa, TipoRelacao, PessoaStatus, SituacaoCredito } from '@/types';
+import type { TipoPessoa, SituacaoCredito } from '@/types';
 
 interface Props {
   open: boolean;
@@ -17,27 +17,19 @@ export function NovoClienteModal({ open, onClose }: Props) {
   const toast = useToast();
   const navigate = useNavigate();
   const [razaoSocialOuNome, setRazaoSocialOuNome] = useState('');
-  const [nomeFantasia, setNomeFantasia] = useState('');
   const [tipoPessoa, setTipoPessoa] = useState<TipoPessoa>('PJ');
-  const [relacao, setRelacao] = useState<TipoRelacao>('cliente');
   const [documento, setDocumento] = useState('');
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
-  const [segmento, setSegmento] = useState('');
-  const [status, setStatus] = useState<PessoaStatus>('ativo');
   const [nameError, setNameError] = useState('');
   const [saving, setSaving] = useState(false);
 
   function reset() {
     setRazaoSocialOuNome('');
-    setNomeFantasia('');
     setTipoPessoa('PJ');
-    setRelacao('cliente');
     setDocumento('');
     setTelefone('');
     setEmail('');
-    setSegmento('');
-    setStatus('ativo');
     setNameError('');
   }
 
@@ -56,24 +48,12 @@ export function NovoClienteModal({ open, onClose }: Props) {
       const created = await createClient({
         tenantId: db.tenants[0]?.id ?? 'tenant-ind-plast',
         tipoPessoa,
-        relacao,
         razaoSocialOuNome: razaoSocialOuNome.trim(),
-        nomeFantasia: nomeFantasia.trim() || undefined,
         documento: documento.trim(),
         telefone: telefone.trim(),
         email: email.trim(),
-        endereco: {
-          cep: '01001-000',
-          logradouro: 'Av. Paulista',
-          numero: '1000',
-          bairro: 'Bela Vista',
-          cidade: 'São Paulo',
-          uf: 'SP',
-        },
         situacaoCredito: 'aprovado' as SituacaoCredito,
         valorEmAtrasoCentavos: 0,
-        status,
-        segmento: segmento.trim() || undefined,
       });
       toast.show('Parceiro comercial cadastrado com sucesso!');
       handleClose();
@@ -102,21 +82,6 @@ export function NovoClienteModal({ open, onClose }: Props) {
           placeholder="Ex: Indústria Química Paulista S.A."
         />
       </ModalField>
-      <ModalField label="Nome Fantasia">
-        <TextInput
-          value={nomeFantasia}
-          onChange={(e) => setNomeFantasia(e.target.value)}
-          placeholder="Ex: Quimex Brasil"
-        />
-      </ModalField>
-      <ModalField label="Relação Comercial" required>
-        <TextSelect value={relacao} onChange={(e) => setRelacao(e.target.value as TipoRelacao)}>
-          <option value="cliente">Cliente</option>
-          <option value="fornecedor">Fornecedor</option>
-          <option value="ambos">Cliente & Fornecedor</option>
-          <option value="transportadora">Transportadora</option>
-        </TextSelect>
-      </ModalField>
       <ModalField label="Tipo de Pessoa" required>
         <TextSelect value={tipoPessoa} onChange={(e) => setTipoPessoa(e.target.value as TipoPessoa)}>
           <option value="PJ">Pessoa Jurídica (PJ)</option>
@@ -144,21 +109,6 @@ export function NovoClienteModal({ open, onClose }: Props) {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="comercial@empresa.com.br"
         />
-      </ModalField>
-      <ModalField label="Segmento / Ramo">
-        <TextInput
-          value={segmento}
-          onChange={(e) => setSegmento(e.target.value)}
-          placeholder="Ex: Manufatura & Plásticos"
-        />
-      </ModalField>
-      <ModalField label="Status Cadastral">
-        <TextSelect value={status} onChange={(e) => setStatus(e.target.value as PessoaStatus)}>
-          <option value="ativo">Ativo</option>
-          <option value="inativo">Inativo</option>
-          <option value="prospect">Prospect</option>
-          <option value="bloqueado">Bloqueado</option>
-        </TextSelect>
       </ModalField>
     </Modal>
   );
