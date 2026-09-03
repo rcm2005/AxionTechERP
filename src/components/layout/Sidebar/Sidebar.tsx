@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { APP_NAME, APP_TAGLINE } from '@/config/app';
 import { useAuth } from '@/contexts/AuthContext';
+import { USE_MOCKS } from '@/services/mockAdapter';
 import { db } from '@/mocks';
 import { Avatar } from '@/components/ui/Avatar/Avatar';
 import styles from './Sidebar.module.scss';
@@ -57,7 +58,7 @@ export function Sidebar() {
   const { usuario, empresaAtivaId, tenantBranding, tenantNavegacao } = useAuth();
 
   const activeCompany = useMemo(() => {
-    if (!empresaAtivaId) return null;
+    if (!USE_MOCKS || !empresaAtivaId) return null;
     return db.tenants.find((t) => t.id === empresaAtivaId);
   }, [empresaAtivaId]);
 

@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { calculateFinancialSummary } from '@/services/financeiro.service';
 import { useLancamentos } from '@/hooks/useFinanceiro';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useToast } from '@/contexts/ToastContext';
+import { useAsync } from '@/hooks/useAsync';
+import { listClients } from '@/services/clientes.service';
 import { PageHead } from '@/components/ui/PageHead/PageHead';
 import { Button } from '@/components/ui/Button/Button';
 import { Alert } from '@/components/ui/Alert/Alert';
@@ -11,7 +12,7 @@ import { Card, CardBody, CardHead } from '@/components/ui/Card/Card';
 import { DataTable } from '@/components/ui/DataTable/DataTable';
 import type { Column } from '@/components/ui/DataTable/DataTable';
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
-import { contasReceberColumns } from '@/components/financeiro/contasReceberColumns';
+import { getContasReceberColumns } from '@/components/financeiro/contasReceberColumns';
 import { FluxoCaixaCard } from '@/components/financeiro/FluxoCaixaCard';
 import { formatBRL } from '@/utils/format';
 import { BarChart } from '@/components/ui/BarChart/BarChart';
@@ -30,11 +31,20 @@ const breakdownColumns: Column<BreakdownRow>[] = [
 
 export function FinanceiroPage() {
   useDocumentTitle('Financeiro');
-  const toast = useToast();
   const { data: entries, loading, error, reload } = useLancamentos();
 
   const [period, setPeriod] = useState<'mes' | 'trimestre' | 'todos'>('mes');
   const [newChargeOpen, setNewChargeOpen] = useState(false);
+  const [newEntryTipo, setNewEntryTipo] = useState<'receita' | 'despesa'>('receita');
+
+  const clientsState = useAsync(() => listClients(), []);
+  const clientNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const client of clientsState.data ?? []) {
+      map.set(client.id, client.nomeFantasia || client.razaoSocialOuNome);
+    }
+    return map;
+  }, [clientsState.data]);
 
   const filteredEntries = useMemo(() => {
     const all = entries ?? [];
@@ -106,8 +116,21 @@ export function FinanceiroPage() {
         subtitle="Contas a receber, despesas e visão do fluxo de caixa."
         actions={
           <>
-            <Button onClick={() => toast.show('Nova despesa iniciada')}>+ Despesa</Button>
-            <Button variant="primary" onClick={() => setNewChargeOpen(true)}>
+            <Button
+              onClick={() => {
+                setNewEntryTipo('despesa');
+                setNewChargeOpen(true);
+              }}
+            >
+              + Despesa
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setNewEntryTipo('receita');
+                setNewChargeOpen(true);
+              }}
+            >
               + Cobrança
             </Button>
           </>
@@ -204,7 +227,7 @@ export function FinanceiroPage() {
             </CardBody>
           ) : (
             <DataTable
-              columns={contasReceberColumns}
+              columns={getContasReceberColumns(clientNameById)}
               rows={receivables}
               getRowId={(entry) => entry.id}
               loading={loading}
@@ -247,7 +270,12 @@ export function FinanceiroPage() {
         </Card>
       )}
 
-      <NovaCobrancaModal open={newChargeOpen} onClose={() => setNewChargeOpen(false)} />
+      <NovaCobrancaModal
+        key={newEntryTipo}
+        open={newChargeOpen}
+        onClose={() => setNewChargeOpen(false)}
+        initialTipo={newEntryTipo}
+      />
     </section>
   );
 }

@@ -14,6 +14,9 @@ import { DataTable } from '@/components/ui/DataTable/DataTable';
 import { clientesColumns } from '@/components/clientes/clientesColumns';
 import { paths } from '@/routes/paths';
 import { NovoClienteModal } from '@/components/modais/NovoClienteModal';
+import { downloadCsv } from '@/utils/csv';
+import { situacaoCreditoMeta } from '@/utils/statusMaps';
+import { formatBRL } from '@/utils/format';
 
 export function ClientesPage() {
   useDocumentTitle('Clientes e Parceiros');
@@ -32,6 +35,30 @@ export function ClientesPage() {
     busca: debouncedSearch,
   });
 
+  function handleExport() {
+    const rows = (clients ?? []).map((client) => [
+      client.razaoSocialOuNome,
+      client.nomeFantasia ?? '',
+      client.tipoPessoa,
+      client.documento,
+      client.email,
+      client.telefone,
+      situacaoCreditoMeta[client.situacaoCredito]?.label ?? client.situacaoCredito,
+      formatBRL(client.valorEmAtrasoCentavos),
+    ]);
+    downloadCsv('clientes-axion.csv', [
+      'Razão Social / Nome',
+      'Nome Fantasia',
+      'Tipo',
+      'Documento',
+      'E-mail',
+      'Telefone',
+      'Situação de Crédito',
+      'Valor em Atraso (R$)',
+    ], rows);
+    toast.show(`${(clients ?? []).length} parceiro(s) exportado(s) em CSV.`);
+  }
+
   return (
     <section>
       <PageHead
@@ -39,7 +66,7 @@ export function ClientesPage() {
         subtitle="Cadastro B2B, análise de crédito e histórico de relacionamento."
         actions={
           <>
-            <Button onClick={() => toast.show('Relatório de parceiros exportado!')}>Exportar</Button>
+            <Button onClick={handleExport}>Exportar</Button>
             <Button variant="primary" onClick={() => setNewClientOpen(true)}>
               + Novo parceiro
             </Button>
