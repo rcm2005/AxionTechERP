@@ -66,6 +66,7 @@ export function ProcessoDetailPage() {
   const [newDeadlineOpen, setNewDeadlineOpen] = useState(false);
   const [newEventOpen, setNewEventOpen] = useState(false);
   const [savingDeadlineId, setSavingDeadlineId] = useState<string>();
+  const [selectedDeadlineId, setSelectedDeadlineId] = useState<string>();
 
   useDocumentTitle(caseItem ? `Processo ${caseItem.numero_cnj}` : 'Processo');
 
@@ -85,6 +86,10 @@ export function ProcessoDetailPage() {
         return urgencyLevel === 'urgente' || urgencyLevel === 'vencido';
       }),
     [pendingDeadlines],
+  );
+  const selectedDeadline = useMemo(
+    () => (deadlines ?? []).find((deadline) => deadline.id === selectedDeadlineId),
+    [deadlines, selectedDeadlineId],
   );
 
   async function handleMarcarCumprido(deadline: Prazo) {
@@ -169,6 +174,22 @@ export function ProcessoDetailPage() {
         </div>
       </div>
 
+      {caseItem.cnj_decomposicao && (
+        <Card className={styles.secao}>
+          <CardHead title="Número CNJ decodificado" />
+          <CardBody>
+            {/* No "instância/grau" field: the CNJ number format (Resolução CNJ
+                65/2008) does not encode it — only tribunal segment/code, ano
+                and unidade de origem are derivable from the number itself. */}
+            <div className={styles.infoGrid}>
+              <Info label="Tribunal">{caseItem.cnj_decomposicao.tribunal ?? 'Não identificado'}</Info>
+              <Info label="Ano de ajuizamento">{caseItem.cnj_decomposicao.ano}</Info>
+              <Info label="Código da unidade de origem">{caseItem.cnj_decomposicao.codigoOrigem}</Info>
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
       <Card className={styles.secao}>
         <CardHead title="Partes do processo" />
         <CardBody>
@@ -213,13 +234,33 @@ export function ProcessoDetailPage() {
             />
           </CardBody>
         ) : (
-          <DataTable
-            columns={deadlinesColumns}
-            rows={deadlines ?? []}
-            getRowId={(deadline) => deadline.id}
-            loading={loadingDeadlines}
-            emptyMessage="Nenhum prazo cadastrado para este processo."
-          />
+          <>
+            <DataTable
+              columns={deadlinesColumns}
+              rows={deadlines ?? []}
+              getRowId={(deadline) => deadline.id}
+              loading={loadingDeadlines}
+              emptyMessage="Nenhum prazo cadastrado para este processo."
+              onRowClick={(deadline) =>
+                setSelectedDeadlineId((current) => (current === deadline.id ? undefined : deadline.id))
+              }
+            />
+            {selectedDeadline && (
+              <CardBody className={styles.explicacaoBlock}>
+                <span className={styles.infoLabel}>
+                  Como o prazo foi contado — {selectedDeadline.descricao}
+                </span>
+                {selectedDeadline.explicacao_contagem ? (
+                  <p className={styles.explicacaoTexto}>{selectedDeadline.explicacao_contagem}</p>
+                ) : (
+                  <p className={styles.explicacaoIndisponivel}>
+                    Contagem detalhada não disponível para este prazo (faltam data de intimação ou
+                    dias úteis cadastrados).
+                  </p>
+                )}
+              </CardBody>
+            )}
+          </>
         )}
       </Card>
 

@@ -21,6 +21,17 @@ export interface Prazo {
    */
   prazo_fatal: string;
   dias_uteis?: number | null;
+  /**
+   * Human-readable Portuguese explanation of the business-day count behind
+   * `prazo_fatal` (which holidays/recess days were excluded, etc.) —
+   * computed server-side by the same `buildExplicacaoContagem` function the
+   * Copilot's `AnaliseIntimacao.explicacao_contagem` uses (see
+   * `src/components/copilot/AnalisePrazoCard.tsx`); same field name, same
+   * authoring function, deliberately, so the two screens never disagree.
+   * `null` when `data_intimacao` or `dias_uteis` is missing on this prazo
+   * (nothing to reconstruct); `undefined` in mock mode.
+   */
+  explicacao_contagem?: string | null;
   origem: PrazoOrigem;
   status: PrazoStatus;
   created_at?: string;

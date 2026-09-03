@@ -17,11 +17,36 @@ export interface ParteProcesso {
   cpf_cnpj?: string;
 }
 
+/**
+ * Mirrors `CnjDecomposicao` in the backend's `apps/api/src/utils/cnj.ts`
+ * exactly (field names included) — that file owns the real CNJ
+ * segment/tribunal lookup table and is the only place that ever resolves a
+ * tribunal code to a name. This type only describes the shape of the value
+ * the backend already computed and sent; do not add a lookup table here.
+ */
+export interface CnjDecomposicao {
+  numeroCnj: string;
+  segmentoJustica: string;
+  codigoTribunal: string;
+  codigoOrigem: string;
+  ano: string;
+  tribunal: string | null;
+}
+
 export interface Processo {
   id: ID;
   cliente_id: ID;
   /** Formato CNJ: NNNNNNN-DD.AAAA.J.TR.OOOO */
   numero_cnj: string;
+  /**
+   * Present only on the response from `GET /processos/:id` (not the list
+   * endpoint), and only when `numero_cnj` matched the CNJ shape server-side —
+   * `null` if the backend couldn't parse it, `undefined` in mock mode (no
+   * local mock for this, see `processos.service.ts`) or when this Processo
+   * came from the list endpoint. Always guard with optional chaining before
+   * reading into it, never assume presence.
+   */
+  cnj_decomposicao?: CnjDecomposicao | null;
   tribunal: string;
   vara: string;
   partes: ParteProcesso[];
