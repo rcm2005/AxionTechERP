@@ -2,7 +2,7 @@ import type { ID } from './common';
 
 export type TipoLancamento = 'receita' | 'despesa';
 
-export type StatusLancamento = 'pago' | 'pendente' | 'atrasado' | 'cancelado' | 'parcial';
+export type StatusLancamento = 'pago' | 'pendente' | 'atrasado' | 'cancelado';
 
 export type FormaPagamento =
   | 'boleto'

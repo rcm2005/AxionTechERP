@@ -41,7 +41,6 @@ export const lancamentoStatusMeta: Record<StatusLancamento, StatusMeta> = {
   pendente: { label: 'Pendente', tone: 'orange' },
   atrasado: { label: 'Atrasado', tone: 'red' },
   cancelado: { label: 'Cancelado', tone: 'neutral' },
-  parcial: { label: 'Parcial', tone: 'blue' },
 };
 
 export const tipoProdutoMeta: Record<TipoProduto, { label: string; tone: Tone; shortLabel: string }> = {

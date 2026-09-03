@@ -1,5 +1,4 @@
 import type { FinancialSummary } from '@/services/financeiro.service';
-import { REFERENCE_DATE } from '@/config/app';
 import { Card, CardBody, CardHead } from '@/components/ui/Card/Card';
 import { Alert } from '@/components/ui/Alert/Alert';
 import { ProgressBar } from '@/components/ui/ProgressBar/ProgressBar';
@@ -14,7 +13,7 @@ export function FluxoCaixaCard({ summary }: FluxoCaixaCardProps) {
   const totalMoved = summary.revenueCentavos + summary.expenseCentavos;
   const percentRevenue = totalMoved > 0 ? (summary.revenueCentavos / totalMoved) * 100 : 0;
   const percentExpense = totalMoved > 0 ? (summary.expenseCentavos / totalMoved) * 100 : 0;
-  const monthLabel = formatMonthYear(REFERENCE_DATE);
+  const monthLabel = formatMonthYear(new Date().toISOString());
 
   return (
     <Card>

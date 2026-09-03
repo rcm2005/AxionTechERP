@@ -10,7 +10,6 @@ import { Skeleton } from '@/components/ui/Skeleton/Skeleton';
 import { AlertsCard } from '@/components/dashboard/AlertasCard';
 import { QuickActionsCard } from '@/components/dashboard/AtalhosCard';
 import { NovoClienteModal } from '@/components/modais/NovoClienteModal';
-import { REFERENCE_DATE } from '@/config/app';
 import { formatLongDate } from '@/utils/format';
 import styles from './DashboardPage.module.scss';
 
@@ -38,7 +37,7 @@ export function DashboardPage() {
     <section>
       <PageHead
         title={`${greeting}, ${firstName} 👋`}
-        subtitle={`Visão geral da operação em ${formatLongDate(REFERENCE_DATE)}.`}
+        subtitle={`Visão geral da operação em ${formatLongDate(new Date().toISOString())}.`}
         actions={
           <Button variant="primary" onClick={() => setNewClientOpen(true)}>
             + Novo cliente / parceiro

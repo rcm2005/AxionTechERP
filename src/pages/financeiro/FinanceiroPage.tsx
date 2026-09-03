@@ -19,8 +19,6 @@ import { NovaCobrancaModal } from '@/components/modais/NovaCobrancaModal';
 
 import styles from './FinanceiroPage.module.scss';
 
-const REFERENCE_DATE = new Date('2026-08-18');
-
 type BreakdownRow = { id: string; category: string; revenue: number; expense: number; balance: number };
 
 const breakdownColumns: Column<BreakdownRow>[] = [
@@ -41,12 +39,13 @@ export function FinanceiroPage() {
   const filteredEntries = useMemo(() => {
     const all = entries ?? [];
     if (period === 'todos') return all;
-    const refMs = REFERENCE_DATE.getTime();
+    const today = new Date();
+    const refMs = today.getTime();
     const days = period === 'mes' ? 31 : 92;
     const start = new Date(refMs - days * 24 * 60 * 60 * 1000);
     return all.filter((entry) => {
       const date = new Date(entry.vencimento);
-      return date >= start && date <= REFERENCE_DATE;
+      return date >= start && date <= today;
     });
   }, [entries, period]);
 

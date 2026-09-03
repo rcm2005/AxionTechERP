@@ -6,10 +6,6 @@ export const COMPANY_NAME = 'AXION ENTERPRISE';
 export const SUPPORT_EMAIL = 'suporte@axionerp.com.br';
 export const OFFICE_NAME = 'Corporativo Multi-tenant';
 
-// Data usada como "hoje" enquanto os dados forem mockados — troque por
-// `new Date().toISOString()` quando um backend real fornecer os dados.
-export const REFERENCE_DATE = '2026-08-18';
-
 export interface NavItem {
   path: string;
   label: string;

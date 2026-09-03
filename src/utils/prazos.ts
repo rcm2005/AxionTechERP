@@ -20,7 +20,7 @@ export interface DeadlineUrgency {
  *
  * Deadlines already completed/lost do not receive urgency styling — the
  * visual highlight exists to prompt action, and there is no possible action on them.
- * Uses real system date (not REFERENCE_DATE from mocks) because the value
+ * Uses the real system date (never a hardcoded/mocked one) because the value
  * of the feature depends on being anchored in the user's true "today".
  */
 export function classifyDeadline(deadline: Prazo, today: Date = new Date()): DeadlineUrgency {
